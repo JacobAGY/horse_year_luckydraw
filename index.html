@@ -1052,7 +1052,7 @@
     const idiomPoints = new THREE.Points(idiomGeo, idiomMat);
     idiomGroup.add(idiomPoints);
     idiomPoints.layers.enable(BLOOM_LAYER);
-
+    let envHomeRingR = 3.0; // 红包环绕半径（会在 rebuildIdiomTargets 里更新）
     function rebuildIdiomTargets(text){
       // sample points for idiom text
       const samples = sampleTextPoints(text, {
