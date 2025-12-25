@@ -813,12 +813,13 @@ rebuildIdiomTargets(IDIOMS[Math.floor(Math.random()*IDIOMS.length)]);
 // ---------------------------
 // 红包系统：合拢时环绕分布；散开时惯性爆散
 // ---------------------------
-let envHomeRingR = 3.2; // 必须在 rebuildIdiomTargets 前已经初始化，否则会 TDZ
+
 const ENVELOPES = IS_MOBILE ? 160 : 240; // 数量更多
 const envGroup = new THREE.Group();
 idiomGroup.add(envGroup); // 绑定到成语周围（合拢时自然围绕）
 envGroup.position.set(0,0,0);
-
+let envHomeRingR = 3.2;
+  
 function makeRedEnvelopeTexture(){
   const c = document.createElement("canvas");
   c.width=256; c.height=320;
