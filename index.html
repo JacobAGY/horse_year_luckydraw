@@ -1119,7 +1119,7 @@
     const envHomeLocal = new Array(ENVELOPE_COUNT);
     const envScatterWorld = new Array(ENVELOPE_COUNT);
     const envSeed = new Array(ENVELOPE_COUNT);
-    let envHomeRingR = 3.0; // 会在每次生成新成语后自适应更新
+    envHomeRingR = 3.0; // 会在每次生成新成语后自适应更新
 
     function sampleEnvelopeHomeLocal(){
       // 围绕文字的“环”，并留一点厚度，避免全都在一个平面
