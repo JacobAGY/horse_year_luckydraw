@@ -1,16 +1,16 @@
 <!doctype html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
-  <title>Analytic Factory Wish Tree-Hand Tracking</title>
+  <title>马年 · 手势粒子祝福 | Three.js + MediaPipe Hands</title>
 
   <!-- ES Module Shims (Import Maps for broader browser support) -->
   <script async src="https://unpkg.com/es-module-shims@1.10.0/dist/es-module-shims.js"></script>
   <link rel="preconnect" href="https://unpkg.com" crossorigin>
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-  
+
   <link rel="modulepreload" href="https://unpkg.com/three@0.182.0/build/three.module.js">
   <link rel="modulepreload" href="https://unpkg.com/three@0.182.0/examples/jsm/postprocessing/EffectComposer.js">
   <link rel="modulepreload" href="https://unpkg.com/three@0.182.0/examples/jsm/postprocessing/RenderPass.js">
@@ -32,28 +32,30 @@
 
   <style>
     :root{
-      --matte-green:#0b3d2e;
       --gold:#d4af37;
+      --gold2:#ffdc7a;
       --red:#b11226;
-      --ink:#070a0c;
-      --panel: rgba(10,18,16,.62);
-      --panel2: rgba(4,8,10,.45);
+      --red2:#ff2b4a;
+      --ink:#060507;
+      --panel: rgba(10, 6, 8, .62);
+      --panel2: rgba(6, 4, 5, .45);
       --line: rgba(212,175,55,.35);
       --text: rgba(255,255,255,.92);
-      --muted: rgba(255,255,255,.65);
+      --muted: rgba(255,255,255,.68);
+      --ok: rgba(212,175,55,.92);
+      --warn: rgba(255,80,80,.92);
     }
 
     html,body{
       height:100%;
       margin:0;
-      background: radial-gradient(120% 120% at 50% 30%, #0a1412 0%, #06080a 55%, #040506 100%);
+      background: radial-gradient(120% 120% at 50% 30%, #16050a 0%, #070509 55%, #040307 100%);
       color:var(--text);
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      font-family: ui-sans-serif, system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", Segoe UI, Roboto, Helvetica, Arial;
       overflow:hidden;
     }
 
     #app{ position:fixed; inset:0; }
-
     canvas#gl{
       position:absolute; inset:0;
       width:100%; height:100%;
@@ -61,25 +63,25 @@
       touch-action:none;
     }
 
-    /* Cinematic: vignette + gentle haze */
+    /* Cinematic overlays */
     .cinema-vignette{
       position:absolute; inset:0;
       pointer-events:none;
       background:
-        radial-gradient(120% 120% at 50% 42%, rgba(0,0,0,0) 40%, rgba(0,0,0,.55) 100%),
-        radial-gradient(80% 60% at 50% 0%, rgba(212,175,55,.10) 0%, rgba(0,0,0,0) 55%),
-        linear-gradient(180deg, rgba(177,18,38,.08) 0%, rgba(0,0,0,0) 40%);
-      mix-blend-mode:screen;
-      opacity:.9;
+        radial-gradient(120% 120% at 50% 42%, rgba(0,0,0,0) 42%, rgba(0,0,0,.64) 100%),
+        radial-gradient(70% 60% at 55% 0%, rgba(212,175,55,.12) 0%, rgba(0,0,0,0) 60%),
+        radial-gradient(70% 60% at 35% 0%, rgba(177,18,38,.12) 0%, rgba(0,0,0,0) 60%),
+        linear-gradient(180deg, rgba(177,18,38,.10) 0%, rgba(0,0,0,0) 42%);
+      mix-blend-mode: screen;
+      opacity:.92;
     }
-
     .film-grain{
       position:absolute; inset:-20%;
       pointer-events:none;
       background-image:
-        repeating-linear-gradient(0deg, rgba(255,255,255,.025) 0 1px, rgba(0,0,0,0) 1px 3px),
-        repeating-linear-gradient(90deg, rgba(255,255,255,.018) 0 1px, rgba(0,0,0,0) 1px 4px);
-      opacity:.25;
+        repeating-linear-gradient(0deg, rgba(255,255,255,.028) 0 1px, rgba(0,0,0,0) 1px 3px),
+        repeating-linear-gradient(90deg, rgba(255,255,255,.02) 0 1px, rgba(0,0,0,0) 1px 4px);
+      opacity:.24;
       transform:rotate(2deg);
       animation: grain 7s linear infinite;
       mix-blend-mode:overlay;
@@ -91,6 +93,7 @@
       100%{ transform:translate3d(-2%, -2%, 0) rotate(2deg); }
     }
 
+    /* HUD */
     .hud{
       position:absolute;
       left:12px; right:12px; top:12px;
@@ -99,38 +102,46 @@
       align-items:flex-start;
       pointer-events:none;
     }
-
     .panel{
       pointer-events:auto;
       flex:1 1 auto;
-      max-width:860px;
+      max-width:980px;
       padding:12px 12px 10px;
       border:1px solid var(--line);
       border-radius:14px;
       background:linear-gradient(180deg, var(--panel) 0%, var(--panel2) 100%);
-      box-shadow: 0 14px 40px rgba(0,0,0,.45);
+      box-shadow: 0 14px 40px rgba(0,0,0,.50);
       backdrop-filter: blur(10px);
+      position:relative;
+      overflow:hidden;
     }
-
+    .panel:before{
+      content:"";
+      position:absolute; inset:-2px;
+      background:
+        radial-gradient(70% 120% at 20% 0%, rgba(212,175,55,.20), rgba(0,0,0,0) 55%),
+        radial-gradient(70% 120% at 80% 0%, rgba(177,18,38,.18), rgba(0,0,0,0) 55%);
+      pointer-events:none;
+    }
     .row{
+      position:relative;
       display:flex;
       gap:10px;
       align-items:center;
       flex-wrap:wrap;
     }
-
     .brand{
       display:flex; gap:10px; align-items:center;
-      min-width:260px;
+      min-width:320px;
     }
     .badge{
       width:12px; height:12px; border-radius:999px;
       background:var(--gold);
-      box-shadow: 0 0 0 2px rgba(212,175,55,.18), 0 0 18px rgba(212,175,55,.45);
+      box-shadow: 0 0 0 2px rgba(212,175,55,.18), 0 0 18px rgba(212,175,55,.55);
     }
     .title{
-      font-weight:750;
-      letter-spacing:.3px;
+      font-weight:820;
+      letter-spacing:.4px;
       font-size:14px;
       line-height:1.2;
     }
@@ -147,19 +158,18 @@
       flex-wrap:wrap;
       margin-left:auto;
     }
-
     button{
       pointer-events:auto;
       appearance:none;
-      border:1px solid rgba(212,175,55,.38);
+      border:1px solid rgba(212,175,55,.40);
       color:var(--text);
-      background:linear-gradient(180deg, rgba(11,61,46,.65), rgba(6,10,12,.55));
+      background:linear-gradient(180deg, rgba(177,18,38,.30), rgba(0,0,0,.22));
       border-radius:12px;
       padding:10px 12px;
       font-size:12px;
-      font-weight:700;
+      font-weight:800;
       letter-spacing:.2px;
-      box-shadow: 0 10px 24px rgba(0,0,0,.35);
+      box-shadow: 0 10px 24px rgba(0,0,0,.40);
       cursor:pointer;
       user-select:none;
     }
@@ -169,8 +179,13 @@
       background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(0,0,0,.18));
       color: rgba(255,255,255,.86);
     }
+    button.danger{
+      border-color: rgba(255,80,80,.25);
+      background: linear-gradient(180deg, rgba(255,43,74,.14), rgba(0,0,0,.22));
+    }
 
     .tips{
+      position:relative;
       margin-top:10px;
       padding-top:10px;
       border-top:1px solid rgba(212,175,55,.22);
@@ -178,7 +193,7 @@
       gap:10px;
       flex-wrap:wrap;
       font-size:12px;
-      color:rgba(255,255,255,.78);
+      color:rgba(255,255,255,.80);
     }
     .chip{
       border:1px solid rgba(255,255,255,.12);
@@ -188,14 +203,23 @@
       display:inline-flex;
       gap:8px;
       align-items:center;
+      white-space:nowrap;
     }
-    .chip b{ color:rgba(255,255,255,.92); font-weight:800; }
+    .chip b{ color:rgba(255,255,255,.94); font-weight:900; }
+    .chip em{
+      font-style:normal;
+      color: rgba(212,175,55,.92);
+      font-weight:800;
+    }
 
     .status{
+      position:relative;
       margin-left:auto;
       font-size:12px;
-      color:rgba(255,255,255,.70);
+      color:rgba(255,255,255,.72);
       display:flex; align-items:center; gap:8px;
+      min-width: 260px;
+      justify-content:flex-end;
     }
     .led{
       width:8px; height:8px; border-radius:999px;
@@ -206,8 +230,17 @@
       background: var(--gold);
       box-shadow: 0 0 0 2px rgba(212,175,55,.16), 0 0 16px rgba(212,175,55,.55);
     }
+    .modeBadge{
+      padding:5px 8px;
+      border-radius:999px;
+      border:1px solid rgba(212,175,55,.26);
+      background: rgba(0,0,0,.20);
+      color: rgba(255,255,255,.86);
+      font-weight:800;
+      letter-spacing:.2px;
+    }
 
-    /* Focus overlay */
+    /* Video Focus overlay (cinematic card) */
     .focusOverlay{
       position:absolute; inset:0;
       display:flex;
@@ -225,56 +258,104 @@
     }
     .focusCard{
       pointer-events:auto;
-      width:min(720px, calc(100vw - 24px));
+      width:min(920px, calc(100vw - 24px));
       border-radius:18px;
-      border:1px solid rgba(212,175,55,.40);
-      background: linear-gradient(180deg, rgba(0,0,0,.52), rgba(8,12,14,.62));
-      box-shadow: 0 22px 70px rgba(0,0,0,.58);
+      border:1px solid rgba(212,175,55,.42);
+      background: linear-gradient(180deg, rgba(0,0,0,.50), rgba(10,7,9,.72));
+      box-shadow: 0 22px 70px rgba(0,0,0,.62);
       backdrop-filter: blur(12px);
-      padding:14px 14px 12px;
+      padding:12px;
       position:relative;
       overflow:hidden;
     }
     .focusCard:before{
       content:"";
       position:absolute; inset:-2px;
-      background: radial-gradient(60% 120% at 20% 0%, rgba(212,175,55,.18), rgba(0,0,0,0) 55%),
-                  radial-gradient(60% 120% at 80% 0%, rgba(177,18,38,.12), rgba(0,0,0,0) 55%);
+      background:
+        radial-gradient(70% 120% at 20% 0%, rgba(212,175,55,.18), rgba(0,0,0,0) 60%),
+        radial-gradient(70% 120% at 80% 0%, rgba(177,18,38,.14), rgba(0,0,0,0) 60%);
       pointer-events:none;
     }
-    .focusCard h3{
+    .focusTop{
+      position:relative;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      margin-bottom:10px;
+    }
+    .focusTitle{
       margin:0;
       font-size:14px;
       letter-spacing:.4px;
-      position:relative;
+      font-weight:920;
+      color: rgba(255,255,255,.92);
     }
-    .focusCard p{
-      margin:8px 0 0;
-      font-size:13px;
-      line-height:1.55;
-      color: rgba(255,255,255,.86);
-      position:relative;
-      white-space:pre-wrap;
-    }
-    .focusCard .small{
-      margin-top:10px;
+    .focusHint{
+      margin-left:auto;
       font-size:12px;
-      color: rgba(255,255,255,.65);
-      position:relative;
+      color: rgba(255,255,255,.68);
       display:flex;
-      gap:10px;
       align-items:center;
-      justify-content:space-between;
-      flex-wrap:wrap;
+      gap:8px;
     }
     .kbd{
       border:1px solid rgba(255,255,255,.14);
       background: rgba(255,255,255,.06);
       border-radius:10px;
       padding:6px 10px;
+      white-space:nowrap;
     }
 
-    /* Hidden camera element (still required by MediaPipe) */
+    .videoWrap{
+      position:relative;
+      border-radius:14px;
+      overflow:hidden;
+      border:1px solid rgba(255,255,255,.10);
+      background: radial-gradient(120% 120% at 50% 30%, rgba(212,175,55,.10), rgba(0,0,0,.55));
+    }
+    video#horseVid{
+      width:100%;
+      height:min(46vh, 420px);
+      object-fit:cover;
+      display:block;
+      filter: contrast(1.05) saturate(1.10);
+    }
+    .videoGlow{
+      pointer-events:none;
+      position:absolute; inset:-1px;
+      background:
+        radial-gradient(80% 140% at 50% 30%, rgba(212,175,55,.18), rgba(0,0,0,0) 60%),
+        radial-gradient(80% 140% at 50% 90%, rgba(177,18,38,.12), rgba(0,0,0,0) 60%);
+      mix-blend-mode: screen;
+      opacity: .95;
+    }
+
+    .idiomLine{
+      position:relative;
+      margin-top:10px;
+      display:flex;
+      align-items:baseline;
+      justify-content:space-between;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .idiomText{
+      font-size:18px;
+      font-weight:960;
+      letter-spacing: 1.4px;
+      color: rgba(255,255,255,.95);
+      text-shadow:
+        0 0 12px rgba(212,175,55,.26),
+        0 0 22px rgba(212,175,55,.18),
+        0 0 18px rgba(177,18,38,.14);
+    }
+    .idiomSub{
+      font-size:12px;
+      color: rgba(255,255,255,.70);
+    }
+
+    /* Hidden camera (still required by MediaPipe) */
     video#cam{
       position:absolute;
       right:12px; bottom:12px;
@@ -284,11 +365,38 @@
       transform: translateZ(0);
     }
 
+    .toast{
+      position:absolute;
+      left:50%;
+      top:18px;
+      transform: translateX(-50%);
+      pointer-events:none;
+      opacity:0;
+      transition: opacity .18s ease, transform .18s ease;
+      padding:10px 12px;
+      border-radius:999px;
+      border:1px solid rgba(212,175,55,.28);
+      background: rgba(0,0,0,.36);
+      backdrop-filter: blur(10px);
+      color: rgba(255,255,255,.88);
+      font-size:12px;
+      box-shadow: 0 16px 48px rgba(0,0,0,.45);
+      max-width: calc(100vw - 24px);
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .toast.show{
+      opacity:1;
+      transform: translateX(-50%) translateY(6px);
+    }
+
     @media (max-width:420px){
-      .brand{ min-width: 220px; }
+      .brand{ min-width: 260px; }
       .panel{ padding:10px; }
       button{ padding:9px 10px; }
       .tips{ gap:8px; }
+      .idiomText{ font-size:16px; }
     }
   </style>
 </head>
@@ -299,66 +407,69 @@
     <div class="cinema-vignette"></div>
     <div class="film-grain"></div>
 
+    <div class="toast" id="toast"></div>
+
     <div class="hud">
       <div class="panel">
         <div class="row">
           <div class="brand">
             <span class="badge"></span>
             <div>
-              <div class="title">Analytic Factory Wish Tree-Hand Trackin</div>
-              <div class="subtitle">Three.js / WebGL · MediaPipe Hands · Selective Bloom</div>
+              <div class="title">马年手势粒子祝福 · 金红辉光</div>
+              <div class="subtitle">Three.js / WebGL · MediaPipe Hands · 选择性辉光 Bloom · “马”字粒子凝聚成语</div>
             </div>
           </div>
 
           <div class="controls">
-            <button id="btnStart">Enable Hand Tracking</button>
-            <button id="btnReset" class="secondary">Reset</button>
-            <button id="btnHelp" class="secondary">Tips</button>
-            <button id="btnMusic" class="secondary">Music: Off</button>
+            <button id="btnStart">开启手势识别（相机）</button>
+            <button id="btnIdiom" class="secondary">随机成语</button>
+            <button id="btnReset" class="secondary">重置</button>
+            <button id="btnHelp" class="secondary">手势提示</button>
+            <button id="btnFS" class="secondary">全屏</button>
           </div>
 
           <div class="status">
             <span id="led" class="led"></span>
-            <span id="statusText">Default: Cone mode (touch drag works in Scatter)</span>
+            <span class="modeBadge" id="modeBadge">状态：合拢成语</span>
+            <span id="statusText">提示：先点击“开启手势识别”授权相机（GitHub Pages 必须 https）。</span>
           </div>
         </div>
 
         <div class="tips" id="tips" style="display:none;">
-          <span class="chip"><b>Open hand</b> → Scatter mode</span>
-          <span class="chip"><b>Close hand</b> → Cone mode</span>
-          <span class="chip"><b>Move palm</b> → Rotate (in Scatter)</span>
-          <span class="chip"><b>Pinch</b> → Pick a random photo + message</span>
-          <span class="chip"><b>Double-tap</b> → Pick (touch fallback)</span>
+          <span class="chip"><b>握拳</b> → <em>合拢成语</em>（每次合拢随机成语）</span>
+          <span class="chip"><b>五指张开</b> → <em>散开漂浮</em></span>
+          <span class="chip"><b>张开手掌移动</b> → <em>旋转视角</em>（仅散开态）</span>
+          <span class="chip"><b>三指抓</b>（拇指+食指+中指合拢）→ <em>视频放大态</em></span>
+          <span class="chip"><b>鼠标/触控拖拽</b> → 旋转视角（手势未开启时可用）</span>
         </div>
       </div>
     </div>
 
     <div id="focusOverlay" class="focusOverlay">
       <div class="focusCard">
-        <h3 id="focusTitle">Holiday Message</h3>
-        <p id="focusText"></p>
-        <div class="small">
-          <span class="kbd">Close hand: Cone</span>
-          <span class="kbd">Open hand: Scatter</span>
-          <span class="kbd">Pinch again: Next</span>
+        <div class="focusTop">
+          <h3 class="focusTitle" id="focusTitle">视频放大态</h3>
+          <div class="focusHint">
+            <span class="kbd">握拳：回到合拢</span>
+            <span class="kbd">五指张开：回到散开</span>
+            <span class="kbd">三指抓：切换视频/成语</span>
+          </div>
+        </div>
+        <div class="videoWrap">
+          <video id="horseVid" playsinline muted loop></video>
+          <div class="videoGlow"></div>
+        </div>
+        <div class="idiomLine">
+          <div class="idiomText" id="focusIdiom">马到成功</div>
+          <div class="idiomSub" id="focusSub">提示：若视频未显示，请将 mp4 放到 assets/videos/ 并更新列表。</div>
         </div>
       </div>
     </div>
 
     <video id="cam" playsinline></video>
-    <audio id="bgm" preload="none" loop playsinline></audio>
   </div>
 
   <script type="module-shim">
-    /*
-      Notes:
-      - Mobile camera access typically requires HTTPS (or localhost).
-      - On iOS, Safari is recommended.
-      - Put participants + avatars into:
-          /assets/participants.json
-          /assets/avatars/*.webp (recommended)
-    */
-
     import * as THREE from "three";
     import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
     import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
@@ -366,70 +477,8 @@
     import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
     import { ShaderPass } from "three/addons/postprocessing/ShaderPass.js";
 
-    const COLORS = {
-      matteGreen: new THREE.Color("#0b3d2e"),
-      gold: new THREE.Color("#d4af37"),
-      red: new THREE.Color("#b11226"),
-      bg0: new THREE.Color("#040506"),
-      bg1: new THREE.Color("#0a1412")
-    };
-
-    const canvas = document.getElementById("gl");
-    const statusText = document.getElementById("statusText");
-    const led = document.getElementById("led");
-    const btnStart = document.getElementById("btnStart");
-    const btnReset = document.getElementById("btnReset");
-    const btnHelp = document.getElementById("btnHelp");
-    const tips = document.getElementById("tips");
-    const btnMusic = document.getElementById("btnMusic");
-    const bgm = document.getElementById("bgm");
-
-    // ---- Mobile/perf knobs (2~5) ----
-    const IS_MOBILE = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-    const DPR_CAP = IS_MOBILE ? 1.25 : 2.0;
-    const MAX_ANISO = IS_MOBILE ? 2 : 8;
-
-    const BGM_URL = "assets/music/newyear.mp3";
-    let musicEnabled = false;
-    let musicPrepared = false;
-
-    async function enableMusic() {
-      try {
-        if (!musicPrepared) {
-          bgm.src = BGM_URL;          // load only after user gesture
-          bgm.load();
-          musicPrepared = true;
-        }
-        bgm.volume = 0.28;
-        await bgm.play();
-        musicEnabled = true;
-        btnMusic.textContent = "Music: On";
-      } catch (e) {
-        statusText.textContent = "Tap “Music” to start audio (autoplay blocked by browser).";
-        musicEnabled = false;
-        btnMusic.textContent = "Music: Off";
-      }
-    }
-
-    function disableMusic() {
-      bgm.pause();
-      musicEnabled = false;
-      btnMusic.textContent = "Music: Off";
-    }
-
-    btnMusic.addEventListener("click", () => {
-      if (musicEnabled) disableMusic();
-      else enableMusic();
-    });
-
-    const focusOverlay = document.getElementById("focusOverlay");
-    const focusTitleEl = document.getElementById("focusTitle");
-    const focusTextEl = document.getElementById("focusText");
-
-    const videoEl = document.getElementById("cam");
-
     // ---------------------------
-    // Utils
+    // 基础工具
     // ---------------------------
     const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
     const lerp = (a, b, t) => a + (b - a) * t;
@@ -438,123 +487,152 @@
       return current + (target - current) * t;
     };
 
-    function makeStarSpriteTexture() {
+    const IS_MOBILE = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    const DPR_CAP = IS_MOBILE ? 1.35 : 2.0;
+
+    const COLORS = {
+      gold: new THREE.Color("#d4af37"),
+      gold2: new THREE.Color("#ffdc7a"),
+      red: new THREE.Color("#b11226"),
+      red2: new THREE.Color("#ff2b4a"),
+      bg0: new THREE.Color("#040307"),
+      bg1: new THREE.Color("#16050a"),
+      white: new THREE.Color("#ffffff")
+    };
+
+    const canvas = document.getElementById("gl");
+    const statusText = document.getElementById("statusText");
+    const modeBadge = document.getElementById("modeBadge");
+    const led = document.getElementById("led");
+    const btnStart = document.getElementById("btnStart");
+    const btnIdiom = document.getElementById("btnIdiom");
+    const btnReset = document.getElementById("btnReset");
+    const btnHelp = document.getElementById("btnHelp");
+    const btnFS = document.getElementById("btnFS");
+    const tips = document.getElementById("tips");
+    const toastEl = document.getElementById("toast");
+
+    const focusOverlay = document.getElementById("focusOverlay");
+    const focusIdiomEl = document.getElementById("focusIdiom");
+    const focusSubEl = document.getElementById("focusSub");
+    const horseVid = document.getElementById("horseVid");
+    const camVideo = document.getElementById("cam");
+
+    function toast(msg, ms = 1600){
+      toastEl.textContent = msg;
+      toastEl.classList.add("show");
+      clearTimeout(toastEl._t);
+      toastEl._t = setTimeout(() => toastEl.classList.remove("show"), ms);
+    }
+
+    // ---------------------------
+    // 成语列表（去重后使用）
+    // ---------------------------
+    const IDIOMS = [
+      "马到成功","龙马精神","一马当先","万马奔腾","马上发财","马上如意",
+      "策马扬鞭","快马加鞭","一马平川","天马行空","马到功成","马跃钱程",
+      "人强马壮","金戈铁马","骏马奔腾","马蹄生风",
+      "马年大吉","马年行大运","马年祥瑞","金马迎春","宝马香车","马首是瞻",
+      "马到财来","马到福来","马到运来",
+      "马上有钱","马上有房","马上有对象","马力全开"
+    ];
+
+    function pickRandomIdiom(except = ""){
+      if (IDIOMS.length === 0) return "马到成功";
+      let s = "";
+      for (let i = 0; i < 6; i++){
+        s = IDIOMS[Math.floor(Math.random() * IDIOMS.length)];
+        if (s && s !== except) break;
+      }
+      return s || "马到成功";
+    }
+
+    // ---------------------------
+    // 视频列表（请将文件放到 GitHub Pages 同仓库 assets/videos/）
+    // ---------------------------
+    const HORSE_VIDEOS = [
+      "assets/videos/horse1.mp4",
+      "assets/videos/horse2.mp4",
+      "assets/videos/horse3.mp4"
+    ];
+
+    async function playRandomVideo(){
+      const url = HORSE_VIDEOS[Math.floor(Math.random() * HORSE_VIDEOS.length)] || "";
+      if (!url) return;
+
+      try {
+        horseVid.pause();
+        horseVid.src = url;
+        horseVid.load();
+        await horseVid.play();
+        focusSubEl.textContent = "提示：三指抓可切换视频与成语；握拳/张开可退出。";
+      } catch (e) {
+        focusSubEl.textContent = "视频未能自动播放：请确保 assets/videos/ 下存在 mp4（GitHub Pages 同源），并允许浏览器播放。";
+      }
+    }
+
+    // ---------------------------
+    // 生成“马”字粒子纹理（点精灵）
+    // ---------------------------
+    function makeMaGlyphTexture({
+      size = 128,
+      glyph = "马"
+    } = {}){
       const c = document.createElement("canvas");
-      c.width = 256; c.height = 256;
+      c.width = size;
+      c.height = size;
       const ctx = c.getContext("2d");
 
-      const g = ctx.createRadialGradient(128, 128, 0, 128, 128, 120);
-      g.addColorStop(0, "rgba(212,175,55,0.55)");
-      g.addColorStop(1, "rgba(212,175,55,0)");
-      ctx.fillStyle = g;
-      ctx.fillRect(0, 0, 256, 256);
+      ctx.clearRect(0,0,size,size);
 
+      // 金红辉光底
+      const g0 = ctx.createRadialGradient(size*0.50, size*0.52, 0, size*0.50, size*0.52, size*0.48);
+      g0.addColorStop(0, "rgba(255,220,122,0.45)");
+      g0.addColorStop(0.45, "rgba(212,175,55,0.22)");
+      g0.addColorStop(0.85, "rgba(177,18,38,0.08)");
+      g0.addColorStop(1, "rgba(0,0,0,0)");
+      ctx.fillStyle = g0;
+      ctx.fillRect(0,0,size,size);
+
+      // 字形
       ctx.save();
-      ctx.translate(128, 128);
-      ctx.rotate(-Math.PI / 2);
+      ctx.translate(size/2, size/2);
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
 
-      const spikes = 5;
-      const outerR = 56;
-      const innerR = 24;
-      let rot = 0;
-      const step = Math.PI / spikes;
+      const font = `900 ${Math.round(size*0.62)}px "PingFang SC","Microsoft YaHei",ui-sans-serif`;
+      ctx.font = font;
 
-      ctx.beginPath();
-      ctx.moveTo(Math.cos(rot) * outerR, Math.sin(rot) * outerR);
-      for (let i = 0; i < spikes; i++) {
-        ctx.lineTo(Math.cos(rot + step) * innerR, Math.sin(rot + step) * innerR);
-        rot += step;
-        ctx.lineTo(Math.cos(rot + step) * outerR, Math.sin(rot + step) * outerR);
-        rot += step;
-      }
-      ctx.closePath();
+      // 外描边（更“金属”）
+      ctx.lineWidth = Math.max(6, Math.round(size*0.08));
+      ctx.strokeStyle = "rgba(255,220,122,0.90)";
+      ctx.strokeText(glyph, 0, 2);
 
-      ctx.fillStyle = "rgba(255,245,220,0.95)";
-      ctx.fill();
+      // 内填充（偏金白）
+      const g1 = ctx.createLinearGradient(0, -size/2, 0, size/2);
+      g1.addColorStop(0, "rgba(255,245,220,0.98)");
+      g1.addColorStop(0.45, "rgba(255,220,122,0.98)");
+      g1.addColorStop(1, "rgba(212,175,55,0.95)");
+      ctx.fillStyle = g1;
+      ctx.fillText(glyph, 0, 2);
 
-      ctx.lineWidth = 8;
-      ctx.strokeStyle = "rgba(212,175,55,0.85)";
-      ctx.stroke();
+      // 微红高光
+      ctx.globalCompositeOperation = "screen";
+      ctx.shadowColor = "rgba(255,43,74,0.35)";
+      ctx.shadowBlur = Math.round(size*0.18);
+      ctx.fillStyle = "rgba(255,43,74,0.10)";
+      ctx.fillText(glyph, 0, 2);
 
       ctx.restore();
 
-      const tex = new THREE.CanvasTexture(c);
-      tex.colorSpace = THREE.SRGBColorSpace;
-      tex.minFilter = THREE.LinearFilter;
-      tex.magFilter = THREE.LinearFilter;
-      return tex;
-    }
+      // 轻微柔化
+      ctx.globalCompositeOperation = "source-over";
+      const g2 = ctx.createRadialGradient(size*0.50, size*0.52, 0, size*0.50, size*0.52, size*0.55);
+      g2.addColorStop(0, "rgba(255,255,255,0.08)");
+      g2.addColorStop(1, "rgba(0,0,0,0)");
+      ctx.fillStyle = g2;
+      ctx.fillRect(0,0,size,size);
 
-    function makeStripeTexture() {
-      const c = document.createElement("canvas");
-      c.width = 256; c.height = 64;
-      const ctx = c.getContext("2d");
-      ctx.fillStyle = "#ffffff";
-      ctx.fillRect(0, 0, c.width, c.height);
-
-      for (let i = -64; i < c.width + 64; i += 28) {
-        ctx.save();
-        ctx.translate(i, 0);
-        ctx.rotate(Math.PI / 10);
-        ctx.fillStyle = "rgba(177,18,38,0.95)";
-        ctx.fillRect(0, -40, 12, 140);
-        ctx.restore();
-      }
-
-      const g = ctx.createLinearGradient(0, 0, 0, c.height);
-      g.addColorStop(0, "rgba(212,175,55,.12)");
-      g.addColorStop(1, "rgba(0,0,0,0)");
-      ctx.fillStyle = g;
-      ctx.fillRect(0, 0, c.width, c.height);
-
-      const tex = new THREE.CanvasTexture(c);
-      tex.colorSpace = THREE.SRGBColorSpace;
-      tex.wrapS = THREE.RepeatWrapping;
-      tex.wrapT = THREE.RepeatWrapping;
-      tex.repeat.set(2.2, 1);
-      return tex;
-    }
-
-    function makePlaceholderPhotoTexture(label = "Happy\nHolidays", w = 256, h = 320) {
-      const c = document.createElement("canvas");
-      c.width = w; c.height = h;
-      const ctx = c.getContext("2d");
-    
-      const g = ctx.createLinearGradient(0, 0, 0, h);
-      g.addColorStop(0, "#0b3d2e");
-      g.addColorStop(1, "#050708");
-      ctx.fillStyle = g;
-      ctx.fillRect(0, 0, w, h);
-    
-      // 少画一点，减 CPU
-      const dots = IS_MOBILE ? 24 : 40;
-      for (let i = 0; i < dots; i++) {
-        const x = Math.random() * w;
-        const y = Math.random() * h;
-        const r = 6 + Math.random() * 24;
-        ctx.beginPath();
-        ctx.fillStyle = `rgba(212,175,55,${0.04 + Math.random() * 0.08})`;
-        ctx.arc(x, y, r, 0, Math.PI * 2);
-        ctx.fill();
-      }
-    
-      ctx.strokeStyle = "rgba(212,175,55,.55)";
-      ctx.lineWidth = Math.max(6, Math.round(w * 0.02));
-      ctx.strokeRect(
-        Math.round(w * 0.04),
-        Math.round(h * 0.04),
-        Math.round(w * 0.92),
-        Math.round(h * 0.92)
-      );
-    
-      // 文字也简化（可选）
-      ctx.fillStyle = "rgba(255,255,255,.90)";
-      ctx.font = `700 ${Math.round(w * 0.09)}px ui-sans-serif, system-ui, -apple-system`;
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      const lines = String(label).split("\n");
-      lines.forEach((ln, idx) => ctx.fillText(ln, w / 2, h * 0.58 + idx * (w * 0.11)));
-    
       const tex = new THREE.CanvasTexture(c);
       tex.colorSpace = THREE.SRGBColorSpace;
       tex.generateMipmaps = false;
@@ -564,198 +642,70 @@
     }
 
     // ---------------------------
-// Intro: "Analytic Factory" particle text (one-shot)
-// ---------------------------
-const AF_INTRO = {
-  group: null,
-  points: null,
-  uniforms: null,
-  triggered: false,
-  done: false,
-  startT: 0,
-  duration: 1.15,     // 散开消失时间（秒）
-  distance: 9       // 离相机距离（越大越靠后）
-};
+    // 用 Canvas 采样成语形状点（“合拢态”目标）
+    // ---------------------------
+    function sampleTextPoints(text, {
+      fontSize = 220,
+      step = 3,
+      padding = 60,
+      threshold = 10,
+      worldWidth = 7.2
+    } = {}){
+      const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+      const c = document.createElement("canvas");
+      const ctx = c.getContext("2d", { willReadFrequently: true });
 
-function buildTextPointCloud(text, {
-  fontSize = 160,          // 字号（CSS px）
-  step = 3,                // 采样步长（CSS px）越小点越多
-  worldWidth = 6.2,        // 字在世界空间的横向宽度
-  threshold = 10           // alpha阈值
-} = {}) {
-  const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+      const font = `900 ${fontSize}px "PingFang SC","Microsoft YaHei",ui-sans-serif`;
+      ctx.font = font;
+      const metrics = ctx.measureText(text);
 
-  // 先用一个临时 canvas 测量（CSS 尺寸）
-  const c = document.createElement("canvas");
-  const ctx = c.getContext("2d", { willReadFrequently: true });
+      const cssW = Math.ceil(metrics.width + padding * 2);
+      const cssH = Math.ceil(fontSize * 1.25 + padding * 2);
 
-  const font = `900 ${fontSize}px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial`;
-  ctx.font = font;
+      c.width = Math.ceil(cssW * dpr);
+      c.height = Math.ceil(cssH * dpr);
 
-  const metrics = ctx.measureText(text);
-  const pad = Math.ceil(fontSize * 0.35);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, cssW, cssH);
 
-  const cssW = Math.ceil(metrics.width + pad * 2);
-  const cssH = Math.ceil(fontSize * 1.2 + pad * 2);
+      // 金红渐变文字（采样 alpha 即可）
+      const fillG = ctx.createLinearGradient(0, 0, cssW, cssH);
+      fillG.addColorStop(0, "#ffffff");
+      fillG.addColorStop(0.45, "#ffffff");
+      fillG.addColorStop(1, "#ffffff");
+      ctx.fillStyle = fillG;
 
-  // 用 DPR 放大 canvas 像素，保证采样稳定
-  c.width  = Math.ceil(cssW * dpr);
-  c.height = Math.ceil(cssH * dpr);
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.font = font;
 
-  // 注意：resize 后 context 状态会重置
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0); // 之后的坐标都用 CSS px
-  ctx.clearRect(0, 0, cssW, cssH);
-  ctx.font = font;
-  ctx.fillStyle = "#ffffff";
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  ctx.fillText(text, cssW / 2, cssH / 2);
+      ctx.fillText(text, cssW/2, cssH/2);
 
-  const img = ctx.getImageData(0, 0, c.width, c.height).data;
+      const img = ctx.getImageData(0, 0, c.width, c.height).data;
+      const stepPx = Math.max(1, Math.round(step * dpr));
 
-  // 采样点（用 DPR 后的像素坐标读取）
-  const pts = [];
-  const stepPx = Math.max(1, Math.round(step * dpr));
-
-  for (let y = 0; y < c.height; y += stepPx) {
-    for (let x = 0; x < c.width; x += stepPx) {
-      const a = img[(y * c.width + x) * 4 + 3];
-      if (a > threshold) {
-        // 转回 CSS px 坐标
-        pts.push([x / dpr, y / dpr]);
+      const pts = [];
+      for (let y = 0; y < c.height; y += stepPx) {
+        for (let x = 0; x < c.width; x += stepPx) {
+          const a = img[(y * c.width + x) * 4 + 3];
+          if (a > threshold) pts.push([x / dpr, y / dpr]);
+        }
       }
+
+      // 映射到世界坐标：按宽度缩放，居中
+      const scale = worldWidth / cssW;
+      const out = new Array(pts.length);
+      for (let i = 0; i < pts.length; i++){
+        const [xCss, yCss] = pts[i];
+        const px = (xCss - cssW/2) * scale;
+        const py = (cssH/2 - yCss) * scale;
+        out[i] = new THREE.Vector3(px, py, 0);
+      }
+      return out;
     }
-  }
-
-  const count = pts.length;
-
-  // 关键：用 CSS 宽度计算 world scale（不要用 c.width）
-  const scale = worldWidth / cssW;
-
-  const aHome = new Float32Array(count * 3);
-  const aScatter = new Float32Array(count * 3);
-  const aRand = new Float32Array(count);
-
-  for (let i = 0; i < count; i++) {
-    const [xCss, yCss] = pts[i];
-
-    const px = (xCss - cssW / 2) * scale;
-    const py = (cssH / 2 - yCss) * scale;
-
-    aHome[i * 3 + 0] = px;
-    aHome[i * 3 + 1] = py;
-    aHome[i * 3 + 2] = 0;
-
-    // 散开目标：外扩 + 少量 z
-    const r1 = Math.random();
-    const r2 = Math.random();
-    const theta = r1 * Math.PI * 2;
-    const phi = Math.acos(2 * r2 - 1);
-    const rr = 2.0 + Math.random() * 3.0;
-
-    const sx = Math.sin(phi) * Math.cos(theta) * rr;
-    const sy = Math.cos(phi) * rr * 0.75;
-    const sz = Math.sin(phi) * Math.sin(theta) * rr;
-
-    aScatter[i * 3 + 0] = px + sx;
-    aScatter[i * 3 + 1] = py + sy;
-    aScatter[i * 3 + 2] = sz;
-
-    aRand[i] = Math.random();
-  }
-
-  const geo = new THREE.BufferGeometry();
-
-  // 关键修复：给一个 position，Three.js 更稳定（count/bounds/frustum）
-  geo.setAttribute("position", new THREE.BufferAttribute(aHome, 3));
-
-  // 你 shader 里仍然用 aHome/aScatter/aRand
-  geo.setAttribute("aHome", new THREE.BufferAttribute(aHome, 3));
-  geo.setAttribute("aScatter", new THREE.BufferAttribute(aScatter, 3));
-  geo.setAttribute("aRand", new THREE.BufferAttribute(aRand, 1));
-
-  geo.computeBoundingSphere();
-  return { geo, count };
-}
-
-function createAFIntroPoints(isMobile) {
-  // 你要的这一行：保留，并推荐用这组参数
-  const { geo } = buildTextPointCloud("Analytic Factory", {
-    fontSize: 160,
-    step: isMobile ? 3 : 2,           // 更密：字更清晰
-    worldWidth: isMobile ? 6.0 : 7.0, // 字更大
-    threshold: 10
-  });
-
-  const uniforms = {
-    uTime: { value: 0 },
-    uDissolve: { value: 0 },
-    uOpacity: { value: 1.0 },
-    uBaseSize: { value: isMobile ? 1.0 : 1.15 } // 点更小
-  };
-
-  const mat = new THREE.ShaderMaterial({
-    transparent: true,
-    depthWrite: false,
-    depthTest: false,
-    blending: THREE.AdditiveBlending,
-    uniforms,
-    vertexShader: /* glsl */`
-      uniform float uTime;
-      uniform float uDissolve;
-      uniform float uBaseSize;
-      attribute vec3 aHome;
-      attribute vec3 aScatter;
-      attribute float aRand;
-      varying float vFade;
-
-      void main(){
-        float d = clamp(uDissolve, 0.0, 1.0);
-        vec3 pos = mix(aHome, aScatter, d);
-
-        float alive = 1.0 - d;
-        pos.x += sin(uTime * 1.2 + aRand * 10.0) * 0.05 * alive;
-        pos.y += cos(uTime * 0.9 + aRand *  8.0) * 0.04 * alive;
-
-        vec4 mv = modelViewMatrix * vec4(pos, 1.0);
-        gl_Position = projectionMatrix * mv;
-
-        float dist = max(0.001, -mv.z);
-        float tw = 0.90 + 0.10 * sin(uTime * 2.0 + aRand * 6.0);
-
-        // 更温和的尺寸衰减：避免糊成一坨
-        gl_PointSize = clamp(uBaseSize * tw * (60.0 / dist), 0.7, 2.2);
-
-        vFade = pow(1.0 - d, 1.6);
-      }
-    `,
-    fragmentShader: /* glsl */`
-      precision highp float;
-      uniform float uOpacity;
-      varying float vFade;
-      void main(){
-        vec2 uv = gl_PointCoord - 0.5;
-        float d = length(uv);
-
-        float core = smoothstep(0.45, 0.0, d);
-        float halo = smoothstep(0.60, 0.18, d) * 0.45;
-
-        float a = (core + halo) * uOpacity * vFade;
-        if(a < 0.01) discard;
-
-        vec3 col = vec3(1.00, 0.94, 0.78);
-        gl_FragColor = vec4(col, a);
-      }
-    `
-  });
-
-  const points = new THREE.Points(geo, mat);
-  points.renderOrder = 9999;
-  return { points, uniforms };
-}
 
     // ---------------------------
-    // Three.js Setup
+    // Three.js 初始化
     // ---------------------------
     const renderer = new THREE.WebGLRenderer({
       canvas,
@@ -767,51 +717,53 @@ function createAFIntroPoints(isMobile) {
     renderer.setSize(window.innerWidth, window.innerHeight, false);
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.08;
+    renderer.toneMappingExposure = 1.12;
 
     const scene = new THREE.Scene();
     scene.background = COLORS.bg0;
 
-    const fog = new THREE.FogExp2(0x050708, 0.085);
+    const fog = new THREE.FogExp2(0x040307, 0.085);
     scene.fog = fog;
 
     const camera = new THREE.PerspectiveCamera(52, window.innerWidth / window.innerHeight, 0.1, 120);
-    camera.position.set(0, 2.4, 8.6);
-    // ---------------------------
-    // Create one-shot intro text (only once on first load)
-    // ---------------------------
-    {
-      const intro = createAFIntroPoints(IS_MOBILE);
-      AF_INTRO.uniforms = intro.uniforms;
-    
-      AF_INTRO.group = new THREE.Group();
-      AF_INTRO.points = intro.points;
-      AF_INTRO.group.add(AF_INTRO.points);
-    
-      // 放进场景
-      scene.add(AF_INTRO.group);
-    }
+    camera.position.set(0, 2.0, 8.8);
 
+    // 灯光：金红电影感
+    scene.add(new THREE.AmbientLight(0xffffff, 0.18));
+
+    const keyLight = new THREE.DirectionalLight(0xfff2d6, 1.05);
+    keyLight.position.set(6, 8, 5);
+    scene.add(keyLight);
+
+    const rimGold = new THREE.DirectionalLight(0xd4af37, 0.55);
+    rimGold.position.set(-6, 4, -6);
+    scene.add(rimGold);
+
+    const goldPoint = new THREE.PointLight(0xd4af37, 1.35, 20, 2);
+    goldPoint.position.set(0, 4.4, 2.6);
+    scene.add(goldPoint);
+
+    const redPoint = new THREE.PointLight(0xb11226, 0.95, 16, 2);
+    redPoint.position.set(-2.5, 3.0, 2.6);
+    scene.add(redPoint);
 
     // ---------------------------
-    // Selective Bloom
+    // 选择性 Bloom（辉光/光晕）
     // ---------------------------
     const BLOOM_LAYER = 1;
 
     const bloomComposer = new EffectComposer(renderer);
     bloomComposer.addPass(new RenderPass(scene, camera));
-
     const bloomPass = new UnrealBloomPass(
       new THREE.Vector2(window.innerWidth, window.innerHeight),
-      1.10,
-      0.55,
-      0.18
+      1.20, // strength
+      0.65, // radius
+      0.16  // threshold
     );
     bloomComposer.addPass(bloomPass);
 
     const finalComposer = new EffectComposer(renderer);
     finalComposer.addPass(new RenderPass(scene, camera));
-
     const bloomMixPass = new ShaderPass(
       new THREE.ShaderMaterial({
         uniforms: {
@@ -843,894 +795,411 @@ function createAFIntroPoints(isMobile) {
     finalComposer.addPass(bloomMixPass);
     finalComposer.addPass(new OutputPass());
 
-    // Lighting
-    scene.add(new THREE.AmbientLight(0xffffff, 0.22));
-
-    const keyLight = new THREE.DirectionalLight(0xfff2d6, 1.05);
-    keyLight.position.set(5, 8, 6);
-    scene.add(keyLight);
-
-    const rimLight = new THREE.DirectionalLight(0xd4af37, 0.55);
-    rimLight.position.set(-6, 4, -6);
-    scene.add(rimLight);
-
-    const goldPoint = new THREE.PointLight(0xd4af37, 1.25, 18, 2);
-    goldPoint.position.set(0, 4.8, 2.6);
-    scene.add(goldPoint);
-
-    const redPoint = new THREE.PointLight(0xb11226, 0.85, 14, 2);
-    redPoint.position.set(-2.4, 3.2, 2.4);
-    scene.add(redPoint);
-
-    // Tree container
-    const tree = new THREE.Group();
-    scene.add(tree);
-    tree.position.y = -0.75;
-
-    // Ground
-    const groundGeo = new THREE.CircleGeometry(14, 64);
-    const groundMat = new THREE.MeshStandardMaterial({
-      color: new THREE.Color("#06110d"),
-      roughness: 0.95,
-      metalness: 0.05,
-      transparent: true,
-      opacity: 0.9
-    });
-    const ground = new THREE.Mesh(groundGeo, groundMat);
-    ground.rotation.x = -Math.PI / 2;
-    ground.position.y = -0.02;
-    tree.add(ground);
-
     // ---------------------------
-    // Star Top
+    // 粒子系统：“马”字点精灵
     // ---------------------------
-    const starTex = makeStarSpriteTexture();
+    const group = new THREE.Group();
+    scene.add(group);
+    group.position.y = 2.35; // 让成语居中偏上，镜头更“电影”
 
-    const starMat = new THREE.SpriteMaterial({
-      map: starTex,
-      transparent: true,
-      depthWrite: false,
-      opacity: 0.92,
-      blending: THREE.AdditiveBlending,
-      toneMapped: false
-    });
+    const PARTICLE_COUNT = IS_MOBILE ? 9000 : 14000;
 
-    const treeHeight = 4.6;
-    const baseRadius = 1.95;
+    const geo = new THREE.BufferGeometry();
+    const pos = new Float32Array(PARTICLE_COUNT * 3);
 
-    const star = new THREE.Sprite(starMat);
-    const STAR_Y = treeHeight + 0.22;
-    star.position.set(0, STAR_Y, 0);
-    star.scale.set(0.95, 0.95, 1);
-    tree.add(star);
+    // 合拢态目标（随成语更新）
+    const aHome = new Float32Array(PARTICLE_COUNT * 3);
 
-    const star2 = new THREE.Sprite(starMat.clone());
-    star2.material.opacity = 0.65;
-    star2.position.copy(star.position);
-    star2.scale.set(0.62, 0.62, 1);
-    star2.rotation.z = Math.PI / 4;
-    tree.add(star2);
+    // 散开态目标（固定）
+    const aScatter = new Float32Array(PARTICLE_COUNT * 3);
 
-    star.layers.enable(BLOOM_LAYER);
-    star2.layers.enable(BLOOM_LAYER);
+    // 随机与尺寸
+    const aRand = new Float32Array(PARTICLE_COUNT);
+    const aSize = new Float32Array(PARTICLE_COUNT);
 
-    const starCore = new THREE.Mesh(
-      new THREE.OctahedronGeometry(0.06, 0),
-      new THREE.MeshStandardMaterial({
-        color: COLORS.gold,
-        emissive: COLORS.gold.clone().multiplyScalar(0.35),
-        emissiveIntensity: 0.6,
-        metalness: 1.0,
-        roughness: 0.25
-      })
-    );
-    starCore.position.copy(star.position);
-    tree.add(starCore);
-    starCore.layers.enable(BLOOM_LAYER);
-
-    // ---------------------------
-    // Particle field
-    // ---------------------------
-    const PARTICLE_COUNT = 14000;
-
-    const pGeo = new THREE.BufferGeometry();
-    const conePos = new Float32Array(PARTICLE_COUNT * 3);
-    const scatterPos = new Float32Array(PARTICLE_COUNT * 3);
-    const rand = new Float32Array(PARTICLE_COUNT);
-    const size = new Float32Array(PARTICLE_COUNT);
-
-    function sampleTreeConeDense() {
-      const u = Math.pow(Math.random(), 0.58);
-      const y = u * treeHeight;
-      const maxR = (1 - (y / treeHeight)) * baseRadius;
-      const rVol = Math.sqrt(Math.random()) * maxR;
-      const rShell = maxR * (0.82 + Math.random() * 0.18);
-      const r = lerp(rVol, rShell, 0.62);
-      const a = Math.random() * Math.PI * 2;
-      let x = Math.cos(a) * r;
-      let z = Math.sin(a) * r;
-      const twist = (1 - y / treeHeight) * 0.65;
-      const cx = x * Math.cos(twist) - z * Math.sin(twist);
-      const cz = x * Math.sin(twist) + z * Math.cos(twist);
-      return new THREE.Vector3(cx, y + 0.12, cz);
-    }
-
-    function sampleScatter() {
-      const R = 5.2;
+    function sampleScatterPos(){
+      const R = 6.2;
       const u = Math.random();
       const v = Math.random();
       const theta = u * Math.PI * 2;
       const phi = Math.acos(2 * v - 1);
-      const rr = (0.45 + Math.pow(Math.random(), 0.65) * 0.55) * R;
+      const rr = (0.35 + Math.pow(Math.random(), 0.65) * 0.65) * R;
       const x = rr * Math.sin(phi) * Math.cos(theta);
-      const y = rr * Math.cos(phi) * 0.75 + 1.6;
+      const y = rr * Math.cos(phi) * 0.70 + 0.2;
       const z = rr * Math.sin(phi) * Math.sin(theta);
       return new THREE.Vector3(x, y, z);
     }
 
-    for (let i = 0; i < PARTICLE_COUNT; i++) {
-      const c = sampleTreeConeDense();
-      const s = sampleScatter();
-      conePos[i*3+0] = c.x; conePos[i*3+1] = c.y; conePos[i*3+2] = c.z;
-      scatterPos[i*3+0] = s.x; scatterPos[i*3+1] = s.y; scatterPos[i*3+2] = s.z;
-      rand[i] = Math.random();
-      size[i] = 1.2 + Math.random() * 2.6;
+    for (let i = 0; i < PARTICLE_COUNT; i++){
+      // 初始化 position 先填 scatter，避免空 bounding
+      const s = sampleScatterPos();
+      pos[i*3+0] = s.x; pos[i*3+1] = s.y; pos[i*3+2] = s.z;
+
+      aScatter[i*3+0] = s.x;
+      aScatter[i*3+1] = s.y;
+      aScatter[i*3+2] = s.z;
+
+      aRand[i] = Math.random();
+      aSize[i] = (IS_MOBILE ? 1.0 : 1.15) + Math.random() * (IS_MOBILE ? 1.8 : 2.2);
     }
 
-    pGeo.setAttribute("aCone", new THREE.BufferAttribute(conePos, 3));
-    pGeo.setAttribute("aScatter", new THREE.BufferAttribute(scatterPos, 3));
-    pGeo.setAttribute("aRand", new THREE.BufferAttribute(rand, 1));
-    pGeo.setAttribute("aSize", new THREE.BufferAttribute(size, 1));
+    geo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+    geo.setAttribute("aHome", new THREE.BufferAttribute(aHome, 3));
+    geo.setAttribute("aScatter", new THREE.BufferAttribute(aScatter, 3));
+    geo.setAttribute("aRand", new THREE.BufferAttribute(aRand, 1));
+    geo.setAttribute("aSize", new THREE.BufferAttribute(aSize, 1));
 
-    const pMat = new THREE.ShaderMaterial({
+    const maTex = makeMaGlyphTexture({ size: 128, glyph: "马" });
+
+    const uniforms = {
+      uTime: { value: 0 },
+      uMix: { value: 0 },       // 0 合拢 -> 1 散开
+      uFocus: { value: 0 },     // 0 非视频 -> 1 视频（轻微景深/聚焦）
+      uOpacity: { value: 1.0 }
+    };
+
+    const mat = new THREE.ShaderMaterial({
       transparent: true,
       depthWrite: false,
       blending: THREE.AdditiveBlending,
-      uniforms: { uTime:{value:0}, uMix:{value:0}, uFocus:{value:0} },
+      uniforms,
       vertexShader: /* glsl */`
         uniform float uTime;
         uniform float uMix;
         uniform float uFocus;
-        attribute vec3 aCone;
+        attribute vec3 aHome;
         attribute vec3 aScatter;
         attribute float aRand;
         attribute float aSize;
         varying float vRand;
-        varying float vGlow;
+        varying float vHalo;
 
         void main(){
           vRand = aRand;
-          vec3 pos = mix(aCone, aScatter, uMix);
 
-          float t = uTime * (0.7 + aRand * 1.1);
-          pos.y += sin(t + aRand * 6.2831) * (0.06 + aRand * 0.10);
-          pos.x += cos(t * 1.13 + aRand * 3.1) * (0.03 + aRand * 0.08);
-          pos.z += sin(t * 0.97 + aRand * 2.7) * (0.03 + aRand * 0.08);
+          float mixV = clamp(uMix, 0.0, 1.0);
+          vec3 pos = mix(aHome, aScatter, mixV);
 
-          pos *= (1.0 + uFocus * (0.10 + aRand * 0.18));
+          // 漂浮：散开更明显；合拢更克制
+          float drift = 0.06 + 0.14 * mixV;
+          float t = uTime * (0.8 + aRand * 1.25);
+          pos.x += cos(t * 1.10 + aRand * 6.1) * drift * (0.50 + aRand);
+          pos.y += sin(t * 0.90 + aRand * 7.3) * drift * (0.45 + aRand * 0.9);
+          pos.z += sin(t * 0.95 + aRand * 5.7) * drift * (0.40 + aRand);
+
+          // 视频态：把粒子稍微“推开”一点，营造景深与舞台感
+          pos *= (1.0 + uFocus * (0.06 + aRand * 0.10));
 
           vec4 mv = modelViewMatrix * vec4(pos, 1.0);
           gl_Position = projectionMatrix * mv;
 
-          float dist = -mv.z;
-          float ps = aSize * (260.0 / dist);
+          float dist = max(0.001, -mv.z);
+          float tw = 0.72 + 0.28 * sin(uTime * 2.2 + aRand * 12.0);
+          float size = aSize * tw * (260.0 / dist);
 
-          vGlow = 0.55 + 0.45 * sin(uTime * 2.2 + aRand * 12.0);
-          gl_PointSize = clamp(ps, 1.0, 8.0);
+          // 合拢时更“细密”；散开时更“星屑”
+          float capMin = 1.0;
+          float capMax = 9.0;
+          gl_PointSize = clamp(size, capMin, capMax);
+
+          // 用于片元辉光强度变化
+          vHalo = 0.55 + 0.45 * sin(uTime * 2.0 + aRand * 9.0);
         }
       `,
       fragmentShader: /* glsl */`
         precision highp float;
+        uniform sampler2D uMap;
+        uniform float uOpacity;
         varying float vRand;
-        varying float vGlow;
+        varying float vHalo;
 
         void main(){
-          vec2 uv = gl_PointCoord - 0.5;
-          float d = length(uv);
+          vec2 uv = gl_PointCoord;
+          // 采样“马”字纹理（自带柔光）
+          vec4 tex = texture2D(uMap, uv);
 
-          float core = smoothstep(0.35, 0.0, d);
-          float halo = smoothstep(0.50, 0.15, d) * 0.55;
+          // 额外 halo：中心更亮
+          vec2 p = uv - 0.5;
+          float d = length(p);
+          float core = smoothstep(0.50, 0.0, d);
+          float halo = smoothstep(0.62, 0.18, d) * 0.55;
 
+          float a = tex.a * (0.62 + 0.55 * vHalo) + (core + halo) * 0.10;
+          a *= uOpacity;
+          if(a < 0.01) discard;
+
+          // 颜色微变化（金/红/白），增强“金碧辉煌”
           vec3 gold = vec3(0.83, 0.69, 0.22);
           vec3 red  = vec3(0.70, 0.07, 0.15);
-          vec3 green= vec3(0.04, 0.25, 0.18);
+          vec3 white= vec3(0.98, 0.97, 1.00);
 
-          float m1 = smoothstep(0.25, 0.85, vRand);
-          float m2 = smoothstep(0.55, 0.95, vRand);
-          vec3 col = mix(green, gold, m1);
-          col = mix(col, red, (m2 - 0.55) * 0.8);
+          float m1 = smoothstep(0.10, 0.92, vRand);
+          float m2 = smoothstep(0.70, 0.99, vRand);
+          vec3 col = mix(white, gold, m1);
+          col = mix(col, red, (m2 - 0.70) * 0.65);
 
-          float a = (core + halo) * (0.62 + 0.55 * vGlow);
-          if(a < 0.01) discard;
+          // 让字形内部更“金属亮”
+          col *= (0.95 + 0.55 * tex.r);
+          col *= (1.15 + 0.65 * halo);
 
-          gl_FragColor = vec4(col * (1.35 + 0.9 * halo), a);
+          gl_FragColor = vec4(col, a);
         }
       `
     });
 
-    const particles = new THREE.Points(pGeo, pMat);
-    tree.add(particles);
-    particles.layers.enable(BLOOM_LAYER);
+    // 绑定纹理到 shader
+    mat.uniforms.uMap = { value: maTex };
 
-    // ---------------------------
-    // Near-orbit sparkles
-    // ---------------------------
-    const ORBIT_COUNT = 5200;
+    const points = new THREE.Points(geo, mat);
+    group.add(points);
+    points.layers.enable(BLOOM_LAYER);
 
-    const orbitGeo = new THREE.BufferGeometry();
-    const aY = new Float32Array(ORBIT_COUNT);
-    const aTheta = new Float32Array(ORBIT_COUNT);
-    const aRad = new Float32Array(ORBIT_COUNT);
-    const aScatter = new Float32Array(ORBIT_COUNT * 3);
-    const aRand2 = new Float32Array(ORBIT_COUNT);
-    const aSize2 = new Float32Array(ORBIT_COUNT);
-
-    for (let i = 0; i < ORBIT_COUNT; i++) {
-      const y = Math.pow(Math.random(), 0.62) * treeHeight + 0.15;
-      const maxR = (1 - (y / treeHeight)) * baseRadius;
-      const rad = maxR * (1.05 + Math.random() * 0.45) + 0.05;
-      const theta = i * 0.61803398875 * Math.PI * 2 + Math.random() * 0.35;
-
-      aY[i] = y;
-      aTheta[i] = theta;
-      aRad[i] = rad;
-
-      const s = sampleScatter();
-      aScatter[i*3+0] = s.x; aScatter[i*3+1] = s.y; aScatter[i*3+2] = s.z;
-
-      aRand2[i] = Math.random();
-      aSize2[i] = 0.55 + Math.pow(Math.random(), 1.4) * 1.35;
-    }
-
-    orbitGeo.setAttribute("aY", new THREE.BufferAttribute(aY, 1));
-    orbitGeo.setAttribute("aTheta", new THREE.BufferAttribute(aTheta, 1));
-    orbitGeo.setAttribute("aRad", new THREE.BufferAttribute(aRad, 1));
-    orbitGeo.setAttribute("aScatter", new THREE.BufferAttribute(aScatter, 3));
-    orbitGeo.setAttribute("aRand", new THREE.BufferAttribute(aRand2, 1));
-    orbitGeo.setAttribute("aSize", new THREE.BufferAttribute(aSize2, 1));
-
-    const orbitMat = new THREE.ShaderMaterial({
-      transparent: true,
-      depthWrite: false,
-      blending: THREE.AdditiveBlending,
-      uniforms: { uTime:{value:0}, uMix:{value:0}, uFocus:{value:0} },
-      vertexShader: /* glsl */`
-        uniform float uTime;
-        uniform float uMix;
-        uniform float uFocus;
-
-        attribute float aY;
-        attribute float aTheta;
-        attribute float aRad;
-        attribute vec3  aScatter;
-        attribute float aRand;
-        attribute float aSize;
-
-        varying float vTw;
-        varying float vRand;
-
-        void main(){
-          vRand = aRand;
-
-          float spin = uTime * (0.28 + aRand * 0.22);
-          float theta = aTheta + spin;
-
-          float y = aY + sin(uTime * (0.9 + aRand) + aTheta) * (0.03 + aRand * 0.05);
-          float rad = aRad + sin(uTime * (0.6 + aRand) + aTheta * 1.7) * (0.02 + aRand * 0.05);
-
-          vec3 conePos = vec3(cos(theta) * rad, y, sin(theta) * rad);
-          vec3 pos = mix(conePos, aScatter, uMix);
-
-          pos *= (1.0 + uFocus * 0.06);
-
-          vec4 mv = modelViewMatrix * vec4(pos, 1.0);
-          gl_Position = projectionMatrix * mv;
-
-          float dist = -mv.z;
-          float ps = aSize * (230.0 / dist);
-          gl_PointSize = clamp(ps, 0.6, 3.2);
-
-          vTw = 0.55 + 0.45 * sin(uTime * 2.0 + aRand * 19.0);
-        }
-      `,
-      fragmentShader: /* glsl */`
-        precision highp float;
-        varying float vTw;
-        varying float vRand;
-
-        void main(){
-          vec2 uv = gl_PointCoord - 0.5;
-          float d = length(uv);
-
-          float core = smoothstep(0.20, 0.0, d);
-          float halo = smoothstep(0.55, 0.15, d) * 0.60;
-
-          vec3 gold  = vec3(0.83, 0.69, 0.22);
-          vec3 red   = vec3(0.70, 0.07, 0.15);
-          vec3 white = vec3(0.96, 0.97, 1.00);
-
-          vec3 col = mix(white, gold, smoothstep(0.10, 0.95, vRand));
-          col = mix(col, red, smoothstep(0.86, 0.98, vRand) * 0.30);
-
-          float a = (core + halo) * (0.55 + 0.75 * vTw);
-          if(a < 0.01) discard;
-
-          gl_FragColor = vec4(col * (1.25 + halo), a);
-        }
-      `
-    });
-
-    const orbitSparkles = new THREE.Points(orbitGeo, orbitMat);
-    tree.add(orbitSparkles);
-    orbitSparkles.layers.enable(BLOOM_LAYER);
-
-    // ---------------------------
-    // Background starfield
-    // ---------------------------
-    const STAR_COUNT = 12000;
+    // 背景星尘（少量）
+    const starCount = IS_MOBILE ? 4000 : 7000;
     const starGeo = new THREE.BufferGeometry();
+    const starPos = new Float32Array(starCount * 3);
+    const starRnd = new Float32Array(starCount);
+    const starSz  = new Float32Array(starCount);
 
-    const starNear = new Float32Array(STAR_COUNT * 3);
-    const starFar  = new Float32Array(STAR_COUNT * 3);
-    const starRand = new Float32Array(STAR_COUNT);
-    const starSize = new Float32Array(STAR_COUNT);
-
-    function sampleSkySphere(R) {
-      const u = Math.random();
-      const v = Math.random();
+    for (let i=0;i<starCount;i++){
+      const R = 28;
+      const u = Math.random(), v = Math.random();
       const theta = u * Math.PI * 2;
       const phi = Math.acos(2 * v - 1);
       const rr = (0.55 + Math.pow(Math.random(), 0.55) * 0.45) * R;
-      const x = rr * Math.sin(phi) * Math.cos(theta);
-      const y = rr * Math.cos(phi) * 0.85 + 1.5;
-      const z = rr * Math.sin(phi) * Math.sin(theta);
-      return new THREE.Vector3(x, y, z);
+      starPos[i*3+0] = rr * Math.sin(phi) * Math.cos(theta);
+      starPos[i*3+1] = rr * Math.cos(phi) * 0.85 + 2.0;
+      starPos[i*3+2] = rr * Math.sin(phi) * Math.sin(theta);
+      starRnd[i] = Math.random();
+      starSz[i]  = 0.35 + Math.pow(Math.random(), 1.6) * 1.15;
     }
 
-    for (let i = 0; i < STAR_COUNT; i++) {
-      const y = 0.8 + Math.pow(Math.random(), 0.55) * 6.2;
-      const r = (0.6 + Math.random() * 0.7) * (2.6 + (1 - y / 7.0) * 2.4);
-      const a = Math.random() * Math.PI * 2;
-      starNear[i*3+0] = Math.cos(a) * r;
-      starNear[i*3+1] = y;
-      starNear[i*3+2] = Math.sin(a) * r;
+    starGeo.setAttribute("position", new THREE.BufferAttribute(starPos, 3));
+    starGeo.setAttribute("aRand", new THREE.BufferAttribute(starRnd, 1));
+    starGeo.setAttribute("aSize", new THREE.BufferAttribute(starSz, 1));
 
-      const far = sampleSkySphere(38);
-      starFar[i*3+0] = far.x;
-      starFar[i*3+1] = far.y;
-      starFar[i*3+2] = far.z;
-
-      starRand[i] = Math.random();
-      starSize[i] = 0.35 + Math.pow(Math.random(), 1.6) * 1.25;
-    }
-
-    starGeo.setAttribute("aNear", new THREE.BufferAttribute(starNear, 3));
-    starGeo.setAttribute("aFar", new THREE.BufferAttribute(starFar, 3));
-    starGeo.setAttribute("aRand", new THREE.BufferAttribute(starRand, 1));
-    starGeo.setAttribute("aSize", new THREE.BufferAttribute(starSize, 1));
-
-    const starsMat = new THREE.ShaderMaterial({
+    const starMat = new THREE.ShaderMaterial({
       transparent: true,
       depthWrite: false,
       blending: THREE.AdditiveBlending,
-      uniforms: { uTime:{value:0}, uMix:{value:0}, uFocus:{value:0}, uOrbit:{value:new THREE.Vector2(0,0)} },
+      uniforms: { uTime:{value:0} },
       vertexShader: /* glsl */`
         uniform float uTime;
-        uniform float uMix;
-        uniform float uFocus;
-        uniform vec2  uOrbit;
-
-        attribute vec3 aNear;
-        attribute vec3 aFar;
         attribute float aRand;
         attribute float aSize;
-
-        varying float vRand;
         varying float vTw;
-
         void main(){
-          vRand = aRand;
-
-          vec3 pos = mix(aNear, aFar, uMix);
-
+          vec3 pos = position;
           float t = uTime * (0.35 + aRand * 1.2);
-          float drift = (0.20 + 0.55 * uMix) * (1.0 - 0.35 * uFocus);
-          pos.x += sin(t + aRand * 12.0 + uOrbit.x * 1.2) * drift;
-          pos.y += cos(t * 0.9 + aRand * 9.0  + uOrbit.y * 1.1) * drift * 0.6;
-          pos.z += sin(t * 0.8 + aRand * 7.0  + uOrbit.x * 0.9) * drift;
-
-          pos *= (1.0 + uFocus * 0.08);
+          pos.x += sin(t + aRand*9.0) * 0.18;
+          pos.y += cos(t*0.9 + aRand*7.0) * 0.10;
+          pos.z += sin(t*0.8 + aRand*5.0) * 0.18;
 
           vec4 mv = modelViewMatrix * vec4(pos, 1.0);
           gl_Position = projectionMatrix * mv;
 
-          float dist = -mv.z;
-          float ps = aSize * (220.0 / dist);
-          gl_PointSize = clamp(ps, 0.4, 2.4);
+          float dist = max(0.001, -mv.z);
+          gl_PointSize = clamp(aSize * (220.0 / dist), 0.4, 2.4);
 
           vTw = 0.55 + 0.45 * sin(uTime * 2.0 + aRand * 19.0);
         }
       `,
       fragmentShader: /* glsl */`
         precision highp float;
-        varying float vRand;
         varying float vTw;
-
         void main(){
           vec2 uv = gl_PointCoord - 0.5;
           float d = length(uv);
-
           float core = smoothstep(0.22, 0.0, d);
           float halo = smoothstep(0.50, 0.15, d) * 0.55;
 
           vec3 gold = vec3(0.83, 0.69, 0.22);
-          vec3 red  = vec3(0.70, 0.07, 0.15);
-          vec3 white= vec3(0.95, 0.96, 1.00);
+          vec3 white= vec3(0.96, 0.97, 1.00);
 
-          float m = smoothstep(0.15, 0.95, vRand);
-          vec3 col = mix(white, gold, m);
-          col = mix(col, red, smoothstep(0.82, 0.98, vRand) * 0.35);
-
-          float a = (core + halo) * (0.45 + 0.75 * vTw);
+          float a = (core + halo) * (0.40 + 0.80 * vTw);
           if(a < 0.01) discard;
 
+          vec3 col = mix(white, gold, 0.55);
           gl_FragColor = vec4(col * (1.2 + halo), a);
         }
       `
     });
 
-    const stars = new THREE.Points(starGeo, starsMat);
+    const stars = new THREE.Points(starGeo, starMat);
     scene.add(stars);
     stars.layers.enable(BLOOM_LAYER);
 
     // ---------------------------
-    // Instanced ornaments
+    // 状态机：合拢 / 散开 / 视频放大
     // ---------------------------
-    class InstancedOrnaments {
-      constructor({ count, geometry, material, scaleRange = [0.9, 1.7], wobble = 0.12 }) {
-        this.count = count;
-        this.mesh = new THREE.InstancedMesh(geometry, material, count);
-        this.mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+    const Mode = {
+      COLLAPSE: "COLLAPSE",
+      SCATTER: "SCATTER",
+      FOCUS: "FOCUS"
+    };
 
-        this._cone = new Array(count);
-        this._scatter = new Array(count);
-        this._scale = new Array(count);
-        this._seed = new Array(count);
-        this._wobble = wobble;
+    let mode = Mode.COLLAPSE;
 
-        for (let i = 0; i < count; i++) {
-          this._cone[i] = sampleTreeConeDense();
-          this._scatter[i] = sampleScatter();
-          this._scale[i] = lerp(scaleRange[0], scaleRange[1], Math.random());
-          this._seed[i] = Math.random() * 1000;
-        }
-        tree.add(this.mesh);
-      }
+    // mix：0 合拢；1 散开
+    let mix = 0, targetMix = 0;
 
-      resampleScatter() {
-        for (let i = 0; i < this.count; i++) this._scatter[i] = sampleScatter();
-      }
+    // focus：0 非视频；1 视频
+    let focus = 0, targetFocus = 0;
 
-      update({ mix, time, focus, focusDim = 0 }) {
-        const obj = new THREE.Object3D();
+    let currentIdiom = "马到成功";
+    let focusIdiom = "马到成功";
 
-        for (let i = 0; i < this.count; i++) {
-          const a = this._cone[i];
-          const b = this._scatter[i];
-
-          const x = lerp(a.x, b.x, mix);
-          const y = lerp(a.y, b.y, mix);
-          const z = lerp(a.z, b.z, mix);
-
-          const t = time * (0.7 + (this._seed[i] % 1.0) * 1.3);
-          const bob = Math.sin(t + this._seed[i]) * this._wobble * (0.6 + (this._seed[i] % 1.0));
-
-          obj.position.set(x, y + bob, z);
-
-          const rotAmp = lerp(0.25, 1.2, mix);
-          obj.rotation.set(
-            (Math.sin(t * 0.9 + this._seed[i]) * 0.55) * rotAmp,
-            (Math.cos(t * 0.7 + this._seed[i] * 0.7) * 0.85) * rotAmp,
-            (Math.sin(t * 0.6 + this._seed[i] * 0.4) * 0.35) * rotAmp
-          );
-
-          const s = this._scale[i] * (1.0 - focusDim * focus * 0.08);
-          obj.scale.setScalar(s);
-
-          obj.updateMatrix();
-          this.mesh.setMatrixAt(i, obj.matrix);
-        }
-        this.mesh.instanceMatrix.needsUpdate = true;
-      }
+    function showFocusOverlay(){
+      focusOverlay.classList.add("show");
+    }
+    function hideFocusOverlay(){
+      focusOverlay.classList.remove("show");
     }
 
-    const goldMat = new THREE.MeshStandardMaterial({
-      color: COLORS.gold,
-      metalness: 1.0,
-      roughness: 0.24,
-      emissive: COLORS.gold.clone().multiplyScalar(0.25),
-      emissiveIntensity: 1.0
-    });
-
-    const redMat = new THREE.MeshStandardMaterial({
-      color: COLORS.red,
-      metalness: 0.65,
-      roughness: 0.32,
-      emissive: COLORS.red.clone().multiplyScalar(0.20),
-      emissiveIntensity: 1.0
-    });
-
-    const greenMat = new THREE.MeshStandardMaterial({
-      color: COLORS.matteGreen,
-      metalness: 0.18,
-      roughness: 0.85,
-      emissive: COLORS.matteGreen.clone().multiplyScalar(0.18),
-      emissiveIntensity: 0.9
-    });
-
-    const stripeTex = makeStripeTexture();
-    const candyMat = new THREE.MeshStandardMaterial({
-      color: 0xffffff,
-      metalness: 0.35,
-      roughness: 0.55,
-      map: stripeTex,
-      emissive: new THREE.Color("#ffffff").multiplyScalar(0.08),
-      emissiveIntensity: 0.9
-    });
-
-    const sphereGeo = new THREE.SphereGeometry(0.02, 16, 16);
-    const cubeGeo   = new THREE.BoxGeometry(0.03, 0.03, 0.03);
-    const candyGeo  = new THREE.CylinderGeometry(0.012, 0.012, 0.10, 14, 1, true);
-
-    const goldBalls   = new InstancedOrnaments({ count: 900, geometry: sphereGeo, material: goldMat,  scaleRange: [0.9, 1.7], wobble: 0.12 });
-    const redBalls    = new InstancedOrnaments({ count: 650, geometry: sphereGeo, material: redMat,   scaleRange: [0.9, 1.6], wobble: 0.13 });
-    const greenCubes  = new InstancedOrnaments({ count: 420, geometry: cubeGeo,   material: greenMat, scaleRange: [0.9, 1.5], wobble: 0.09 });
-    const candySticks = new InstancedOrnaments({ count: 260, geometry: candyGeo,  material: candyMat, scaleRange: [0.9, 1.7], wobble: 0.10 });
-
-    // ---------------------------
-    // Photo Cloud
-    // ---------------------------
-    const photosGroup = new THREE.Group();
-    tree.add(photosGroup);
-
-    const focusBackplate = new THREE.Mesh(
-      new THREE.PlaneGeometry(1, 1),
-      new THREE.MeshBasicMaterial({
-        color: 0x000000,
-        transparent: true,
-        opacity: 0.0,
-        depthWrite: false,
-        toneMapped: false
-      })
-    );
-    focusBackplate.renderOrder = 1;
-    scene.add(focusBackplate);
-
-    const _tmpDir = new THREE.Vector3();
-
-    const photoItems = [];
-    const PLACEHOLDER_TEX = makePlaceholderPhotoTexture(
-      "Happy\nHolidays",
-      IS_MOBILE ? 256 : 384,
-      IS_MOBILE ? 320 : 480
-    );
-
-    let focusedIndex = -1;
-
-    function makePhotoMaterial(tex) {
-      tex.colorSpace = THREE.SRGBColorSpace;
-
-      // (3) Cap anisotropy on mobile
-      tex.anisotropy = Math.min(MAX_ANISO, renderer.capabilities.getMaxAnisotropy());
-
-      // Keep photos crisp and unaffected by global toneMapping/exposure.
-      return new THREE.MeshBasicMaterial({
-        map: tex,
-        transparent: true,
-        opacity: 1.0,
-        toneMapped: false
-      });
-    }
-
-    const FRAME_GLOW_TIME = { value: 0 };
-
-    function addPhotoTexture(tex, meta = {}) {
-      const aspect = tex.image ? (tex.image.width / tex.image.height) : 0.8;
-      const h = 0.12;
-      const w = h * clamp(aspect, 0.55, 1.55);
-
-      const geo = new THREE.PlaneGeometry(w, h, 1, 1);
-      const mat = makePhotoMaterial(tex);
-      const mesh = new THREE.Mesh(geo, mat);
-
-      mesh.renderOrder = 2;
-      mesh.userData = {
-        cone: (() => {
-          const v = sampleTreeConeDense();
-          const push = 1.10;
-          v.x *= push;
-          v.z *= push;
-          return v;
-        })(),
-        scatter: sampleScatter(),
-        baseScale: 1.0,
-        seed: Math.random() * 1000,
-        w, h,
-
-        name: String(meta.name || ""),
-        message: String(meta.message || ""),
-
-        frameMesh: null
-      };
-
-      // Metallic frame (subtle, not overbright)
-      const frameGeo = new THREE.PlaneGeometry(w * 1.06, h * 1.06);
-      const frameMat = new THREE.MeshStandardMaterial({
-        color: COLORS.gold,
-        metalness: 1.0,
-        roughness: 0.28,
-        emissive: COLORS.gold.clone().multiplyScalar(0.12),
-        emissiveIntensity: 0.25,
-        transparent: true,
-        opacity: 0.70
-      });
-      const frame = new THREE.Mesh(frameGeo, frameMat);
-      frame.position.z = -0.01;
-      mesh.add(frame);
-      mesh.userData.frameMesh = frame;
-
-      // Flowing gold glow overlay (bloom layer only)
-      const glowMat = new THREE.ShaderMaterial({
-        transparent: true,
-        depthWrite: false,
-        blending: THREE.AdditiveBlending,
-        uniforms: {
-          uTime: FRAME_GLOW_TIME,
-          uSeed: { value: Math.random() * 10.0 }
-        },
-        vertexShader: /* glsl */`
-          varying vec2 vUv;
-          void main(){
-            vUv = uv;
-            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-          }
-        `,
-        fragmentShader: /* glsl */`
-          precision highp float;
-          varying vec2 vUv;
-          uniform float uTime;
-          uniform float uSeed;
-
-          float hash(float n){ return fract(sin(n)*43758.5453123); }
-
-          void main(){
-            vec2 uv = vUv;
-
-            float edge = min(min(uv.x, 1.0-uv.x), min(uv.y, 1.0-uv.y));
-
-            float thickness = 0.060;
-            float soft = 0.020;
-            float border = 1.0 - smoothstep(thickness, thickness + soft, edge);
-
-            float t = uTime * 0.9 + uSeed;
-            float sweep = 0.5 + 0.5 * sin((uv.x*7.0 + uv.y*5.0) * 6.2831 + t*2.0);
-
-            float n = hash(floor((uv.x+uv.y)*120.0) + floor(t*10.0)*13.0);
-            float sparkle = smoothstep(0.985, 1.0, n) * (0.6 + 0.4*sweep);
-
-            float a = border * (0.10 + 0.25*sweep) + border * sparkle * 0.8;
-            if(a < 0.01) discard;
-
-            vec3 gold = vec3(0.83, 0.69, 0.22);
-            gl_FragColor = vec4(gold * (1.2 + 0.8*sweep), a);
-          }
-        `
-      });
-
-      const glow = new THREE.Mesh(frameGeo.clone(), glowMat);
-      glow.position.z = 0.005;
-      mesh.add(glow);
-      glow.layers.enable(BLOOM_LAYER);
-
-      photosGroup.add(mesh);
-      photoItems.push(mesh);
-      if (focusedIndex === -1) focusedIndex = 0;
-      return mesh;
-    }
-
-    function disposeTextureSafely(tex) {
-      if (!tex) return;
-      // If this texture was created from ImageBitmap, close() releases underlying bitmap memory
-      const img = tex.image;
-      if (img && typeof img.close === "function") {
-        try { img.close(); } catch (e) {}
-      }
-      tex.dispose?.();
-    }
-
-    function applyTextureToPhoto(mesh, tex, url) {
-      if (!mesh || !tex) return;
-    
-      tex.colorSpace = THREE.SRGBColorSpace;
-      tex.anisotropy = Math.min(MAX_ANISO, renderer.capabilities.getMaxAnisotropy());
-      tex.generateMipmaps = false;
-      tex.minFilter = THREE.LinearFilter;
-      tex.magFilter = THREE.LinearFilter;
-    
-      const aspect = tex.image ? (tex.image.width / tex.image.height) : 0.8;
-      const h = mesh.userData.h || 0.12;
-      const w = h * clamp(aspect, 0.55, 1.55);
-    
-      if (Math.abs((mesh.userData.w || w) - w) > 1e-4) {
-        mesh.geometry.dispose();
-        mesh.geometry = new THREE.PlaneGeometry(w, h, 1, 1);
-    
-        if (mesh.userData.frameMesh) {
-          mesh.userData.frameMesh.geometry.dispose();
-          mesh.userData.frameMesh.geometry = new THREE.PlaneGeometry(w * 1.06, h * 1.06, 1, 1);
-        }
-    
-        const glowMesh = mesh.children[mesh.children.length - 1];
-        if (glowMesh && glowMesh.geometry) {
-          glowMesh.geometry.dispose();
-          glowMesh.geometry = new THREE.PlaneGeometry(w * 1.06, h * 1.06, 1, 1);
-        }
-    
-        mesh.userData.w = w;
-        mesh.userData.h = h;
-      }
-    
-      const oldMap = mesh.material.map;
-      const oldUrl = mesh.userData.texUrl || "";
-    
-      mesh.material.map = tex;
-      mesh.material.needsUpdate = true;
-      mesh.userData.texUrl = url || mesh.userData.texUrl || "";
-    
-      // Release old cached texture (avoid disposing PLACEHOLDER_TEX etc.)
-      if (oldMap && oldMap !== tex && oldUrl && oldUrl !== (url || "")) {
-        releaseTex(oldUrl);
-      }
-    }
-
-
-    function clearPhotos() {
-      for (const m of photoItems.splice(0, photoItems.length)) {
-        photosGroup.remove(m);
-        if (m.geometry) m.geometry.dispose();
-        if (m.material?.map && m.material.map !== PLACEHOLDER_TEX) disposeTextureSafely(m.material.map);
-        m.material?.dispose?.();
-
-        for (const ch of (m.children || [])) {
-          if (ch.geometry) ch.geometry.dispose();
-          if (ch.material?.map) disposeTextureSafely(ch.material.map);
-          ch.material?.dispose?.();
-        }
-      }
-      focusedIndex = -1;
-    }
-
-    // ---------------------------
-    // State machine
-    // ---------------------------
-    const Mode = { CONE:"CONE", SCATTER:"SCATTER", FOCUS:"FOCUS" };
-    let mode = Mode.CONE;
-    let targetMix = 0;
-    let mix = 0;
-
-    let focus = 0;
-    let targetFocus = 0;
-
-    function setMode(next) {
+    function setMode(next){
       if (mode === next) return;
-      mode = next;
 
-      if (mode === Mode.CONE) {
+      // 进入合拢态：随机抽一个新成语并更新目标点
+      if (next === Mode.COLLAPSE){
+        const prev = currentIdiom;
+        currentIdiom = pickRandomIdiom(prev);
+        buildHomeTargetsForIdiom(currentIdiom);
         targetMix = 0;
         targetFocus = 0;
         hideFocusOverlay();
-      } else if (mode === Mode.SCATTER) {
+        modeBadge.textContent = "状态：合拢成语";
+        toast(`合拢成语：${currentIdiom}`);
+      }
+
+      if (next === Mode.SCATTER){
         targetMix = 1;
         targetFocus = 0;
         hideFocusOverlay();
-        // 第一次扩散时：让 "Analytic Factory" 散开消失，且永不再出现
-        if (!AF_INTRO.done && !AF_INTRO.triggered) {
-          AF_INTRO.triggered = true;
-          AF_INTRO.startT = performance.now() * 0.001;
-        }
-      } else if (mode === Mode.FOCUS) {
+        modeBadge.textContent = "状态：散开漂浮";
+        toast("散开漂浮：移动手掌可旋转视角");
+      }
+
+      if (next === Mode.FOCUS){
         targetMix = 1;
         targetFocus = 1;
         showFocusOverlay();
+        modeBadge.textContent = "状态：视频放大";
+        toast("视频放大态：三指抓可切换视频/成语");
+      }
+
+      mode = next;
+      updateStatusLine();
+    }
+
+    function updateStatusLine(){
+      if (mode === Mode.COLLAPSE){
+        statusText.textContent = `当前成语：${currentIdiom}（握拳：合拢 | 张开：散开 | 三指抓：视频）`;
+      } else if (mode === Mode.SCATTER){
+        statusText.textContent = "散开漂浮中：张开手掌移动可旋转视角；三指抓进入视频放大态。";
+      } else {
+        statusText.textContent = `视频放大态：${focusIdiom}（握拳/张开可退出；三指抓切换）`;
       }
     }
 
-    function showFocusOverlay() { focusOverlay.classList.add("show"); }
-    function hideFocusOverlay() { focusOverlay.classList.remove("show"); }
+    // ---------------------------
+    // 合拢态目标生成：把“马”字粒子凝聚成四字成语
+    // ---------------------------
+    function buildHomeTargetsForIdiom(idiom){
+      // 采样点数：根据设备适配
+      const points2D = sampleTextPoints(idiom, {
+        fontSize: IS_MOBILE ? 190 : 240,
+        step: IS_MOBILE ? 4 : 3,
+        padding: IS_MOBILE ? 60 : 80,
+        threshold: 10,
+        worldWidth: IS_MOBILE ? 6.6 : 7.6
+      });
 
-    function pickRandomPhotoAndMessage() {
-      if (!photoItems.length) return;
-      focusedIndex = Math.floor(Math.random() * photoItems.length);
+      // 成语点云中心略微前移一些（立体层次）
+      const centerZ = -0.6;
 
-      const m = photoItems[focusedIndex];
-      const name = (m?.userData?.name || "").trim() || "Anonymous";
-      const msg  = (m?.userData?.message || "").trim() || "Happy Holidays!";
+      const M = Math.max(1, points2D.length);
+      for (let i = 0; i < PARTICLE_COUNT; i++){
+        const p = points2D[i % M];
+        // 微抖动：形成更“粒子化”的笔画
+        const j = (i % 7) * 0.02;
+        const rx = (aRand[i] - 0.5) * (IS_MOBILE ? 0.08 : 0.10);
+        const ry = (Math.sin(aRand[i] * 999.0) - 0.5) * (IS_MOBILE ? 0.08 : 0.10);
+        const rz = (Math.cos(aRand[i] * 777.0) - 0.5) * (IS_MOBILE ? 0.22 : 0.28);
 
-      focusTitleEl.textContent = `From: ${name}`;
-      focusTextEl.textContent = msg;
-      ensureFullForIndex(focusedIndex);
-    }
-
-    async function ensureFullForIndex(i) {
-      const m = photoItems[i];
-      if (!m) return;
-    
-      const fullUrl = m.userData.fullUrl || toFullUrlFromAny(m.userData.thumbUrl, m.userData.fullUrl);
-      if (!fullUrl) return;
-    
-      // already full?
-      if (m.userData.isFull) return;
-    
-      try {
-        const texFull = await loadTextureViaBitmapCached(fullUrl);
-        m.userData.isFull = true;
-        applyTextureToPhoto(m, texFull, fullUrl);
-    
-        // 可选：释放 thumb（如果当前贴图是 thumb，会在 applyTextureToPhoto 里 releaseTex）
-      } catch (e) {
-        // ignore
+        aHome[i*3+0] = p.x + rx + j;
+        aHome[i*3+1] = p.y + ry;
+        aHome[i*3+2] = centerZ + rz;
       }
+      geo.attributes.aHome.needsUpdate = true;
+
+      // 更新合拢态的“当前位置”属性不是必须（我们用 shader mix），但保持 bounding 更稳
+      geo.computeBoundingSphere();
     }
 
-    
-    // ---------------------------
-    // Camera control (palm-driven + touch fallback)
-    // ---------------------------
-    let yaw = 0.0, pitch = 0.18, radius = 8.6;
-    let yawT = yaw, pitchT = pitch;
+    // 初始成语
+    buildHomeTargetsForIdiom(currentIdiom);
+    updateStatusLine();
 
-    let perfTime = 0;
+    // ---------------------------
+    // 相机控制：散开态可旋转
+    // ---------------------------
+    let yaw = 0.0, pitch = 0.14, radius = 8.8;
+    let yawT = yaw, pitchT = pitch, radiusT = radius;
 
-    function applyCamera(dt) {
-      if (mode === Mode.CONE) {
+    function applyCamera(dt){
+      // 合拢态：缓慢环绕（更“仪式感”）
+      if (mode === Mode.COLLAPSE){
         yawT += dt * 0.22;
-        pitchT = damp(pitchT, 0.16, 2.5, dt);
-      } else if (mode === Mode.SCATTER) {
-        pitchT = clamp(pitchT, -0.22, 0.62);
-      } else if (mode === Mode.FOCUS) {
-        pitchT = damp(pitchT, 0.15, 3.0, dt);
+        pitchT = damp(pitchT, 0.10, 2.6, dt);
+        radiusT = damp(radiusT, 8.8, 2.2, dt);
+      }
+
+      // 散开态：允许用户手势/鼠标改变 yawT/pitchT
+      if (mode === Mode.SCATTER){
+        pitchT = clamp(pitchT, -0.18, 0.62);
+        radiusT = damp(radiusT, 9.2, 2.2, dt);
+      }
+
+      // 视频态：镜头稍微拉近一点，舞台更集中
+      if (mode === Mode.FOCUS){
+        pitchT = damp(pitchT, 0.12, 3.0, dt);
+        radiusT = damp(radiusT, 7.6, 2.6, dt);
       }
 
       yaw = damp(yaw, yawT, 6.2, dt);
       pitch = damp(pitch, pitchT, 6.2, dt);
+      radius = damp(radius, radiusT, 6.0, dt);
 
-      const r = radius;
-      const cx = Math.sin(yaw) * Math.cos(pitch) * r;
-      const cy = 2.25 + Math.sin(pitch) * r * 0.35;
-      const cz = Math.cos(yaw) * Math.cos(pitch) * r;
-
+      const cx = Math.sin(yaw) * Math.cos(pitch) * radius;
+      const cy = 2.0 + Math.sin(pitch) * radius * 0.35;
+      const cz = Math.cos(yaw) * Math.cos(pitch) * radius;
       camera.position.set(cx, cy, cz);
-      camera.lookAt(0, 2.35, 0);
+      camera.lookAt(0, 2.25, 0);
 
+      // 灯光轻跟随，提升“金属感”
       goldPoint.position.set(
         Math.sin(yaw * 0.7) * 1.8,
-        4.7 + Math.sin(perfTime * 0.7) * 0.12,
-        2.4 + Math.cos(yaw * 0.7) * 1.2
+        4.3 + Math.sin(perfTime * 0.7) * 0.10,
+        2.3 + Math.cos(yaw * 0.7) * 1.2
+      );
+      redPoint.position.set(
+        -2.4 + Math.cos(yaw * 0.55) * 0.5,
+        3.0 + Math.sin(perfTime * 0.9) * 0.08,
+        2.4 + Math.sin(yaw * 0.55) * 0.4
       );
     }
 
-    // Touch fallback
+    // 鼠标/触控拖拽（手势未开时也能玩）
     let dragging = false;
     let lastX = 0, lastY = 0;
-    let lastTap = 0;
 
-    canvas.addEventListener("pointerdown", (e) => {
+    canvas.addEventListener("pointerdown", (e)=>{
       dragging = true;
       lastX = e.clientX;
       lastY = e.clientY;
     });
-    window.addEventListener("pointerup", () => dragging = false);
-    window.addEventListener("pointermove", (e) => {
+    window.addEventListener("pointerup", ()=> dragging = false);
+    window.addEventListener("pointermove", (e)=>{
       if (!dragging) return;
       const dx = e.clientX - lastX;
       const dy = e.clientY - lastY;
@@ -1741,21 +1210,8 @@ function createAFIntroPoints(isMobile) {
       pitchT += dy * 0.0034;
     });
 
-    canvas.addEventListener("click", () => {
-      const now = performance.now();
-      if (now - lastTap < 360) {
-        if (mode === Mode.SCATTER) {
-          pickRandomPhotoAndMessage();
-          setMode(Mode.FOCUS);
-        } else if (mode === Mode.FOCUS) {
-          pickRandomPhotoAndMessage();
-        }
-      }
-      lastTap = now;
-    });
-
     // ---------------------------
-    // MediaPipe Hands
+    // MediaPipe Hands：手势识别
     // ---------------------------
     let hands = null;
     let handEnabled = false;
@@ -1763,20 +1219,25 @@ function createAFIntroPoints(isMobile) {
     let lastLandmarks = null;
     let lastLandmarksTs = 0;
 
-    let pinchDown = false;
-    let pinchCooldown = 0;
-
-    function dist2(a, b) {
+    function dist3(a, b){
       const dx = a.x - b.x;
       const dy = a.y - b.y;
       const dz = (a.z || 0) - (b.z || 0);
       return Math.sqrt(dx*dx + dy*dy + dz*dz);
     }
 
-    function computeGesture(landmarks) {
+    function extended(landmarks, tip, pip){
+      const wrist = landmarks[0];
+      const dt = dist3(landmarks[tip], wrist);
+      const dp = dist3(landmarks[pip], wrist);
+      return dt > dp * 1.12;
+    }
+
+    function computeGesture(landmarks){
+      // palm center
       const palmIdx = [0, 5, 9, 13, 17];
-      const palm = { x: 0, y: 0, z: 0 };
-      for (const i of palmIdx) {
+      const palm = { x:0, y:0, z:0 };
+      for (const i of palmIdx){
         palm.x += landmarks[i].x;
         palm.y += landmarks[i].y;
         palm.z += landmarks[i].z;
@@ -1786,60 +1247,86 @@ function createAFIntroPoints(isMobile) {
       palm.z /= palmIdx.length;
 
       const wrist = landmarks[0];
-      const handSize = Math.max(1e-6, dist2(wrist, landmarks[9]));
+      const handSize = Math.max(1e-6, dist3(wrist, landmarks[9])); // wrist -> middle MCP
 
-      const tips = [4, 8, 12, 16, 20];
-      let avgTipPalm = 0;
-      for (const t of tips) avgTipPalm += dist2(landmarks[t], palm);
-      avgTipPalm /= tips.length;
-      const pinchMetric = avgTipPalm / handSize;
+      const thumbExt  = extended(landmarks, 4, 2);
+      const indexExt  = extended(landmarks, 8, 6);
+      const middleExt = extended(landmarks, 12, 10);
+      const ringExt   = extended(landmarks, 16, 14);
+      const pinkyExt  = extended(landmarks, 20, 18);
 
-      function extended(tip, pip) {
-        const dt = dist2(landmarks[tip], wrist);
-        const dp = dist2(landmarks[pip], wrist);
-        return dt > dp * 1.12;
-      }
-      const thumbExt  = extended(4, 2);
-      const indexExt  = extended(8, 6);
-      const middleExt = extended(12, 10);
-      const ringExt   = extended(16, 14);
-      const pinkyExt  = extended(20, 18);
-      const extCount = [thumbExt, indexExt, middleExt, ringExt, pinkyExt].filter(Boolean).length;
+      const extCount = [thumbExt,indexExt,middleExt,ringExt,pinkyExt].filter(Boolean).length;
 
-      const pinch = (dist2(landmarks[4], landmarks[8]) / handSize) < 0.38;
+      // 五指张开（散开）
+      const openHand = (extCount >= 4);
 
-      const openHand = (extCount >= 4) || (pinchMetric > 1.20);
-      const closeHand = (extCount <= 1) && (pinchMetric < 0.88);
+      // 握拳（合拢）
+      const closeHand = (extCount <= 1) &&
+        (dist3(landmarks[8], palm) / handSize < 0.95) &&
+        (dist3(landmarks[12], palm) / handSize < 0.95);
 
-      return { palm, openHand, closeHand, pinch };
+      // 三指抓：拇指/食指/中指靠拢（比“捏合”更强）
+      const dTI = dist3(landmarks[4], landmarks[8]) / handSize;
+      const dTM = dist3(landmarks[4], landmarks[12]) / handSize;
+      const dIM = dist3(landmarks[8], landmarks[12]) / handSize;
+
+      const threeFingerGrab =
+        (dTI < 0.40 && dTM < 0.45 && dIM < 0.48) &&
+        // ring/pinky 不强制，但避免“全拳”误判
+        !(closeHand);
+
+      return { palm, openHand, closeHand, threeFingerGrab };
     }
 
     let lastPalmX = null, lastPalmY = null;
+    let grabDown = false;
+    let grabCooldown = 0;
 
-    function handleGesture(g, dt) {
-      if (g.openHand) setMode(Mode.SCATTER);
-      else if (g.closeHand) setMode(Mode.CONE);
-
-      pinchCooldown = Math.max(0, pinchCooldown - dt);
-
-      const pinchPressed = g.pinch && pinchCooldown <= 0;
-      if (pinchPressed && !pinchDown) {
-        pinchDown = true;
-
-        if (mode === Mode.SCATTER) {
-          pickRandomPhotoAndMessage();
-          setMode(Mode.FOCUS);
-        } else if (mode === Mode.FOCUS) {
-          pickRandomPhotoAndMessage();
-        }
-        pinchCooldown = 0.45;
+    function handleGesture(g, dt){
+      // 一次只响应一种高优先级动作
+      if (g.closeHand){
+        setMode(Mode.COLLAPSE);
+      } else if (g.openHand && mode !== Mode.FOCUS){
+        setMode(Mode.SCATTER);
+      } else if (g.openHand && mode === Mode.FOCUS){
+        // 视频态：张开 -> 回散开
+        setMode(Mode.SCATTER);
       }
-      if (!g.pinch) pinchDown = false;
 
-      if (mode === Mode.SCATTER && !g.pinch && !g.closeHand) {
+      // 三指抓：进入/切换视频态
+      grabCooldown = Math.max(0, grabCooldown - dt);
+      const grabPressed = g.threeFingerGrab && grabCooldown <= 0;
+
+      if (grabPressed && !grabDown){
+        grabDown = true;
+        if (mode === Mode.SCATTER){
+          setMode(Mode.FOCUS);
+          focusIdiom = pickRandomIdiom(focusIdiom);
+          focusIdiomEl.textContent = focusIdiom;
+          playRandomVideo();
+          updateStatusLine();
+        } else if (mode === Mode.FOCUS){
+          focusIdiom = pickRandomIdiom(focusIdiom);
+          focusIdiomEl.textContent = focusIdiom;
+          playRandomVideo();
+          updateStatusLine();
+        } else if (mode === Mode.COLLAPSE){
+          // 合拢态也允许直接进视频态（先散开再进）
+          setMode(Mode.FOCUS);
+          focusIdiom = pickRandomIdiom(focusIdiom);
+          focusIdiomEl.textContent = focusIdiom;
+          playRandomVideo();
+          updateStatusLine();
+        }
+        grabCooldown = 0.55;
+      }
+      if (!g.threeFingerGrab) grabDown = false;
+
+      // 散开态：手掌移动驱动旋转（符合“打开后的手掌旋转/移动调整相机角度”的交互感）
+      if (mode === Mode.SCATTER && g.openHand && !g.threeFingerGrab){
         const x = g.palm.x;
         const y = g.palm.y;
-        if (lastPalmX != null) {
+        if (lastPalmX != null){
           const dx = x - lastPalmX;
           const dy = y - lastPalmY;
           yawT   += (-dx) * 4.2;
@@ -1851,13 +1338,13 @@ function createAFIntroPoints(isMobile) {
       }
     }
 
-    async function startHands() {
-      if (!window.Hands) {
-        statusText.textContent = "MediaPipe Hands not loaded (check network).";
+    async function startHands(){
+      if (!window.Hands){
+        statusText.textContent = "MediaPipe Hands 未加载（请检查网络/CDN）。";
         return;
       }
-      if (!navigator.mediaDevices?.getUserMedia) {
-        statusText.textContent = "Camera API not supported in this browser.";
+      if (!navigator.mediaDevices?.getUserMedia){
+        statusText.textContent = "当前浏览器不支持相机接口。";
         return;
       }
 
@@ -1870,9 +1357,9 @@ function createAFIntroPoints(isMobile) {
         minDetectionConfidence: 0.6,
         minTrackingConfidence: 0.6
       });
-      hands.onResults((results) => {
+      hands.onResults((results)=>{
         const lm = results.multiHandLandmarks?.[0] || null;
-        if (lm) {
+        if (lm){
           lastLandmarks = lm;
           lastLandmarksTs = performance.now();
         }
@@ -1883,23 +1370,25 @@ function createAFIntroPoints(isMobile) {
         video: { facingMode: "user", width: { ideal: 640 }, height: { ideal: 480 } }
       });
 
-      videoEl.srcObject = stream;
-      await videoEl.play();
+      camVideo.srcObject = stream;
+      await camVideo.play();
 
       handEnabled = true;
       led.classList.add("on");
-      statusText.textContent = "Hand tracking enabled: Open/Close/Rotate/Pinch.";
+      toast("手势识别已开启：握拳/张开/三指抓/移动手掌");
+      statusText.textContent = "手势识别已开启：握拳合拢、张开散开、三指抓视频、移动手掌旋转视角。";
 
+      // 以 requestAnimationFrame 驱动 send（节流）
       let busy = false;
       let lastSent = 0;
 
-      async function pump() {
+      async function pump(){
         if (!handEnabled) return;
         const now = performance.now();
-        if (!busy && (now - lastSent) > 33) {
+        if (!busy && (now - lastSent) > 33){
           busy = true;
           lastSent = now;
-          try { await hands.send({ image: videoEl }); } catch (e) {}
+          try { await hands.send({ image: camVideo }); } catch(e) {}
           busy = false;
         }
         requestAnimationFrame(pump);
@@ -1907,469 +1396,136 @@ function createAFIntroPoints(isMobile) {
       pump();
     }
 
-    btnStart.addEventListener("click", async () => {
-      try {
+    btnStart.addEventListener("click", async ()=>{
+      try{
         btnStart.disabled = true;
-        btnStart.textContent = "Enabling…";
+        btnStart.textContent = "正在开启…";
         await startHands();
-        btnStart.textContent = "Hand Tracking On";
-      } catch (e) {
-        statusText.textContent = "Failed to enable. Allow camera permission and use HTTPS.";
+        btnStart.textContent = "手势识别：已开启";
+      } catch(e){
         btnStart.disabled = false;
-        btnStart.textContent = "Enable Hand Tracking";
+        btnStart.textContent = "开启手势识别（相机）";
+        statusText.textContent = "开启失败：请允许相机权限，并确保在 https 页面访问（GitHub Pages 默认 https）。";
+        toast("开启失败：请允许相机权限", 2200);
       }
     });
 
-    btnReset.addEventListener("click", () => {
-      setMode(Mode.CONE);
-      goldBalls.resampleScatter();
-      redBalls.resampleScatter();
-      greenCubes.resampleScatter();
-      candySticks.resampleScatter();
-      for (const p of photoItems) p.userData.scatter = sampleScatter();
-      pickRandomPhotoAndMessage();
-    });
-
-    btnHelp.addEventListener("click", () => {
+    btnHelp.addEventListener("click", ()=>{
       tips.style.display = (tips.style.display === "none") ? "flex" : "none";
     });
 
-    // ---------------------------
-    // Photo update per frame
-    // ---------------------------
-    const tmpV = new THREE.Vector3();
-    const tmpV2 = new THREE.Vector3();
+    btnIdiom.addEventListener("click", ()=>{
+      if (mode !== Mode.COLLAPSE){
+        toast("提示：随机成语将在合拢态更新（也可直接握拳合拢）。");
+        return;
+      }
+      const prev = currentIdiom;
+      currentIdiom = pickRandomIdiom(prev);
+      buildHomeTargetsForIdiom(currentIdiom);
+      toast(`当前成语：${currentIdiom}`);
+      updateStatusLine();
+    });
 
-    function updatePhotos({ mix, time, focus }) {
-      let backplateActive = false;
-      focusBackplate.material.opacity = 0.0;
+    btnReset.addEventListener("click", ()=>{
+      // 重新生成散开分布
+      for (let i=0;i<PARTICLE_COUNT;i++){
+        const s = sampleScatterPos();
+        aScatter[i*3+0] = s.x;
+        aScatter[i*3+1] = s.y;
+        aScatter[i*3+2] = s.z;
+      }
+      geo.attributes.aScatter.needsUpdate = true;
 
-      const focusPos = new THREE.Vector3(0, 2.2, 1.15);
-      const focusScale = 15;
+      // 回到合拢态并随机新成语
+      setMode(Mode.COLLAPSE);
+      yawT = 0; pitchT = 0.14; radiusT = 8.8;
+      toast("已重置：合拢成语");
+    });
 
-      for (let i = 0; i < photoItems.length; i++) {
-        const m = photoItems[i];
-        const ud = m.userData;
-
-        const a = ud.cone;
-        const b = ud.scatter;
-
-        const x = lerp(a.x, b.x, mix);
-        const y = lerp(a.y, b.y, mix);
-        const z = lerp(a.z, b.z, mix);
-
-        const t = time * (0.7 + (ud.seed % 1.0) * 1.1);
-        const bob = Math.sin(t + ud.seed) * 0.10;
-
-        tmpV.set(x, y + bob, z);
-
-        const isFocused = (mode === Mode.FOCUS && i === focusedIndex);
-
-        if (mode === Mode.FOCUS) {
-          if (isFocused) {
-            tmpV.lerp(focusPos, focus);
-            const s = lerp(1.0, focusScale, focus);
-            m.scale.setScalar(s);
-            m.material.opacity = 1.0;
-
-            // Focus backplate (behind the focused photo)
-            backplateActive = true;
-
-            const bw = (ud.w || 0.12) * 1.35 * s;
-            const bh = (ud.h || 0.12) * 1.35 * s;
-
-            focusBackplate.scale.set(bw, bh, 1);
-
-            _tmpDir.subVectors(m.position, camera.position).normalize();
-            focusBackplate.position.copy(m.position).addScaledVector(_tmpDir, 0.03);
-
-            focusBackplate.lookAt(camera.position);
-
-            focusBackplate.material.opacity = 0.48 * focus;
-          } else {
-            m.scale.setScalar(1.0);
-            m.material.opacity = lerp(1.0, 0.75, focus);
-            tmpV.multiplyScalar(1.0 + focus * 0.10);
-          }
+    btnFS.addEventListener("click", async ()=>{
+      try{
+        if (!document.fullscreenElement){
+          await document.documentElement.requestFullscreen?.();
+          toast("已进入全屏");
         } else {
-          m.scale.setScalar(1.0);
-          m.material.opacity = 1.0;
+          await document.exitFullscreen?.();
+          toast("已退出全屏");
         }
-
-        m.position.copy(tmpV);
-
-        tmpV2.copy(camera.position);
-        m.lookAt(tmpV2);
-
-        const tilt = (1.0 - (isFocused ? focus : 0.0));
-        m.rotateZ(Math.sin(t * 0.6) * 0.06 * tilt);
+      } catch(e){
+        toast("全屏操作被浏览器阻止");
       }
-
-      if (!backplateActive) focusBackplate.material.opacity = 0.0;
-    }
+    });
 
     // ---------------------------
-    // Participants loading: stage-1 placeholders, stage-2 async avatar replace
-    // (2~5) cache + ImageBitmapLoader + lower concurrency on mobile
+    // 氛围参数随状态变化（辉光/雾/曝光）
     // ---------------------------
-    const bitmapLoader = new THREE.ImageBitmapLoader();
-    bitmapLoader.setOptions({ imageOrientation: "flipY" });
-    // --- Thumb/Full URL helpers ---
-function toThumbUrl(fullUrl) {
-  if (!fullUrl) return "";
-  // already thumb?
-  if (fullUrl.includes("/thumb/")) return fullUrl;
-
-  // Insert "thumb" folder before filename: assets/avatars/xx.webp -> assets/avatars/thumb/xx.webp
-  const q = fullUrl.split("?");
-  const path = q[0];
-  const parts = path.split("/");
-  const filename = parts.pop();
-  return [...parts, "thumb", filename].join("/") + (q[1] ? `?${q[1]}` : "");
-}
-function toFullUrlFromAny(urlMaybeThumb, fallbackFull) {
-  if (!urlMaybeThumb) return fallbackFull || "";
-  // If current url is thumb, remove /thumb/
-  if (urlMaybeThumb.includes("/thumb/")) return urlMaybeThumb.replace("/thumb/", "/");
-  return fallbackFull || urlMaybeThumb;
-}
-
-// --- Texture cache w/ refcount (avoid duplicate decode/download) ---
-const texCache = new Map(); // url -> { tex, refs, promise }
-function retainTex(url, tex) {
-  if (!url || !tex) return;
-  const entry = texCache.get(url);
-  if (entry && entry.tex === tex) entry.refs++;
-}
-function releaseTex(url) {
-  if (!url) return;
-  const entry = texCache.get(url);
-  if (!entry) return;
-  entry.refs--;
-  if (entry.refs <= 0 && entry.tex) {
-    disposeTextureSafely(entry.tex);
-    texCache.delete(url);
-  }
-}
-
-// You already have bitmapLoader:
-bitmapLoader.setOptions({ imageOrientation: "flipY" });
-
-function loadTextureViaBitmapCached(url) {
-      if (!url) return Promise.reject(new Error("empty url"));
-    
-      const cached = texCache.get(url);
-      if (cached?.tex) {
-        cached.refs++;
-        return Promise.resolve(cached.tex);
-      }
-      if (cached?.promise) {
-        // Someone is already loading it; we'll share the promise and then retain in caller.
-        return cached.promise.then((tex) => {
-          retainTex(url, tex);
-          return tex;
-        });
-      }
-    
-      const p = new Promise((resolve, reject) => {
-        bitmapLoader.load(
-          url,
-          (bitmap) => {
-            const tex = new THREE.Texture(bitmap);
-            tex.colorSpace = THREE.SRGBColorSpace;
-            tex.flipY = false;
-            tex.generateMipmaps = false;
-            tex.minFilter = THREE.LinearFilter;
-            tex.magFilter = THREE.LinearFilter;
-            tex.anisotropy = Math.min(MAX_ANISO, renderer.capabilities.getMaxAnisotropy());
-            tex.needsUpdate = true;
-    
-            texCache.set(url, { tex, refs: 1, promise: null });
-            resolve(tex);
-          },
-          undefined,
-          (e) => {
-            texCache.delete(url);
-            reject(e);
-          }
-        );
-      });
-    
-      texCache.set(url, { tex: null, refs: 0, promise: p });
-      return p;
-    }
-
-
-    function loadTextureViaBitmap(url) {
-      return new Promise((resolve, reject) => {
-        bitmapLoader.load(
-          url,
-          (bitmap) => {
-            const tex = new THREE.Texture(bitmap);
-            tex.colorSpace = THREE.SRGBColorSpace;
-            tex.flipY = false;
-            tex.generateMipmaps = false;
-            tex.minFilter = THREE.LinearFilter;
-            tex.magFilter = THREE.LinearFilter;
-            tex.anisotropy = Math.min(MAX_ANISO, renderer.capabilities.getMaxAnisotropy());
-            tex.needsUpdate = true;
-            resolve(tex);
-          },
-          undefined,
-          (e) => reject(e)
-        );
-      });
-    }
-
-    async function loadParticipantsFromRepo() {
-      const PARTICIPANTS_VERSION = "v1";
-      const url = new URL("./assets/participants.json", location.href).toString() + `?${PARTICIPANTS_VERSION}`;
-
-      try {
-        // (5) allow cache; version param controls refresh
-        const res = await fetch(url, { cache: "force-cache" });
-        if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText} — ${res.url}`);
-
-        const text = (await res.text()).replace(/^\uFEFF/, "");
-        const data = JSON.parse(text);
-        const list = Array.isArray(data) ? data : (Array.isArray(data.participants) ? data.participants : []);
-        if (!list.length) throw new Error("participants.json is empty");
-
-        clearPhotos();
-
-        const max = Math.min(120, list.length);
-        const FIRST_PLACEHOLDERS = Math.min(50, max);
-
-        // Stage 1: instant placeholders (50)
-        for (let i = 0; i < FIRST_PLACEHOLDERS; i++) {
-          const it = list[i] || {};
-          const name = String(it.name || "Anonymous");
-          const message = String(it.message || "Happy Holidays!");
-          addPhotoTexture(PLACEHOLDER_TEX, { name, message });
-        }
-        pickRandomPhotoAndMessage();
-
-        // Stage 2: create remaining planes (placeholders), then async swap textures
-        statusText.textContent = `Photos ready: ${FIRST_PLACEHOLDERS}/${max}. Loading Wishes…`;
-
-        for (let i = FIRST_PLACEHOLDERS; i < max; i++) {
-          const it = list[i] || {};
-          const name = String(it.name || "Anonymous");
-          const message = String(it.message || "Happy Holidays!");
-          const label = (name.split(" ")[0] || "Happy") + "\nHolidays";
-          addPhotoTexture(makePlaceholderPhotoTexture(label), { name, message });
-          if (i % 10 === 0) await new Promise(r => requestAnimationFrame(r));
-        }
-
-        const meshes = photoItems;
-
-        // (4) Lower concurrency on mobile to avoid decode spikes
-        const CONCURRENCY = IS_MOBILE ? 2 : 6;
-        let done = 0;
-
-        const updateProgress = () => {
-          statusText.textContent = `Hanging ${done}/${max} wishes on the tree`;
-        };
-        updateProgress();
-
-        let cursor = 0;
-        const workers = new Array(CONCURRENCY).fill(0).map(async () => {
-          while (cursor < max) {
-            const idx = cursor++;
-            const it = list[idx] || {};
-            const avatar = String(it.avatar || "");
-            const mesh = meshes[idx];
-
-            if (!avatar || !mesh) {
-              done++; updateProgress();
-              continue;
-            }
-
-            try {
-              const fullUrl = String(it.avatar || "");
-              const thumbUrl = toThumbUrl(fullUrl);
-              
-              // 保存到 mesh，后续 focus 用
-              mesh.userData.fullUrl = fullUrl;
-              mesh.userData.thumbUrl = thumbUrl;
-              mesh.userData.isFull = false;
-              
-              try {
-                // First try thumb
-                const texThumb = await loadTextureViaBitmapCached(thumbUrl);
-                applyTextureToPhoto(mesh, texThumb, thumbUrl);
-              } catch (e) {
-                // If thumb missing, fallback to full (still counts as "thumb stage" fallback)
-                try {
-                  const texFull = await loadTextureViaBitmapCached(fullUrl);
-                  mesh.userData.isFull = true;
-                  applyTextureToPhoto(mesh, texFull, fullUrl);
-                } catch (e2) {
-                  // ignore
-                }
-              } finally {
-                done++; updateProgress();
-              }
-
-              applyTextureToPhoto(mesh, tex);
-            } catch (e) {
-              // ignore per-item failures
-            } finally {
-              done++; updateProgress();
-            }
-          }
-        });
-
-        await Promise.all(workers);
-        statusText.textContent = "Ready. Use gestures or touch to interact.";
-
-      } catch (err) {
-        console.error("Failed to load participants.json:", err);
-        statusText.textContent = `Failed to load assets/participants.json: ${err.message}`;
-
-        // fallback placeholders
-        clearPhotos();
-        for (let i = 0; i < 18; i++) {
-          addPhotoTexture(makePlaceholderPhotoTexture("Happy\nHolidays"), { name: "Anonymous", message: "Happy Holidays!" });
-        }
-        pickRandomPhotoAndMessage();
-      }
-    }
-
-    // ---------------------------
-    // Background mood
-    // ---------------------------
-    function updateBackground(dt) {
-      if (mode === Mode.CONE) {
-        bloomPass.strength = damp(bloomPass.strength, 1.10, 2.8, dt);
-        bloomPass.radius   = damp(bloomPass.radius,   0.56, 2.8, dt);
-        bloomPass.threshold= damp(bloomPass.threshold,0.18, 2.8, dt);
-        fog.density        = damp(fog.density,        0.090,2.2, dt);
-        renderer.toneMappingExposure = damp(renderer.toneMappingExposure, 1.08, 2.2, dt);
-      } else if (mode === Mode.SCATTER) {
-        bloomPass.strength = damp(bloomPass.strength, 1.18, 2.8, dt);
-        bloomPass.radius   = damp(bloomPass.radius,   0.62, 2.8, dt);
-        bloomPass.threshold= damp(bloomPass.threshold,0.17, 2.8, dt);
-        fog.density        = damp(fog.density,        0.078,2.2, dt);
-        renderer.toneMappingExposure = damp(renderer.toneMappingExposure, 1.10, 2.2, dt);
-      } else {
-        bloomPass.strength = damp(bloomPass.strength, 1.24, 2.8, dt);
-        bloomPass.radius   = damp(bloomPass.radius,   0.70, 2.8, dt);
-        bloomPass.threshold= damp(bloomPass.threshold,0.15, 2.8, dt);
-        fog.density        = damp(fog.density,        0.070,2.2, dt);
+    function updateMood(dt){
+      if (mode === Mode.COLLAPSE){
+        bloomPass.strength   = damp(bloomPass.strength, 1.15, 2.6, dt);
+        bloomPass.radius     = damp(bloomPass.radius,   0.62, 2.6, dt);
+        bloomPass.threshold  = damp(bloomPass.threshold,0.16, 2.6, dt);
+        fog.density          = damp(fog.density,        0.092,2.2, dt);
         renderer.toneMappingExposure = damp(renderer.toneMappingExposure, 1.12, 2.2, dt);
+      } else if (mode === Mode.SCATTER){
+        bloomPass.strength   = damp(bloomPass.strength, 1.22, 2.6, dt);
+        bloomPass.radius     = damp(bloomPass.radius,   0.70, 2.6, dt);
+        bloomPass.threshold  = damp(bloomPass.threshold,0.15, 2.6, dt);
+        fog.density          = damp(fog.density,        0.080,2.2, dt);
+        renderer.toneMappingExposure = damp(renderer.toneMappingExposure, 1.14, 2.2, dt);
+      } else {
+        bloomPass.strength   = damp(bloomPass.strength, 1.30, 2.8, dt);
+        bloomPass.radius     = damp(bloomPass.radius,   0.82, 2.8, dt);
+        bloomPass.threshold  = damp(bloomPass.threshold,0.14, 2.8, dt);
+        fog.density          = damp(fog.density,        0.072,2.2, dt);
+        renderer.toneMappingExposure = damp(renderer.toneMappingExposure, 1.16, 2.2, dt);
       }
     }
 
     // ---------------------------
-    // Render loop
+    // 渲染循环
     // ---------------------------
     let lastTime = performance.now();
+    let perfTime = 0;
 
-    function animate() {
+    function animate(){
       const now = performance.now();
       const dt = clamp((now - lastTime) / 1000, 0.0, 0.035);
       lastTime = now;
       perfTime += dt;
 
-      if (handEnabled && lastLandmarks && (now - lastLandmarksTs) < 180) {
+      // 手势驱动状态机
+      if (handEnabled && lastLandmarks && (now - lastLandmarksTs) < 180){
         const g = computeGesture(lastLandmarks);
         handleGesture(g, dt);
       }
 
-      mix = damp(mix, targetMix, 2.8, dt);
+      // 平滑过渡
+      mix = damp(mix, targetMix, 3.0, dt);
       targetFocus = (mode === Mode.FOCUS) ? 1 : 0;
       focus = damp(focus, targetFocus, 4.2, dt);
-      bloomMixPass.material.uniforms.uBloomIntensity.value = lerp(1.0, 0.28, focus);
 
       // uniforms
-      pMat.uniforms.uTime.value = perfTime;
-      pMat.uniforms.uMix.value = mix;
-      pMat.uniforms.uFocus.value = focus;
+      uniforms.uTime.value = perfTime;
+      uniforms.uMix.value = mix;
+      uniforms.uFocus.value = focus;
 
-      orbitMat.uniforms.uTime.value = perfTime;
-      orbitMat.uniforms.uMix.value = mix;
-      orbitMat.uniforms.uFocus.value = focus;
+      starMat.uniforms.uTime.value = perfTime;
 
-      starsMat.uniforms.uTime.value = perfTime;
-      starsMat.uniforms.uMix.value = mix;
-      starsMat.uniforms.uFocus.value = focus;
-      starsMat.uniforms.uOrbit.value.set(yaw, pitch);
+      // 视频态：减少 Bloom 混合以避免“糊一片”（保持高级感）
+      bloomMixPass.material.uniforms.uBloomIntensity.value = lerp(1.0, 0.34, focus);
 
-      FRAME_GLOW_TIME.value = perfTime;
-
-      // ornaments
-      goldBalls.update({ mix, time: perfTime, focus, focusDim: 1 });
-      redBalls.update({ mix, time: perfTime, focus, focusDim: 1 });
-      greenCubes.update({ mix, time: perfTime, focus, focusDim: 1 });
-      candySticks.update({ mix, time: perfTime, focus, focusDim: 1 });
-
-      // star shimmer
-      star.material.opacity = 0.86 + Math.sin(perfTime * 2.1) * 0.06;
-      star.scale.setScalar(0.92 + Math.sin(perfTime * 1.6) * 0.05);
-
-      star2.material.opacity = 0.58 + Math.sin(perfTime * 2.4 + 1.2) * 0.06;
-      star2.scale.setScalar(0.60 + Math.sin(perfTime * 1.9 + 0.7) * 0.05);
-      star2.rotation.z += dt * 0.35;
-
-      starCore.rotation.y += dt * 0.8;
-      starCore.rotation.x += dt * 0.4;
-
-      // camera
+      // 相机
       applyCamera(dt);
 
-    // ---------------------------
-    // Update AF intro placement + dissolve (one-shot)
-    // ---------------------------
-    (function updateAFIntro(){
-      if (!AF_INTRO.group || !AF_INTRO.points || AF_INTRO.done) return;
-    
-      const tNow = performance.now() * 0.001;
-    
-      // 固定在相机前方（屏幕正前方）
-      const fwd = new THREE.Vector3();
-      camera.getWorldDirection(fwd);
-    
-      AF_INTRO.group.position.copy(camera.position).addScaledVector(fwd, AF_INTRO.distance);
-      AF_INTRO.group.quaternion.copy(camera.quaternion);
-    
-      // 额外的“横向漂浮”
-      const driftX = Math.sin(tNow * 0.55) * 0.22;
-      const driftY = Math.sin(tNow * 0.33) * 0.06;
-      AF_INTRO.group.position.add(new THREE.Vector3(driftX, driftY, 0).applyQuaternion(camera.quaternion));
-    
-      // uniforms
-      AF_INTRO.uniforms.uTime.value = perfTime;
-    
-      // 若触发散开：推进 dissolve
-      if (AF_INTRO.triggered) {
-        const u = clamp((tNow - AF_INTRO.startT) / AF_INTRO.duration, 0, 1);
-        AF_INTRO.uniforms.uDissolve.value = u;
-    
-        // 完成后彻底隐藏 + 标记 done（永不再出现）
-        if (u >= 1) {
-          AF_INTRO.done = true;
-          AF_INTRO.points.visible = false;
-    
-          // 释放 GPU 资源（可选但推荐）
-          AF_INTRO.points.geometry.dispose();
-          AF_INTRO.points.material.dispose();
-          scene.remove(AF_INTRO.group);
-        }
-      } else {
-        // 没触发前保持可见
-        AF_INTRO.uniforms.uDissolve.value = 0;
-      }
-    })();
+      // 轻微整体摆动（让成语更“活”）
+      const swing = (1.0 - mix) * 0.12;
+      group.rotation.y = Math.sin(perfTime * 0.45) * swing;
+      group.rotation.x = Math.sin(perfTime * 0.33) * swing * 0.45;
 
-      // photos
-      updatePhotos({ mix, time: perfTime, focus });
-      
+      // 氛围
+      updateMood(dt);
 
-      // mood
-      updateBackground(dt);
-
-      // selective bloom render
+      // 渲染：选择性 Bloom
       camera.layers.set(BLOOM_LAYER);
       bloomComposer.render();
 
@@ -2383,13 +1539,15 @@ function loadTextureViaBitmapCached(url) {
     // ---------------------------
     // Resize
     // ---------------------------
-    function onResize() {
+    function onResize(){
       const w = window.innerWidth;
       const h = window.innerHeight;
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
-      renderer.setPixelRatio(Math.min(DPR_CAP, window.devicePixelRatio || 1)); // (2) mobile DPR cap
+
+      renderer.setPixelRatio(Math.min(DPR_CAP, window.devicePixelRatio || 1));
       renderer.setSize(w, h, false);
+
       bloomComposer.setSize(w, h);
       finalComposer.setSize(w, h);
       bloomPass.setSize?.(w, h);
@@ -2397,10 +1555,18 @@ function loadTextureViaBitmapCached(url) {
     window.addEventListener("resize", onResize);
 
     // ---------------------------
-    // Boot
+    // 初始提示
     // ---------------------------
-    statusText.textContent = "Loading participants…";
-    loadParticipantsFromRepo();
+    toast("欢迎：握拳合拢成语，张开散开漂浮，三指抓进入视频放大态。", 2400);
+
+    // 可选：页面首次进入时，预加载一次视频（不自动播放）
+    if (HORSE_VIDEOS[0]) {
+      horseVid.src = HORSE_VIDEOS[0];
+      horseVid.load();
+      horseVid.muted = true;
+      horseVid.loop = true;
+      horseVid.playsInline = true;
+    }
   </script>
 </body>
 </html>
