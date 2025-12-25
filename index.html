@@ -1074,6 +1074,11 @@
       posAttr.needsUpdate = true;
 
       idiomGeo.computeBoundingSphere();
+      idiomGeo.computeBoundingSphere();
+
+      // 新增：红包环绕半径随成语尺寸自适应
+      envHomeRingR = Math.max(2.4, Math.min(4.6, idiomGeo.boundingSphere?.radius * 1.05 || 3.0));
+
     }
 
     function pickNewIdiom(updateTargets=false){
@@ -1114,14 +1119,24 @@
     const envHomeLocal = new Array(ENVELOPE_COUNT);
     const envScatterWorld = new Array(ENVELOPE_COUNT);
     const envSeed = new Array(ENVELOPE_COUNT);
+    let envHomeRingR = 3.0; // 会在每次生成新成语后自适应更新
 
     function sampleEnvelopeHomeLocal(){
-      const ang = Math.random()*Math.PI*2;
-      const r = 1.15 + Math.random()*1.55;
-      const y = (Math.random()-0.5)*1.25;
-      const z = (Math.random()-0.5)*0.70;
-      return new THREE.Vector3(Math.cos(ang)*r, y, z);
+      // 围绕文字的“环”，并留一点厚度，避免全都在一个平面
+      const ang = Math.random() * Math.PI * 2;
+    
+      // 让半径围绕 envHomeRingR 波动（形成一个环形带）
+      const r = envHomeRingR * (0.82 + Math.random() * 0.42);
+    
+      // y 范围决定红包在字上下的环绕幅度（这里是围绕字，而不是跑到字上方）
+      const y = (Math.random() - 0.5) * 1.6;
+    
+      // z 给一点厚度，看起来更立体地环绕
+      const z = (Math.random() - 0.5) * 1.2;
+    
+      return new THREE.Vector3(Math.cos(ang) * r, y, z);
     }
+
 
     function sampleEnvelopeScatterWorld(){
       const R=7.4;
@@ -1188,8 +1203,9 @@
 
       for(let i=0;i<ENVELOPE_COUNT;i++){
         // home target in world: local -> rotate with idiom group -> translate -> lift to idiom height
+        // home target：直接围绕 idiomGroup 的中心（idiomGroup.position 本来就在字的高度）
         _homeWorld.copy(envHomeLocal[i]).applyQuaternion(q).add(c);
-        _homeWorld.y += 2.25;
+
 
         const scatter = envScatterWorld[i];
 
