@@ -4,18 +4,11 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
-  <title>马年祝福 · 手势粒子成语 · 红包开封 · 烟花背景</title>
+  <title>马年祝福 · 成语粒子 · PNG 跑马 · 红包布朗漂浮 · 手势交互</title>
 
   <script async src="https://unpkg.com/es-module-shims@1.10.0/dist/es-module-shims.js"></script>
   <link rel="preconnect" href="https://unpkg.com" crossorigin>
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-
-  <link rel="modulepreload" href="https://unpkg.com/three@0.182.0/build/three.module.js">
-  <link rel="modulepreload" href="https://unpkg.com/three@0.182.0/examples/jsm/postprocessing/EffectComposer.js">
-  <link rel="modulepreload" href="https://unpkg.com/three@0.182.0/examples/jsm/postprocessing/RenderPass.js">
-  <link rel="modulepreload" href="https://unpkg.com/three@0.182.0/examples/jsm/postprocessing/UnrealBloomPass.js">
-  <link rel="modulepreload" href="https://unpkg.com/three@0.182.0/examples/jsm/postprocessing/OutputPass.js">
-  <link rel="modulepreload" href="https://unpkg.com/three@0.182.0/examples/jsm/postprocessing/ShaderPass.js">
 
   <script type="importmap-shim">
   {
@@ -38,217 +31,45 @@
       --text: rgba(255,255,255,.92);
       --muted: rgba(255,255,255,.65);
     }
+    html,body{height:100%;margin:0;overflow:hidden;background:radial-gradient(120% 120% at 50% 30%, #14060a 0%, #070607 55%, #040405 100%);color:var(--text);font-family: ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;}
+    #app{position:fixed;inset:0;}
+    canvas#gl{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;}
+    .cinema-vignette{position:absolute;inset:0;pointer-events:none;background:radial-gradient(120% 120% at 50% 45%, rgba(0,0,0,0) 42%, rgba(0,0,0,.62) 100%),radial-gradient(90% 70% at 50% 0%, rgba(212,175,55,.14) 0%, rgba(0,0,0,0) 60%),linear-gradient(180deg, rgba(177,18,38,.12) 0%, rgba(0,0,0,0) 40%);mix-blend-mode:screen;opacity:.95;}
+    .hud{position:absolute;left:12px;right:12px;top:12px;display:flex;gap:10px;align-items:flex-start;pointer-events:none;}
+    .panel{pointer-events:auto;flex:1 1 auto;max-width:980px;padding:12px 12px 10px;border:1px solid var(--line);border-radius:14px;background:linear-gradient(180deg, var(--panel) 0%, var(--panel2) 100%);box-shadow:0 14px 40px rgba(0,0,0,.45);backdrop-filter:blur(10px);}
+    .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+    .brand{display:flex;gap:10px;align-items:center;min-width:320px;}
+    .badge{width:12px;height:12px;border-radius:999px;background:var(--gold);box-shadow:0 0 0 2px rgba(212,175,55,.18),0 0 18px rgba(212,175,55,.45);}
+    .title{font-weight:800;letter-spacing:.3px;font-size:14px;line-height:1.2;}
+    .subtitle{font-size:12px;color:var(--muted);margin-top:2px;}
+    .controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-left:auto;}
+    button{pointer-events:auto;appearance:none;border:1px solid rgba(212,175,55,.38);color:var(--text);background:linear-gradient(180deg, rgba(177,18,38,.35), rgba(0,0,0,.22));border-radius:12px;padding:10px 12px;font-size:12px;font-weight:800;letter-spacing:.2px;box-shadow:0 10px 24px rgba(0,0,0,.35);cursor:pointer;user-select:none;}
+    button.secondary{border-color: rgba(255,255,255,.14);background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(0,0,0,.18));color: rgba(255,255,255,.86);}
+    button:disabled{opacity:.65;cursor:not-allowed;}
+    .tips{margin-top:10px;padding-top:10px;border-top:1px solid rgba(212,175,55,.22);display:flex;gap:10px;flex-wrap:wrap;font-size:12px;color:rgba(255,255,255,.78);}
+    .chip{border:1px solid rgba(255,255,255,.12);background: rgba(255,255,255,.06);border-radius:999px;padding:6px 10px;display:inline-flex;gap:8px;align-items:center;}
+    .chip b{color:rgba(255,255,255,.92);font-weight:900;}
+    .status{margin-left:auto;font-size:12px;color:rgba(255,255,255,.70);display:flex;align-items:center;gap:8px;}
+    .led{width:8px;height:8px;border-radius:999px;background:rgba(255,255,255,.18);box-shadow:0 0 0 2px rgba(255,255,255,.06);}
+    .led.on{background: var(--gold);box-shadow:0 0 0 2px rgba(212,175,55,.16), 0 0 16px rgba(212,175,55,.55);}
 
-    html,body{
-      height:100%;
-      margin:0;
-      background: radial-gradient(120% 120% at 50% 30%, #14060a 0%, #070607 55%, #040405 100%);
-      color:var(--text);
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
-      overflow:hidden;
-    }
-
-    #app{ position:fixed; inset:0; }
-    canvas#gl{ position:absolute; inset:0; width:100%; height:100%; display:block; touch-action:none; }
-
-    .cinema-vignette{
-      position:absolute; inset:0;
-      pointer-events:none;
-      background:
-        radial-gradient(120% 120% at 50% 45%, rgba(0,0,0,0) 42%, rgba(0,0,0,.62) 100%),
-        radial-gradient(90% 70% at 50% 0%, rgba(212,175,55,.14) 0%, rgba(0,0,0,0) 60%),
-        linear-gradient(180deg, rgba(177,18,38,.12) 0%, rgba(0,0,0,0) 40%);
-      mix-blend-mode:screen;
-      opacity:.95;
-    }
-    .film-grain{
-      position:absolute; inset:-20%;
-      pointer-events:none;
-      background-image:
-        repeating-linear-gradient(0deg, rgba(255,255,255,.025) 0 1px, rgba(0,0,0,0) 1px 3px),
-        repeating-linear-gradient(90deg, rgba(255,255,255,.018) 0 1px, rgba(0,0,0,0) 1px 4px);
-      opacity:.22;
-      transform:rotate(2deg);
-      animation: grain 7s linear infinite;
-      mix-blend-mode:overlay;
-      filter: blur(.2px);
-    }
-    @keyframes grain{
-      0%{ transform:translate3d(-2%, -2%, 0) rotate(2deg); }
-      50%{ transform:translate3d(2%, 1%, 0) rotate(2deg); }
-      100%{ transform:translate3d(-2%, -2%, 0) rotate(2deg); }
-    }
-
-    .hud{
-      position:absolute; left:12px; right:12px; top:12px;
-      display:flex; gap:10px; align-items:flex-start;
-      pointer-events:none;
-    }
-    .panel{
-      pointer-events:auto;
-      flex:1 1 auto;
-      max-width:940px;
-      padding:12px 12px 10px;
-      border:1px solid var(--line);
-      border-radius:14px;
-      background:linear-gradient(180deg, var(--panel) 0%, var(--panel2) 100%);
-      box-shadow: 0 14px 40px rgba(0,0,0,.45);
-      backdrop-filter: blur(10px);
-    }
-    .row{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
-
-    .brand{ display:flex; gap:10px; align-items:center; min-width:300px; }
-    .badge{
-      width:12px; height:12px; border-radius:999px;
-      background: var(--gold);
-      box-shadow: 0 0 0 2px rgba(212,175,55,.18), 0 0 18px rgba(212,175,55,.45);
-    }
-    .title{ font-weight:800; letter-spacing:.3px; font-size:14px; line-height:1.2; }
-    .subtitle{ font-size:12px; color:var(--muted); margin-top:2px; }
-
-    .controls{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-left:auto; }
-
-    button{
-      pointer-events:auto;
-      appearance:none;
-      border:1px solid rgba(212,175,55,.38);
-      color:var(--text);
-      background:linear-gradient(180deg, rgba(177,18,38,.35), rgba(0,0,0,.22));
-      border-radius:12px;
-      padding:10px 12px;
-      font-size:12px;
-      font-weight:800;
-      letter-spacing:.2px;
-      box-shadow: 0 10px 24px rgba(0,0,0,.35);
-      cursor:pointer;
-      user-select:none;
-    }
-    button.secondary{
-      border-color: rgba(255,255,255,.14);
-      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(0,0,0,.18));
-      color: rgba(255,255,255,.86);
-    }
-
-    .tips{
-      margin-top:10px;
-      padding-top:10px;
-      border-top:1px solid rgba(212,175,55,.22);
-      display:flex; gap:10px; flex-wrap:wrap;
-      font-size:12px; color:rgba(255,255,255,.78);
-    }
-    .chip{
-      border:1px solid rgba(255,255,255,.12);
-      background: rgba(255,255,255,.06);
-      border-radius:999px;
-      padding:6px 10px;
-      display:inline-flex; gap:8px; align-items:center;
-    }
-    .chip b{ color:rgba(255,255,255,.92); font-weight:900; }
-
-    .status{
-      margin-left:auto;
-      font-size:12px;
-      color:rgba(255,255,255,.70);
-      display:flex; align-items:center; gap:8px;
-    }
-    .led{
-      width:8px; height:8px; border-radius:999px;
-      background: rgba(255,255,255,.18);
-      box-shadow:0 0 0 2px rgba(255,255,255,.06);
-    }
-    .led.on{
-      background: var(--gold);
-      box-shadow: 0 0 0 2px rgba(212,175,55,.16), 0 0 16px rgba(212,175,55,.55);
-    }
-
-    .focusOverlay{
-      position:absolute; inset:0;
-      display:flex;
-      align-items:flex-end;
-      justify-content:center;
-      padding:16px 12px 22px;
-      pointer-events:none;
-      opacity:0;
-      transform: translate3d(0, 10px, 0);
-      transition: opacity .25s ease, transform .25s ease;
-    }
-    .focusOverlay.show{
-      opacity:1;
-      transform: translate3d(0,0,0);
-    }
-    .focusCard{
-      pointer-events:auto;
-      width:min(860px, calc(100vw - 24px));
-      border-radius:18px;
-      border:1px solid rgba(212,175,55,.45);
-      background: linear-gradient(180deg, rgba(0,0,0,.55), rgba(8,10,12,.66));
-      box-shadow: 0 22px 70px rgba(0,0,0,.62);
-      backdrop-filter: blur(12px);
-      padding:14px 14px 12px;
-      position:relative;
-      overflow:hidden;
-    }
-    .focusTop{
-      display:flex;
-      gap:12px;
-      align-items:flex-start;
-      flex-wrap:wrap;
-      position:relative;
-    }
-    .packet{
-      width:150px;
-      height:190px;
-      border-radius:16px;
-      background: linear-gradient(180deg, rgba(177,18,38,.98), rgba(120,8,22,.98));
-      border:1px solid rgba(212,175,55,.55);
-      box-shadow: 0 18px 55px rgba(0,0,0,.6);
-      position:relative;
-      overflow:hidden;
-      transform-origin: 50% 0%;
-    }
-    .packet .seal{
-      position:absolute;
-      left:50%; top:54%;
-      width:62px; height:62px;
-      transform:translate(-50%,-50%);
-      border-radius:999px;
-      background: radial-gradient(circle at 30% 30%, rgba(255,245,220,.95), rgba(212,175,55,.92) 60%, rgba(90,60,10,.85) 100%);
-      box-shadow: 0 0 0 2px rgba(212,175,55,.20), 0 0 26px rgba(212,175,55,.45);
-    }
-    .packet .lid{
-      position:absolute;
-      left:0; top:0;
-      width:100%; height:52%;
-      background: linear-gradient(180deg, rgba(215,30,55,.98), rgba(140,10,30,.98));
-      border-bottom:1px solid rgba(212,175,55,.35);
-      transform-origin: 50% 100%;
-      transform: rotateX(0deg);
-    }
-    .packet.open .lid{ animation: openLid .55s ease forwards; }
-    @keyframes openLid{ 0%{ transform: rotateX(0deg); } 100%{ transform: rotateX(-125deg); } }
-
-    .focusTextWrap{ flex:1 1 320px; min-width: 260px; }
-    .focusTitle{ margin:0; font-size:15px; letter-spacing:.5px; font-weight:900; }
-    .focusLine{ margin:8px 0 0; font-size:14px; line-height:1.6; color: rgba(255,255,255,.88); white-space:pre-wrap; }
-
-    .videoWrap{
-      margin-top:12px;
-      border-radius:16px;
-      overflow:hidden;
-      border:1px solid rgba(255,255,255,.12);
-      position:relative;
-      box-shadow: 0 16px 46px rgba(0,0,0,.55);
-    }
-    .videoWrap video{ width:100%; height:auto; display:block; background:#000; }
-
-    video#cam{
-      position:absolute;
-      right:12px; bottom:12px;
-      width:120px; height:160px;
-      opacity:0;
-      pointer-events:none;
-      transform: translateZ(0);
-    }
+    .focusOverlay{position:absolute;inset:0;display:flex;align-items:flex-end;justify-content:center;padding:16px 12px 22px;pointer-events:none;opacity:0;transform:translate3d(0,10px,0);transition:opacity .25s ease, transform .25s ease;}
+    .focusOverlay.show{opacity:1;transform:translate3d(0,0,0);}
+    .focusCard{pointer-events:auto;width:min(900px, calc(100vw - 24px));border-radius:18px;border:1px solid rgba(212,175,55,.45);background: linear-gradient(180deg, rgba(0,0,0,.55), rgba(8,10,12,.66));box-shadow: 0 22px 70px rgba(0,0,0,.62);backdrop-filter: blur(12px);padding:14px 14px 12px;position:relative;overflow:hidden;}
+    .focusTop{display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap;position:relative;}
+    .packet{width:150px;height:190px;border-radius:16px;background: linear-gradient(180deg, rgba(177,18,38,.98), rgba(120,8,22,.98));border:1px solid rgba(212,175,55,.55);box-shadow:0 18px 55px rgba(0,0,0,.6);position:relative;overflow:hidden;transform-origin:50% 0%;}
+    .packet .seal{position:absolute;left:50%;top:54%;width:62px;height:62px;transform:translate(-50%,-50%);border-radius:999px;background: radial-gradient(circle at 30% 30%, rgba(255,245,220,.95), rgba(212,175,55,.92) 60%, rgba(90,60,10,.85) 100%);box-shadow:0 0 0 2px rgba(212,175,55,.20), 0 0 26px rgba(212,175,55,.45);}
+    .packet .lid{position:absolute;left:0;top:0;width:100%;height:52%;background: linear-gradient(180deg, rgba(215,30,55,.98), rgba(140,10,30,.98));border-bottom:1px solid rgba(212,175,55,.35);transform-origin:50% 100%;transform: rotateX(0deg);}
+    .packet.open .lid{animation: openLid .55s ease forwards;}
+    @keyframes openLid{0%{transform: rotateX(0deg);}100%{transform: rotateX(-125deg);}}
+    .focusTextWrap{flex:1 1 340px;min-width:260px;}
+    .focusTitle{margin:0;font-size:15px;letter-spacing:.5px;font-weight:900;}
+    .focusLine{margin:8px 0 0;font-size:14px;line-height:1.6;color: rgba(255,255,255,.88);white-space:pre-wrap;text-shadow: 0 0 18px rgba(212,175,55,.12);}
+    .videoWrap{margin-top:12px;border-radius:16px;overflow:hidden;border:1px solid rgba(255,255,255,.12);box-shadow: 0 16px 46px rgba(0,0,0,.55);}
+    .videoWrap video{width:100%;height:auto;display:block;background:#000;}
+    .small{margin-top:10px;font-size:12px;color: rgba(255,255,255,.65);display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;}
+    .kbd{border:1px solid rgba(255,255,255,.14);background: rgba(255,255,255,.06);border-radius:10px;padding:6px 10px;}
+    video#cam{position:absolute;right:12px;bottom:12px;width:120px;height:160px;opacity:0;pointer-events:none;}
   </style>
 </head>
 
@@ -256,7 +77,6 @@
 <div id="app">
   <canvas id="gl"></canvas>
   <div class="cinema-vignette"></div>
-  <div class="film-grain"></div>
 
   <div class="hud">
     <div class="panel">
@@ -264,7 +84,7 @@
         <div class="brand">
           <span class="badge"></span>
           <div>
-            <div class="title">马年祝福 · 手势粒子成语 · 红包开封 · 烟花背景</div>
+            <div class="title">马年祝福 · 成语粒子（收拢态）· PNG 跑马（散开态）· 红包布朗漂浮</div>
             <div class="subtitle">Three.js / WebGL · MediaPipe Hands · Bloom</div>
           </div>
         </div>
@@ -277,16 +97,15 @@
 
         <div class="status">
           <span id="led" class="led"></span>
-          <span id="statusText">默认：合拢态（可点击“启用手势识别”）</span>
+          <span id="statusText">加载中：正在准备 PNG 跑马点云…</span>
         </div>
       </div>
 
       <div class="tips" id="tips" style="display:none;">
-        <span class="chip"><b>五指握拳</b> → 收拢凝聚（平滑过渡，稳定成语）</span>
-        <span class="chip"><b>张开五指</b> → 散开态（雄武奔跑马 + 银河粒子环绕）</span>
-        <span class="chip"><b>三指捏合</b>（拇指+食指+中指） → 抓红包 → 开封 → 播放视频</span>
-        <span class="chip"><b>散开态移动手掌</b> → 旋转视角</span>
-        <span class="chip"><b>双击画面</b> → 触发开封（备选）</span>
+        <span class="chip"><b>五指握拳</b> → 丝滑收拢：稳定成语 + 绕Y轴旋转</span>
+        <span class="chip"><b>张开五指</b> → 散开：PNG 跑马 + 银河环绕</span>
+        <span class="chip"><b>三指捏合</b>（拇指+食指+中指）→ 抓红包</span>
+        <span class="chip"><b>双击画面</b> → 抓红包（无手势备选）</span>
       </div>
     </div>
   </div>
@@ -307,6 +126,12 @@
       <div class="videoWrap">
         <video id="horseVideo" playsinline muted loop></video>
       </div>
+
+      <div class="small">
+        <span class="kbd">握拳：收拢（丝滑过渡）</span>
+        <span class="kbd">张开：散开（PNG 跑马）</span>
+        <span class="kbd">三指捏合 / 双击：抓红包</span>
+      </div>
     </div>
   </div>
 
@@ -321,18 +146,27 @@ import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js"
 import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
 import { ShaderPass } from "three/addons/postprocessing/ShaderPass.js";
 
+/* ========= 基础数据 ========= */
 const IDIOMS = [
   "马到成功","龙马精神","一马当先","万马奔腾","马上发财","马上如意",
   "策马扬鞭","快马加鞭","一马平川","天马行空","马到功成","马跃钱程",
-  "人强马壮","金戈铁马","骏马奔腾","马蹄生风",
-  "马年大吉","马年行大运","马年祥瑞","金马迎春","马到财来"
+  "人强马壮","金戈铁马","骏马奔腾","马蹄生风","马年大吉","金马迎春","马到福来"
 ];
 
+// 你自己的跑马视频（可空）
 const HORSE_VIDEOS = [
   "assets/videos/horse1.mp4",
-  "assets/videos/horse2.mp4",
-  "assets/videos/horse3.mp4",
-  "assets/videos/horse4.mp4"
+  "assets/videos/horse2.mp4"
+];
+
+// ✅ 你的 PNG 跑马帧：a-f（按实际文件名改）
+const HORSE_FRAMES = [
+  "assets/horse_frames/horse_a.png",
+  "assets/horse_frames/horse_b.png",
+  "assets/horse_frames/horse_c.png",
+  "assets/horse_frames/horse_d.png",
+  "assets/horse_frames/horse_e.png",
+  "assets/horse_frames/horse_f.png"
 ];
 
 const IS_MOBILE = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
@@ -340,12 +174,9 @@ const DPR_CAP = IS_MOBILE ? 1.25 : 2.0;
 
 const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
 const lerp  = (a,b,t)=>a+(b-a)*t;
-const damp = (current, target, lambda, dt) => {
-  const t = 1 - Math.exp(-lambda * dt);
-  return current + (target - current) * t;
-};
-const randn = ()=> (Math.random()+Math.random()+Math.random()+Math.random()-2.0);
+const damp  = (current, target, lambda, dt) => current + (target-current)*(1-Math.exp(-lambda*dt));
 
+/* ========= DOM ========= */
 const canvas = document.getElementById("gl");
 const statusText = document.getElementById("statusText");
 const led = document.getElementById("led");
@@ -361,15 +192,8 @@ const focusTextEl = document.getElementById("focusText");
 const packetEl = document.getElementById("packet");
 const horseVideo = document.getElementById("horseVideo");
 
-// ---------------------------
-// Three.js 基础
-// ---------------------------
-const renderer = new THREE.WebGLRenderer({
-  canvas,
-  antialias: true,
-  alpha: false,
-  powerPreference: "high-performance"
-});
+/* ========= Three 基础 ========= */
+const renderer = new THREE.WebGLRenderer({ canvas, antialias:true, alpha:false, powerPreference:"high-performance" });
 renderer.setPixelRatio(Math.min(DPR_CAP, window.devicePixelRatio || 1));
 renderer.setSize(window.innerWidth, window.innerHeight, false);
 renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -379,1225 +203,746 @@ renderer.toneMappingExposure = 1.08;
 const scene = new THREE.Scene();
 scene.background = new THREE.Color("#030304");
 
-const camera = new THREE.PerspectiveCamera(52, window.innerWidth/window.innerHeight, 0.1, 140);
+const camera = new THREE.PerspectiveCamera(52, window.innerWidth/window.innerHeight, 0.1, 160);
 camera.position.set(0, 2.3, 10.4);
 
 scene.add(new THREE.AmbientLight(0xffffff, 0.20));
+const key = new THREE.DirectionalLight(0xfff2d6, 1.05); key.position.set(6,9,6); scene.add(key);
+const goldPoint = new THREE.PointLight(0xd4af37, 1.25, 28, 2); goldPoint.position.set(0,5.2,3.2); scene.add(goldPoint);
+const redPoint  = new THREE.PointLight(0xb11226, 0.85, 22, 2); redPoint.position.set(-2.8,3.4,2.6); scene.add(redPoint);
 
-const key = new THREE.DirectionalLight(0xfff2d6, 1.05);
-key.position.set(6, 9, 6);
-scene.add(key);
-
-const goldPoint = new THREE.PointLight(0xd4af37, 1.25, 22, 2);
-goldPoint.position.set(0, 5.2, 3.2);
-scene.add(goldPoint);
-
-const redPoint = new THREE.PointLight(0xb11226, 0.85, 18, 2);
-redPoint.position.set(-2.8, 3.4, 2.6);
-scene.add(redPoint);
-
-// ---------------------------
-// 后期 Bloom
-// ---------------------------
+/* ========= 后期 Bloom ========= */
 const BLOOM_LAYER = 1;
 
 const bloomComposer = new EffectComposer(renderer);
 bloomComposer.addPass(new RenderPass(scene, camera));
-
-const bloomPass = new UnrealBloomPass(
-  new THREE.Vector2(window.innerWidth, window.innerHeight),
-  1.08,
-  0.60,
-  0.17
-);
+const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.18, 0.62, 0.16);
 bloomComposer.addPass(bloomPass);
 
 const finalComposer = new EffectComposer(renderer);
 finalComposer.addPass(new RenderPass(scene, camera));
-
-const bloomMixPass = new ShaderPass(
-  new THREE.ShaderMaterial({
-    uniforms: {
-      baseTexture: { value: null },
-      bloomTexture: { value: bloomComposer.renderTarget2.texture },
-      uBloomIntensity: { value: 1.0 }
-    },
-    vertexShader: /* glsl */`
-      varying vec2 vUv;
-      void main(){ vUv=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }
-    `,
-    fragmentShader: /* glsl */`
-      uniform sampler2D baseTexture;
-      uniform sampler2D bloomTexture;
-      uniform float uBloomIntensity;
-      varying vec2 vUv;
-      void main(){
-        vec4 base = texture2D(baseTexture, vUv);
-        vec4 bloom = texture2D(bloomTexture, vUv);
-        gl_FragColor = base + bloom * uBloomIntensity;
-      }
-    `
-  }),
-  "baseTexture"
-);
+const bloomMixPass = new ShaderPass(new THREE.ShaderMaterial({
+  uniforms: { baseTexture:{value:null}, bloomTexture:{value:bloomComposer.renderTarget2.texture}, uBloomIntensity:{value:1.0} },
+  vertexShader:`varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}`,
+  fragmentShader:`uniform sampler2D baseTexture;uniform sampler2D bloomTexture;uniform float uBloomIntensity;varying vec2 vUv;
+  void main(){vec4 base=texture2D(baseTexture,vUv);vec4 bloom=texture2D(bloomTexture,vUv);gl_FragColor=base+bloom*uBloomIntensity;}`
+}), "baseTexture");
 finalComposer.addPass(bloomMixPass);
 finalComposer.addPass(new OutputPass());
 
-// ---------------------------
-// 粒子点精灵纹理（“马”字的光形）
-// ---------------------------
+/* ========= 粒子纹理（马字） ========= */
 function makeMaGlyphTexture(){
-  const c = document.createElement("canvas");
-  c.width = 256; c.height = 256;
-  const ctx = c.getContext("2d");
+  const c=document.createElement("canvas"); c.width=256; c.height=256;
+  const ctx=c.getContext("2d");
   ctx.clearRect(0,0,256,256);
-
-  const g = ctx.createRadialGradient(128,128,0,128,128,118);
-  g.addColorStop(0, "rgba(212,175,55,0.22)");
-  g.addColorStop(0.65, "rgba(212,175,55,0.06)");
-  g.addColorStop(1, "rgba(212,175,55,0)");
-  ctx.fillStyle = g;
-  ctx.fillRect(0,0,256,256);
-
-  ctx.save();
-  ctx.translate(128, 145);
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  ctx.font = "900 160px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
-  ctx.lineJoin = "round";
-  ctx.lineWidth = 10;
-  ctx.strokeStyle = "rgba(177,18,38,0.55)";
-  ctx.strokeText("马", 0, 0);
-  ctx.fillStyle = "rgba(255,245,220,0.92)";
-  ctx.fillText("马", 0, 0);
+  const g=ctx.createRadialGradient(128,128,0,128,128,118);
+  g.addColorStop(0,"rgba(212,175,55,0.22)"); g.addColorStop(0.65,"rgba(212,175,55,0.06)"); g.addColorStop(1,"rgba(212,175,55,0)");
+  ctx.fillStyle=g; ctx.fillRect(0,0,256,256);
+  ctx.save(); ctx.translate(128,145);
+  ctx.textAlign="center"; ctx.textBaseline="middle";
+  ctx.font="900 160px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+  ctx.lineJoin="round"; ctx.lineWidth=10;
+  ctx.strokeStyle="rgba(177,18,38,0.55)"; ctx.strokeText("马",0,0);
+  ctx.fillStyle="rgba(255,245,220,0.92)"; ctx.fillText("马",0,0);
   ctx.restore();
-
-  const tex = new THREE.CanvasTexture(c);
-  tex.colorSpace = THREE.SRGBColorSpace;
-  tex.minFilter = THREE.LinearFilter;
-  tex.magFilter = THREE.LinearFilter;
-  tex.generateMipmaps = false;
+  const tex=new THREE.CanvasTexture(c);
+  tex.colorSpace=THREE.SRGBColorSpace; tex.minFilter=THREE.LinearFilter; tex.magFilter=THREE.LinearFilter; tex.generateMipmaps=false;
   return tex;
 }
 const MA_TEX = makeMaGlyphTexture();
 
-// ---------------------------
-// 文字采样 -> 成语点位
-// ---------------------------
-function sampleTextPoints(text, {
-  fontSize = 190,
-  step = IS_MOBILE ? 2 : 1,
-  threshold = 8,
-  worldWidth = 7.9
-} = {}){
-  const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
-  const c = document.createElement("canvas");
-  const ctx = c.getContext("2d", { willReadFrequently: true });
-
-  const font = `900 ${fontSize}px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial`;
-  ctx.font = font;
-  const metrics = ctx.measureText(text);
-  const pad = Math.ceil(fontSize * 0.42);
-  const cssW = Math.ceil(metrics.width + pad * 2);
-  const cssH = Math.ceil(fontSize * 1.25 + pad * 2);
-
-  c.width  = Math.ceil(cssW * dpr);
-  c.height = Math.ceil(cssH * dpr);
-
+/* ========= 文本采样（成语点位） ========= */
+function sampleTextPoints2D(text, { fontSize=200, step=IS_MOBILE?3:2, threshold=10, worldWidth=7.8 } = {}){
+  const dpr=Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+  const c=document.createElement("canvas");
+  const ctx=c.getContext("2d", { willReadFrequently:true });
+  const font=`900 ${fontSize}px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial`;
+  ctx.font=font;
+  const metrics=ctx.measureText(text);
+  const pad=Math.ceil(fontSize*0.46);
+  const cssW=Math.ceil(metrics.width + pad*2);
+  const cssH=Math.ceil(fontSize*1.32 + pad*2);
+  c.width=Math.ceil(cssW*dpr); c.height=Math.ceil(cssH*dpr);
   ctx.setTransform(dpr,0,0,dpr,0,0);
   ctx.clearRect(0,0,cssW,cssH);
+  ctx.font=font; ctx.textAlign="center"; ctx.textBaseline="middle";
+  ctx.lineJoin="round"; ctx.lineWidth=Math.max(10, Math.round(fontSize*0.06));
+  ctx.strokeStyle="rgba(177,18,38,1)"; ctx.strokeText(text, cssW/2, cssH/2);
+  ctx.fillStyle="rgba(255,255,255,1)"; ctx.fillText(text, cssW/2, cssH/2);
 
-  ctx.font = font;
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  ctx.lineJoin = "round";
-  ctx.lineWidth = Math.max(10, Math.round(fontSize*0.06));
-  ctx.strokeStyle = "rgba(177,18,38,1)";
-  ctx.strokeText(text, cssW/2, cssH/2);
-  ctx.fillStyle = "rgba(255,255,255,1)";
-  ctx.fillText(text, cssW/2, cssH/2);
-
-  const img = ctx.getImageData(0,0,c.width,c.height).data;
-  const pts = [];
-  const stepPx = Math.max(1, Math.round(step * dpr));
-
+  const img=ctx.getImageData(0,0,c.width,c.height).data;
+  const pts=[];
+  const stepPx=Math.max(1, Math.round(step*dpr));
   for(let y=0;y<c.height;y+=stepPx){
     for(let x=0;x<c.width;x+=stepPx){
-      const a = img[(y*c.width + x)*4 + 3];
-      if(a > threshold) pts.push([x/dpr, y/dpr]);
+      const a=img[(y*c.width+x)*4+3];
+      if(a>threshold) pts.push([x/dpr, y/dpr]);
     }
   }
-
-  const scale = worldWidth / cssW;
-  const out = new Float32Array(pts.length*3);
+  const scale=worldWidth/cssW;
+  const out=new Float32Array(pts.length*2);
   for(let i=0;i<pts.length;i++){
     const [xCss,yCss]=pts[i];
-    const px=(xCss - cssW/2)*scale;
-    const py=(cssH/2 - yCss)*scale;
-    out[i*3+0]=px;
-    out[i*3+1]=py;
-    out[i*3+2]=0;
+    out[i*2+0]=(xCss-cssW/2)*scale;
+    out[i*2+1]=(cssH/2-yCss)*scale;
   }
   return out;
 }
 
-// ---------------------------
-// ✅ 程序化生成“雄武奔跑马”的点云（不依赖 emoji / canvas）
-//   - 通过“形状采样”生成：身体/胸/颈/头/尾/鬃/四腿
-//   - 四腿带 partId，渲染循环中做摆动 = “原地奔跑”
-// ---------------------------
-const HorsePart = {
-  BODY:0, HEAD:1, MANE:2, TAIL:3,
-  LEG_FL:4, LEG_FR:5, LEG_BL:6, LEG_BR:7
-};
-
-function inEllipse(x,y,cx,cy,rx,ry){
-  const dx=(x-cx)/rx, dy=(y-cy)/ry;
-  return (dx*dx + dy*dy) <= 1.0;
+/* ========= PNG 贴纸采样为点云（关键新增） ========= */
+function loadImage(url){
+  return new Promise((resolve, reject)=>{
+    const img = new Image();
+    img.decoding = "async";
+    img.onload = ()=>resolve(img);
+    img.onerror = ()=>reject(new Error("Failed to load image: " + url));
+    img.src = url;
+  });
 }
 
-function inCapsule(x,y,ax,ay,bx,by,r){
-  // point -> segment distance
-  const abx=bx-ax, aby=by-ay;
-  const apx=x-ax, apy=y-ay;
-  const ab2=abx*abx+aby*aby;
-  const t = ab2>1e-6 ? clamp((apx*abx+apy*aby)/ab2, 0, 1) : 0;
-  const px = ax + abx*t;
-  const py = ay + aby*t;
-  const dx = x-px, dy=y-py;
-  return (dx*dx+dy*dy) <= r*r;
-}
+function sampleCanvasPoints(canvas, {
+  maxPoints=18000,
+  threshold=10,
+  step=IS_MOBILE?3:2,
+  worldWidth=5.8,
+  centerY=-0.25,
+  thickness=0.95
+} = {}){
+  const W=canvas.width, H=canvas.height;
+  const ctx=canvas.getContext("2d", { willReadFrequently:true });
+  const data=ctx.getImageData(0,0,W,H).data;
 
-function inTri(x,y,ax,ay,bx,by,cx,cy){
-  // barycentric
-  const v0x=cx-ax, v0y=cy-ay;
-  const v1x=bx-ax, v1y=by-ay;
-  const v2x=x-ax,  v2y=y-ay;
-  const dot00=v0x*v0x+v0y*v0y;
-  const dot01=v0x*v1x+v0y*v1y;
-  const dot02=v0x*v2x+v0y*v2y;
-  const dot11=v1x*v1x+v1y*v1y;
-  const dot12=v1x*v2x+v1y*v2y;
-  const inv = 1.0 / (dot00*dot11 - dot01*dot01 + 1e-9);
-  const u = (dot11*dot02 - dot01*dot12) * inv;
-  const v = (dot00*dot12 - dot01*dot02) * inv;
-  return (u>=0 && v>=0 && (u+v)<=1);
-}
-
-function rotate2D(x,y,ang){
-  const c=Math.cos(ang), s=Math.sin(ang);
-  return [x*c - y*s, x*s + y*c];
-}
-
-function genHorsePointCloud(totalPoints){
-  // 马的局部坐标系：x 右为头，y 上为背
-  // 下面这些参数决定“雄武感”和比例
-  const S = IS_MOBILE ? 0.92 : 1.0;
-  const HX = 0.0, HY = 0.0;
-
-  // 主体
-  const body = { cx:-0.25, cy:0.10, rx:1.55, ry:0.75 };
-  const chest= { cx:0.70,  cy:0.28, rx:0.85, ry:0.78 };
-
-  // 颈部/头
-  const neckA = { cx:1.05, cy:0.70, rx:0.62, ry:0.35, rot:0.35 };
-  const head  = { cx:1.85, cy:0.90, rx:0.50, ry:0.30, rot:-0.08 };
-  const muzzle= { cx:2.20, cy:0.82, rx:0.30, ry:0.20, rot:-0.10 };
-
-  // 鬃毛：上沿条带
-  const maneLine = { ax:1.05, ay:1.05, bx:1.55, by:0.98, r:0.12 };
-
-  // 尾巴：弧形/条带
-  const tailLine1 = { ax:-1.70, ay:0.55, bx:-2.25, by:0.95, r:0.14 };
-  const tailLine2 = { ax:-1.65, ay:0.45, bx:-2.15, by:0.70, r:0.12 };
-
-  // 耳朵：三角
-  const ear1 = { ax:1.90, ay:1.18, bx:2.08, by:1.28, cx:1.98, cy:1.02 };
-  const ear2 = { ax:1.74, ay:1.16, bx:1.88, by:1.28, cx:1.84, cy:1.02 };
-
-  // 四腿（锚点 + 局部段）——稍微夸张，显得“奔跑有力”
-  const leg = {
-    FL: { hip:[0.95,-0.05], knee:[1.05,-0.75], hoof:[1.25,-1.25], r:0.13 },
-    FR: { hip:[0.80, 0.00], knee:[0.65,-0.72], hoof:[0.55,-1.20], r:0.12 },
-    BL: { hip:[-0.65,-0.10], knee:[-0.75,-0.78], hoof:[-0.60,-1.28], r:0.13 },
-    BR: { hip:[-0.85,-0.05], knee:[-1.05,-0.70], hoof:[-1.20,-1.15], r:0.12 }
-  };
-
-  // 采样区域（稍大一点，避免形状空洞）
-  const xMin=-2.6, xMax= 2.45;
-  const yMin=-1.55, yMax= 1.40;
-
-  // 各部分配比（更“雄武”：身体占比高）
-  const weights = [
-    { part:HorsePart.BODY,   w:0.46 },
-    { part:HorsePart.HEAD,   w:0.16 },
-    { part:HorsePart.MANE,   w:0.06 },
-    { part:HorsePart.TAIL,   w:0.06 },
-    { part:HorsePart.LEG_FL, w:0.07 },
-    { part:HorsePart.LEG_FR, w:0.06 },
-    { part:HorsePart.LEG_BL, w:0.07 },
-    { part:HorsePart.LEG_BR, w:0.06 }
-  ];
-  let wsum = 0; for(const it of weights) wsum += it.w;
-  for(const it of weights) it.w /= wsum;
-
-  const ptsX = new Float32Array(totalPoints);
-  const ptsY = new Float32Array(totalPoints);
-  const ptsZ = new Float32Array(totalPoints);
-  const ptsPart = new Uint8Array(totalPoints);
-
-  // 每个点的“局部偏移”（用于腿摆动更真实）
-  const ptsLX = new Float32Array(totalPoints);
-  const ptsLY = new Float32Array(totalPoints);
-
-  function pickPart(){
-    const r = Math.random();
-    let acc = 0;
-    for(const it of weights){
-      acc += it.w;
-      if(r <= acc) return it.part;
+  const candidates=[];
+  for(let y=0;y<H;y+=step){
+    for(let x=0;x<W;x+=step){
+      const a=data[(y*W+x)*4+3];
+      if(a>threshold) candidates.push([x,y]);
     }
-    return HorsePart.BODY;
   }
 
-  function accept(part, x, y){
-    if(part === HorsePart.BODY){
-      return inEllipse(x,y, body.cx,body.cy, body.rx,body.ry) || inEllipse(x,y, chest.cx,chest.cy, chest.rx,chest.ry);
-    }
-    if(part === HorsePart.HEAD){
-      const [nx,ny] = rotate2D(x-head.cx, y-head.cy, head.rot);
-      const okH = inEllipse(nx,ny, 0,0, head.rx, head.ry);
-      const [mx,my] = rotate2D(x-muzzle.cx, y-muzzle.cy, muzzle.rot);
-      const okM = inEllipse(mx,my, 0,0, muzzle.rx, muzzle.ry);
-      const okN = (()=>{ const [tx,ty]=rotate2D(x-neckA.cx,y-neckA.cy,neckA.rot); return inEllipse(tx,ty,0,0,neckA.rx,neckA.ry); })();
-      const okE = inTri(x,y, ear1.ax,ear1.ay, ear1.bx,ear1.by, ear1.cx,ear1.cy) || inTri(x,y, ear2.ax,ear2.ay, ear2.bx,ear2.by, ear2.cx,ear2.cy);
-      return okH || okM || okN || okE;
-    }
-    if(part === HorsePart.MANE){
-      return inCapsule(x,y, maneLine.ax,maneLine.ay, maneLine.bx,maneLine.by, maneLine.r);
-    }
-    if(part === HorsePart.TAIL){
-      return inCapsule(x,y, tailLine1.ax,tailLine1.ay, tailLine1.bx,tailLine1.by, tailLine1.r)
-          || inCapsule(x,y, tailLine2.ax,tailLine2.ay, tailLine2.bx,tailLine2.by, tailLine2.r);
-    }
-
-    // legs
-    const L =
-      part===HorsePart.LEG_FL ? leg.FL :
-      part===HorsePart.LEG_FR ? leg.FR :
-      part===HorsePart.LEG_BL ? leg.BL : leg.BR;
-
-    const hip=L.hip, knee=L.knee, hoof=L.hoof;
-    return inCapsule(x,y, hip[0],hip[1], knee[0],knee[1], L.r)
-        || inCapsule(x,y, knee[0],knee[1], hoof[0],hoof[1], L.r*0.95)
-        || inEllipse(x,y, hoof[0],hoof[1], L.r*0.85, L.r*0.55);
+  const n=Math.min(maxPoints, candidates.length);
+  for(let i=0;i<n;i++){
+    const j=i + ((Math.random()*(candidates.length-i))|0);
+    const t=candidates[i]; candidates[i]=candidates[j]; candidates[j]=t;
   }
 
-  const thick = IS_MOBILE ? 0.55 : 0.85; // 立体厚度
-  const legLocalJit = IS_MOBILE ? 0.018 : 0.024;
-
-  // rejection sampling
-  for(let i=0;i<totalPoints;i++){
-    const part = pickPart();
-    let x=0, y=0, ok=false;
-
-    // 控制每个点尝试次数
-    for(let k=0;k<120;k++){
-      x = lerp(xMin, xMax, Math.random());
-      y = lerp(yMin, yMax, Math.random());
-
-      // 让轮廓更“硬朗”：边缘加一点抖动（但不至于破形）
-      const jx = randn()*0.012;
-      const jy = randn()*0.010;
-
-      if(accept(part, x+jx, y+jy)){
-        x += jx; y += jy;
-        ok = true;
-        break;
-      }
-    }
-
-    if(!ok){
-      // fallback：塞一个身体点
-      x = body.cx + randn()*0.35;
-      y = body.cy + randn()*0.18;
-    }
-
-    // 统一缩放 + 轻微“前倾姿态”
-    x *= 1.08 * S;
-    y *= 1.08 * S;
-
-    // 前倾：让马更“冲刺”
-    const tilt = -0.08;
-    const [rx,ry] = rotate2D(x, y, tilt);
-
-    ptsX[i] = rx + HX;
-    ptsY[i] = ry + HY;
-    ptsZ[i] = (randn()*0.22 + randn()*0.14) * thick;
-
-    ptsPart[i] = part;
-
-    // 局部点（腿用）：做轻微局部扰动，避免腿呈“直线”
-    ptsLX[i] = rx + randn()*legLocalJit;
-    ptsLY[i] = ry + randn()*legLocalJit;
+  const scale=worldWidth/W;
+  const out=new Float32Array(n*3);
+  for(let i=0;i<n;i++){
+    const x=candidates[i][0], y=candidates[i][1];
+    const wx=(x - W/2)*scale;
+    const wy=(H/2 - y)*scale + centerY;
+    // 固定厚度（一次性随机，之后不会抖）
+    const wz=(Math.random()+Math.random()-1)*(thickness*0.22) + (Math.random()+Math.random()-1)*(thickness*0.14);
+    out[i*3+0]=wx; out[i*3+1]=wy; out[i*3+2]=wz;
   }
-
-  // 另外：为了更雄武，增加“背线/肌肉线”密度（在 body 上沿再补一点点）
-  // 这里不新增数组长度，而是在更新时通过 BODY 的摆动/厚度体现“厚重感”。
-
-  return { ptsX, ptsY, ptsZ, ptsPart, ptsLX, ptsLY };
+  return out;
 }
 
-// ---------------------------
-// 模式 & 过渡
-// ---------------------------
+/* ========= 模式 & 过渡 ========= */
 const Mode = { MERGE:"MERGE", SCATTER:"SCATTER", FOCUS:"FOCUS" };
 let mode = Mode.MERGE;
-
-let mix = 0;
-let targetMix = 0;
-
-let focus = 0;
-let targetFocus = 0;
-
-function setMode(next){
-  if(mode === next) return;
-  mode = next;
-
-  if(mode === Mode.MERGE){
-    targetMix = 0;
-    targetFocus = 0;
-    hideFocusOverlay();
-  }else if(mode === Mode.SCATTER){
-    targetMix = 1;
-    targetFocus = 0;
-    hideFocusOverlay();
-    kickScatterImpulse();
-  }else{
-    targetMix = 1;
-    targetFocus = 1;
-    showFocusOverlay();
-  }
-}
+let mix = 0, targetMix = 0;      // 0=成语，1=散开马+银河
+let focus = 0, targetFocus = 0;
 
 function showFocusOverlay(){ focusOverlay.classList.add("show"); }
 function hideFocusOverlay(){ focusOverlay.classList.remove("show"); packetEl.classList.remove("open"); }
 
-// ---------------------------
-// 成语/马/银河 粒子系统
-// ---------------------------
+function setMode(next){
+  if(mode===next) return;
+  mode=next;
+  if(mode===Mode.MERGE){ targetMix=0; targetFocus=0; hideFocusOverlay(); }
+  if(mode===Mode.SCATTER){ targetMix=1; targetFocus=0; hideFocusOverlay(); kickScatterImpulse(); }
+  if(mode===Mode.FOCUS){ targetMix=1; targetFocus=1; showFocusOverlay(); }
+}
+
+/* ========= 成语粒子系统 ========= */
 const idiomGroup = new THREE.Group();
 idiomGroup.position.set(0, 2.25, 0);
 scene.add(idiomGroup);
 
+let envHomeRingR = 3.4;
 let currentIdiom = "";
-let idiomBounds = { minX:-3, maxX:3, minY:-1.5, maxY:1.5 };
 
-const MAX_PARTICLES = IS_MOBILE ? 26000 : 42000;
-
-// 散开态：马形粒子比例（越大马越“雄武”）
-const HORSE_RATIO = 0.42;
+const MAX_PARTICLES = IS_MOBILE ? 16000 : 26000;
 
 const idiomGeo = new THREE.BufferGeometry();
+const aPos      = new Float32Array(MAX_PARTICLES*3);
+const aVel      = new Float32Array(MAX_PARTICLES*3);
+const aIdiomTar = new Float32Array(MAX_PARTICLES*3);
+const aSeed     = new Float32Array(MAX_PARTICLES);
+const aKind     = new Float32Array(MAX_PARTICLES); // 0=horse, 1=galaxy
+idiomGeo.setAttribute("position", new THREE.BufferAttribute(aPos,3));
+idiomGeo.setAttribute("aVel", new THREE.BufferAttribute(aVel,3));
+idiomGeo.setAttribute("aIdiomTar", new THREE.BufferAttribute(aIdiomTar,3));
+idiomGeo.setAttribute("aSeed", new THREE.BufferAttribute(aSeed,1));
+idiomGeo.setAttribute("aKind", new THREE.BufferAttribute(aKind,1));
 
-const aPos   = new Float32Array(MAX_PARTICLES*3);
-const aVel   = new Float32Array(MAX_PARTICLES*3);
-const aTar   = new Float32Array(MAX_PARTICLES*3);
-const aSeed  = new Float32Array(MAX_PARTICLES);
-
-const aKind  = new Float32Array(MAX_PARTICLES); // 0=horse, 1=galaxy
-const aOrbR  = new Float32Array(MAX_PARTICLES);
-const aOrbA  = new Float32Array(MAX_PARTICLES);
-const aOrbY  = new Float32Array(MAX_PARTICLES);
-const aOrbS  = new Float32Array(MAX_PARTICLES);
-
-// JS 侧：马粒子映射到“马点云”的 index
-const horseRef = new Uint32Array(MAX_PARTICLES);
-
-idiomGeo.setAttribute("position", new THREE.BufferAttribute(aPos, 3));
-idiomGeo.setAttribute("aVel", new THREE.BufferAttribute(aVel, 3));
-idiomGeo.setAttribute("aTar", new THREE.BufferAttribute(aTar, 3));
-idiomGeo.setAttribute("aSeed", new THREE.BufferAttribute(aSeed, 1));
-idiomGeo.setAttribute("aKind", new THREE.BufferAttribute(aKind, 1));
-idiomGeo.setAttribute("aOrbR", new THREE.BufferAttribute(aOrbR, 1));
-idiomGeo.setAttribute("aOrbA", new THREE.BufferAttribute(aOrbA, 1));
-idiomGeo.setAttribute("aOrbY", new THREE.BufferAttribute(aOrbY, 1));
-idiomGeo.setAttribute("aOrbS", new THREE.BufferAttribute(aOrbS, 1));
-
-// 生成“雄武奔跑马”点云：数量要明显大于 horse 粒子数，避免重复纹理感
-const HORSE_POINT_CLOUD_SIZE = Math.max(12000, Math.floor(MAX_PARTICLES * HORSE_RATIO * 1.35));
-const horseCloud = genHorsePointCloud(HORSE_POINT_CLOUD_SIZE);
-
-// 初始化粒子分组 & 银河参数
 for(let i=0;i<MAX_PARTICLES;i++){
-  const s = Math.random();
-  aSeed[i] = s;
-
-  aPos[i*3+0]=(Math.random()-0.5)*3.2;
-  aPos[i*3+1]=(Math.random()-0.5)*1.8;
-  aPos[i*3+2]=(Math.random()-0.5)*1.4;
-
-  aVel[i*3+0]=0; aVel[i*3+1]=0; aVel[i*3+2]=0;
-
-  const isHorse = (s < HORSE_RATIO);
-  aKind[i] = isHorse ? 0.0 : 1.0;
-
-  // horseRef：均匀散列到马点云 index（稳定，不随模式切换变化）
-  horseRef[i] = Math.floor(Math.random() * HORSE_POINT_CLOUD_SIZE);
-
-  // galaxy
-  const rr = lerp(1.4, IS_MOBILE ? 4.8 : 5.6, Math.pow(Math.random(), 0.55));
-  aOrbR[i] = rr;
-  aOrbA[i] = Math.random()*Math.PI*2;
-  aOrbY[i] = lerp(-0.95, 0.95, Math.random()) * (IS_MOBILE ? 0.92 : 1.0);
-  aOrbS[i] = lerp(0.55, 1.35, Math.random()) * (Math.random()<0.5 ? -1 : 1);
-
-  aTar[i*3+0]=0; aTar[i*3+1]=0; aTar[i*3+2]=0;
+  aPos[i*3+0]=(Math.random()-0.5)*6;
+  aPos[i*3+1]=(Math.random()-0.5)*3;
+  aPos[i*3+2]=(Math.random()-0.5)*6;
+  aVel[i*3+0]=(Math.random()-0.5)*0.15;
+  aVel[i*3+1]=(Math.random()-0.5)*0.15;
+  aVel[i*3+2]=(Math.random()-0.5)*0.15;
+  aSeed[i]=Math.random();
+  aKind[i]=(aSeed[i] < 0.44) ? 0.0 : 1.0;
 }
 
-function rebuildIdiomTargets(text, { snap=false } = {}){
+/* ========= PNG 帧点云：horseFramesPts[] ========= */
+let horseFramesPts = [];      // 每帧 Float32Array xyz...
+let horseFrameN = 1;          // 点数（按第0帧）
+let horseReady = false;
+const horseIdx = new Uint32Array(MAX_PARTICLES);
+
+function initHorseIndexMapping(){
+  horseFrameN = Math.max(1, horseFramesPts[0] ? (horseFramesPts[0].length/3) : 1);
+  for(let i=0;i<MAX_PARTICLES;i++){
+    if(aKind[i] === 0.0){
+      // 固定映射：每个马粒子固定一个点索引，保证“像马且稳定”
+      horseIdx[i] = (Math.random() * horseFrameN) | 0;
+    }
+  }
+}
+
+async function buildHorsePointCloudsFromPNGs(){
+  const imgs = await Promise.all(HORSE_FRAMES.map(loadImage));
+  const canvas = document.createElement("canvas");
+  const ctx = canvas.getContext("2d", { willReadFrequently:true });
+
+  // 统一用最大尺寸，避免帧间点位比例变化
+  let W=0,H=0;
+  for(const img of imgs){ W=Math.max(W, img.naturalWidth); H=Math.max(H, img.naturalHeight); }
+  // 如果你的 PNG 很大，这里会自动压一下，提升性能
+  const maxSide = IS_MOBILE ? 1000 : 1400;
+  const scale = Math.min(1, maxSide / Math.max(W,H));
+  canvas.width = Math.max(2, Math.floor(W*scale));
+  canvas.height= Math.max(2, Math.floor(H*scale));
+
+  const maxPts = IS_MOBILE ? 11000 : 19000;
+
+  horseFramesPts = [];
+  for(let k=0;k<imgs.length;k++){
+    ctx.clearRect(0,0,canvas.width, canvas.height);
+    // 居中绘制（防止帧尺寸不一导致“跳”）
+    const dw = imgs[k].naturalWidth * scale;
+    const dh = imgs[k].naturalHeight* scale;
+    const dx = (canvas.width - dw)/2;
+    const dy = (canvas.height- dh)/2;
+    ctx.drawImage(imgs[k], dx, dy, dw, dh);
+
+    const pts = sampleCanvasPoints(canvas, {
+      maxPoints: maxPts,
+      step: IS_MOBILE ? 3 : 2,
+      worldWidth: IS_MOBILE ? 5.0 : 5.9,
+      centerY: -0.25,
+      thickness: IS_MOBILE ? 0.72 : 0.95
+    });
+
+    horseFramesPts.push(pts);
+  }
+
+  initHorseIndexMapping();
+  horseReady = true;
+}
+
+/* ========= 成语目标：只在触发时重建，保证稳定 ========= */
+function pickIdiom(){ return IDIOMS[(Math.random()*IDIOMS.length)|0]; }
+
+function rebuildIdiomTargets(text){
   currentIdiom = text;
+  const pts2 = sampleTextPoints2D(text, { fontSize: IS_MOBILE?190:210, step: IS_MOBILE?3:2, worldWidth: IS_MOBILE?7.0:8.2 });
+  const targetN = Math.max(1, Math.floor(pts2.length/2));
+  const thickness = IS_MOBILE ? 0.55 : 0.85;
 
-  const pts = sampleTextPoints(text, {
-    fontSize: 190,
-    step: IS_MOBILE ? 2 : 1,
-    worldWidth: IS_MOBILE ? 7.0 : 7.9
-  });
+  for(let i=0;i<MAX_PARTICLES;i++){
+    const idx = (i % targetN) * 2;
+    const x = pts2[idx+0], y = pts2[idx+1];
+    const z = (aSeed[i]-0.5)*thickness + (aSeed[i]*aSeed[i]-0.33)*thickness*0.25;
+    aIdiomTar[i*3+0]=x; aIdiomTar[i*3+1]=y; aIdiomTar[i*3+2]=z;
+  }
+  idiomGeo.attributes.aIdiomTar.needsUpdate = true;
 
-  const targetN = Math.max(1, Math.min(MAX_PARTICLES, Math.floor(pts.length/3)));
-
-  let minX= 1e9, maxX=-1e9, minY= 1e9, maxY=-1e9;
-  for(let i=0;i<targetN;i++){
-    const x = pts[i*3+0], y = pts[i*3+1];
+  // 粗估包围半径（给红包环）
+  let minX=1e9,maxX=-1e9,minY=1e9,maxY=-1e9;
+  for(let k=0;k<pts2.length;k+=2){
+    const x=pts2[k], y=pts2[k+1];
     if(x<minX) minX=x; if(x>maxX) maxX=x;
     if(y<minY) minY=y; if(y>maxY) maxY=y;
   }
-  idiomBounds = { minX, maxX, minY, maxY };
-
-  // ✅ “厚重立体”：每个点增加 Z 厚度 + 轻微外扩
-  const thickness = IS_MOBILE ? 0.75 : 1.05;
-  const strokeJit = IS_MOBILE ? 0.038 : 0.055;
-
-  for(let i=0;i<MAX_PARTICLES;i++){
-    const idx = (i % targetN) * 3;
-    const bx = pts[idx+0];
-    const by = pts[idx+1];
-
-    aTar[i*3+0] = bx + randn() * strokeJit * 0.55;
-    aTar[i*3+1] = by + randn() * strokeJit * 0.55;
-
-    const z = randn() * (thickness * 0.22) + randn() * (thickness * 0.16);
-    aTar[i*3+2] = z;
-
-    if(snap){
-      aPos[i*3+0] = aTar[i*3+0] + (Math.random()-0.5)*0.03;
-      aPos[i*3+1] = aTar[i*3+1] + (Math.random()-0.5)*0.03;
-      aPos[i*3+2] = aTar[i*3+2] + (Math.random()-0.5)*0.03;
-      aVel[i*3+0]=0; aVel[i*3+1]=0; aVel[i*3+2]=0;
-    }
-  }
-
-  idiomGeo.attributes.aTar.needsUpdate = true;
-  if(snap){
-    idiomGeo.attributes.position.needsUpdate = true;
-    idiomGeo.attributes.aVel.needsUpdate = true;
-  }
+  const w=Math.max(2.0,(maxX-minX)), h=Math.max(1.2,(maxY-minY));
+  envHomeRingR = clamp(Math.max(w,h)*0.62*1.10, 2.8, 5.6);
 }
 
-// ---------------------------
-// 粒子材质
-// ---------------------------
+rebuildIdiomTargets(pickIdiom());
+
 const idiomMat = new THREE.ShaderMaterial({
-  transparent: true,
-  depthWrite: false,
-  blending: THREE.AdditiveBlending,
-  uniforms: {
-    uTime: { value: 0 },
-    uFocus: { value: 0 },
-    uMap: { value: MA_TEX }
-  },
-  vertexShader: /* glsl */`
-    uniform float uTime;
-    uniform float uFocus;
-    attribute float aSeed;
-    varying float vSeed;
-    varying float vGlow;
+  transparent:true, depthWrite:false, blending:THREE.AdditiveBlending,
+  uniforms:{ uTime:{value:0}, uMix:{value:0}, uFocus:{value:0}, uMap:{value:MA_TEX} },
+  vertexShader:`
+    uniform float uTime; uniform float uMix; uniform float uFocus;
+    attribute vec3 aVel; attribute vec3 aIdiomTar; attribute float aSeed; attribute float aKind;
+    varying float vSeed; varying float vGlow;
     void main(){
-      vSeed = aSeed;
-      vec3 p = position;
+      vSeed=aSeed;
+      vec3 p=position;
 
-      float t = uTime*(0.40 + aSeed*0.85);
-      p.x += cos(t + aSeed*12.0) * (0.004 + aSeed*0.010);
-      p.y += sin(t*0.9 + aSeed*10.0) * (0.004 + aSeed*0.010);
-      p.z += sin(t*1.1 + aSeed* 8.0) * (0.003 + aSeed*0.008);
+      // 收拢态微动更小，稳定观感
+      float wob=mix(0.10,0.30,uMix);
+      float t=uTime*(0.65 + aSeed*1.25);
+      p.x += cos(t + aSeed*12.0) * (0.010 + aSeed*0.020) * wob;
+      p.y += sin(t*0.9 + aSeed*10.0) * (0.012 + aSeed*0.024) * wob;
+      p.z += sin(t*1.1 + aSeed* 8.0) * (0.010 + aSeed*0.020) * wob;
 
-      p *= (1.0 + uFocus*(0.035 + aSeed*0.10));
+      p *= (1.0 + uFocus*(0.05 + aSeed*0.10));
 
-      vec4 mv = modelViewMatrix * vec4(p, 1.0);
-      gl_Position = projectionMatrix * mv;
+      vec4 mv=modelViewMatrix*vec4(p,1.0);
+      gl_Position=projectionMatrix*mv;
 
-      float dist = max(0.001, -mv.z);
-      float base = 0.96;
-      float tw = 0.88 + 0.12*sin(uTime*1.7 + aSeed*9.0);
+      float dist=max(0.001, -mv.z);
+      float base=0.95;
+      float tw=0.90 + 0.10*sin(uTime*2.1 + aSeed*9.0);
+      float size=mix(1.00,1.10,uMix);
+      gl_PointSize=clamp(base*tw*size*(120.0/dist), 0.65, 2.30);
 
-      gl_PointSize = clamp(base*tw*(128.0/dist), 0.75, 2.35);
-      vGlow = 0.55 + 0.45*sin(uTime*1.7 + aSeed*11.0);
+      vGlow=0.55 + 0.45*sin(uTime*2.0 + aSeed*11.0);
     }
   `,
-  fragmentShader: /* glsl */`
+  fragmentShader:`
     precision highp float;
     uniform sampler2D uMap;
-    varying float vSeed;
-    varying float vGlow;
+    varying float vSeed; varying float vGlow;
     void main(){
-      vec4 m = texture2D(uMap, gl_PointCoord);
+      vec4 m=texture2D(uMap, gl_PointCoord);
       if(m.a < 0.06) discard;
 
-      vec3 gold = vec3(0.83,0.69,0.22);
-      vec3 red  = vec3(0.70,0.07,0.15);
-      vec3 warm = vec3(1.00,0.92,0.72);
+      vec3 gold=vec3(0.83,0.69,0.22);
+      vec3 red =vec3(0.70,0.07,0.15);
+      vec3 warm=vec3(1.00,0.92,0.72);
 
-      float k = smoothstep(0.20, 0.95, vSeed);
-      vec3 col = mix(warm, gold, k);
-      col = mix(col, red, smoothstep(0.78, 0.98, vSeed)*0.45);
+      float k=smoothstep(0.20, 0.95, vSeed);
+      vec3 col=mix(warm, gold, k);
+      col=mix(col, red, smoothstep(0.78,0.98,vSeed)*0.45);
 
-      float a = m.a * (0.60 + 0.58*vGlow);
-      gl_FragColor = vec4(col * (1.12 + 0.52*m.a), a);
+      float a=m.a*(0.52 + 0.62*vGlow);
+      gl_FragColor=vec4(col*(1.10 + 0.65*m.a), a);
     }
   `
 });
 
 const idiomPoints = new THREE.Points(idiomGeo, idiomMat);
-idiomGroup.add(idiomPoints);
+idiomPoints.frustumCulled=false;
 idiomPoints.layers.enable(BLOOM_LAYER);
+idiomGroup.add(idiomPoints);
 
-// 初始固定成语（稳定态）
-rebuildIdiomTargets(IDIOMS[Math.floor(Math.random()*IDIOMS.length)], { snap:true });
-
-// ---------------------------
-// 红包系统（缩小一半 + 大小不一 + 凝聚态四周布朗运动）
-// ---------------------------
-const ENVELOPES = IS_MOBILE ? 190 : 300;
-
-const envGroup = new THREE.Group();
-envGroup.position.set(0, 2.25, 0);
-scene.add(envGroup);
-
-let envHomeRadius = 4.4;
-
-function recomputeEnvHomeRadius(){
-  const w = Math.max(3.4, (idiomBounds.maxX - idiomBounds.minX));
-  const h = Math.max(1.8, (idiomBounds.maxY - idiomBounds.minY));
-  envHomeRadius = Math.max(3.8, Math.min(6.2, Math.sqrt(w*w + h*h) * 0.95 + 1.25));
-}
-
+/* ========= 红包系统（缩小一半 + 大小不一 + 布朗漂浮） ========= */
 function makeRedEnvelopeTexture(){
-  const c = document.createElement("canvas");
-  c.width=256; c.height=320;
-  const ctx = c.getContext("2d");
-
-  const g = ctx.createLinearGradient(0,0,0,320);
-  g.addColorStop(0, "#d01a35");
-  g.addColorStop(1, "#7b081a");
-  ctx.fillStyle = g;
-  ctx.fillRect(0,0,256,320);
-
-  ctx.strokeStyle = "rgba(212,175,55,.85)";
-  ctx.lineWidth = 10;
-  ctx.strokeRect(14,14,228,292);
-
+  const c=document.createElement("canvas"); c.width=256; c.height=320;
+  const ctx=c.getContext("2d");
+  const g=ctx.createLinearGradient(0,0,0,320);
+  g.addColorStop(0,"#d01a35"); g.addColorStop(1,"#7b081a");
+  ctx.fillStyle=g; ctx.fillRect(0,0,256,320);
+  ctx.strokeStyle="rgba(212,175,55,.85)"; ctx.lineWidth=10; ctx.strokeRect(14,14,228,292);
   for(let i=0;i<18;i++){
-    const x = Math.random()*256;
-    const y = Math.random()*320;
-    const r = 18+Math.random()*46;
-    ctx.beginPath();
-    ctx.fillStyle = `rgba(212,175,55,${0.04+Math.random()*0.06})`;
-    ctx.arc(x,y,r,0,Math.PI*2);
-    ctx.fill();
+    const x=Math.random()*256, y=Math.random()*320, r=18+Math.random()*46;
+    ctx.beginPath(); ctx.fillStyle=`rgba(212,175,55,${0.04+Math.random()*0.06})`; ctx.arc(x,y,r,0,Math.PI*2); ctx.fill();
   }
-
-  ctx.save();
-  ctx.translate(128,190);
-  ctx.beginPath();
-  ctx.fillStyle = "rgba(212,175,55,.92)";
-  ctx.arc(0,0,42,0,Math.PI*2);
-  ctx.fill();
-  ctx.fillStyle = "rgba(90,60,10,.80)";
-  ctx.font = "900 54px ui-sans-serif, system-ui, -apple-system";
-  ctx.textAlign="center"; ctx.textBaseline="middle";
-  ctx.fillText("福", 0, 2);
+  ctx.save(); ctx.translate(128,190);
+  ctx.beginPath(); ctx.fillStyle="rgba(212,175,55,.92)"; ctx.arc(0,0,42,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle="rgba(90,60,10,.80)"; ctx.font="900 54px ui-sans-serif, system-ui, -apple-system";
+  ctx.textAlign="center"; ctx.textBaseline="middle"; ctx.fillText("福",0,2);
   ctx.restore();
-
-  const tex = new THREE.CanvasTexture(c);
-  tex.colorSpace = THREE.SRGBColorSpace;
-  tex.minFilter = THREE.LinearFilter;
-  tex.magFilter = THREE.LinearFilter;
-  tex.generateMipmaps = false;
+  const tex=new THREE.CanvasTexture(c);
+  tex.colorSpace=THREE.SRGBColorSpace; tex.minFilter=THREE.LinearFilter; tex.magFilter=THREE.LinearFilter; tex.generateMipmaps=false;
   return tex;
 }
 const ENV_TEX = makeRedEnvelopeTexture();
 
-// ✅ 缩小一半
-const envGeo = new THREE.PlaneGeometry(0.14, 0.18, 1, 1);
+const ENVELOPES = IS_MOBILE ? 160 : 260;
+const envGroup = new THREE.Group();
+idiomGroup.add(envGroup);
 
-const envMat = new THREE.MeshBasicMaterial({
-  map: ENV_TEX,
-  transparent: true,
-  opacity: 0.98,
-  depthWrite: false,
-  toneMapped: false
-});
+const envGeo = new THREE.PlaneGeometry(0.14, 0.18); // 缩小一半
+const envMat = new THREE.MeshBasicMaterial({ map: ENV_TEX, transparent:true, opacity:0.98, depthWrite:false, toneMapped:false });
 const envMesh = new THREE.InstancedMesh(envGeo, envMat, ENVELOPES);
 envMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
-envGroup.add(envMesh);
 envMesh.layers.enable(BLOOM_LAYER);
+envGroup.add(envMesh);
 
-const envHome = new Array(ENVELOPES);
-const envScatter = new Array(ENVELOPES);
-const envVel = new Array(ENVELOPES);
+const envHomeLocal = new Array(ENVELOPES);
+const envScatterWorld = new Array(ENVELOPES);
+const envVelWorld = new Array(ENVELOPES);
 const envScale = new Array(ENVELOPES);
 const envSeed = new Array(ENVELOPES);
-const envBrown = new Array(ENVELOPES);
-const envBrownVel = new Array(ENVELOPES);
 
-function sampleEnvelopeHomeWorld(){
-  const R = envHomeRadius;
-  const ang = Math.random() * Math.PI * 2;
-  const r = R * (0.86 + Math.random()*0.42);
-  const y = (Math.random()-0.5) * 2.6;
-  const z = (Math.random()-0.5) * 3.2;
+function sampleEnvelopeHomeLocal(i){
+  const ang=(i/ENVELOPES)*Math.PI*2 + (Math.random()-0.5)*0.35;
+  const r=envHomeRingR*(0.86 + Math.random()*0.52);
+  const y=(Math.random()-0.5)*1.9;
+  const z=(Math.random()-0.5)*1.7;
   return new THREE.Vector3(Math.cos(ang)*r, y, z);
 }
 function sampleScatterWorld(){
-  const R = 10.8;
-  const u = Math.random();
-  const v = Math.random();
-  const theta = u * Math.PI * 2;
-  const phi = Math.acos(2 * v - 1);
-  const rr = (0.35 + Math.pow(Math.random(), 0.55) * 0.65) * R;
-  const x = rr * Math.sin(phi) * Math.cos(theta);
-  const y = rr * Math.cos(phi) * 0.70 + 2.0;
-  const z = rr * Math.sin(phi) * Math.sin(theta) - 1.8;
-  return new THREE.Vector3(x,y,z);
+  const R=7.2;
+  const u=Math.random(), v=Math.random();
+  const theta=u*Math.PI*2;
+  const phi=Math.acos(2*v-1);
+  const rr=(0.45 + Math.pow(Math.random(),0.65)*0.55)*R;
+  return new THREE.Vector3(
+    rr*Math.sin(phi)*Math.cos(theta),
+    rr*Math.cos(phi)*0.75 + 2.2,
+    rr*Math.sin(phi)*Math.sin(theta)
+  );
 }
-
-recomputeEnvHomeRadius();
 for(let i=0;i<ENVELOPES;i++){
-  envHome[i] = sampleEnvelopeHomeWorld();
-  envScatter[i] = sampleScatterWorld();
-  envVel[i] = new THREE.Vector3(0,0,0);
-
-  // ✅ 大小不一：范围更广
-  envScale[i] = lerp(0.55, 2.20, Math.pow(Math.random(), 0.72));
-  envSeed[i] = Math.random()*1000;
-
-  envBrown[i] = new THREE.Vector3(0,0,0);
-  envBrownVel[i] = new THREE.Vector3(0,0,0);
+  envHomeLocal[i]=sampleEnvelopeHomeLocal(i);
+  envScatterWorld[i]=sampleScatterWorld();
+  envVelWorld[i]=new THREE.Vector3(0,0,0);
+  const sizeTier=Math.random();
+  envScale[i]=(sizeTier<0.18)?lerp(0.45,0.70,Math.random())
+           :(sizeTier<0.78)?lerp(0.70,1.05,Math.random())
+           :                 lerp(1.05,1.55,Math.random());
+  envSeed[i]=Math.random()*1000;
 }
-
 const _obj = new THREE.Object3D();
+const _tmp = new THREE.Vector3();
+const _homeWorld = new THREE.Vector3();
+
+function brown3(seed,t){
+  const a=Math.sin(t*0.55 + seed*1.3);
+  const b=Math.sin(t*0.93 + seed*2.1);
+  const c=Math.sin(t*1.37 + seed*3.7);
+  const d=Math.sin(t*0.71 + seed*5.2);
+  return { x:a*0.38 + b*0.22, y:c*0.34 + a*0.16, z:d*0.38 + b*0.18 };
+}
 
 function updateEnvelopes(time, dt){
-  const brownAcc = 0.38;
-  const brownDrag = 2.2;
-  const brownSpring = 1.6;
-  const brownMax = 0.55;
+  idiomGroup.updateMatrixWorld(true);
 
   for(let i=0;i<ENVELOPES;i++){
-    const seed = envSeed[i];
+    const seed=envSeed[i];
+    const n=brown3(seed, time);
+    _homeWorld.copy(envHomeLocal[i]);
+    _homeWorld.x += n.x*0.22;
+    _homeWorld.y += n.y*0.22;
+    _homeWorld.z += n.z*0.22;
 
-    const mergeK = (1.0 - mix);
-    if(mergeK > 0.02){
-      const b = envBrown[i];
-      const bv = envBrownVel[i];
+    const sW=envScatterWorld[i];
+    const vW=envVelWorld[i];
 
-      const nx = Math.sin(time*0.55 + seed*1.1) + Math.sin(time*0.31 + seed*2.3)*0.6;
-      const ny = Math.cos(time*0.48 + seed*1.7) + Math.sin(time*0.29 + seed*3.1)*0.6;
-      const nz = Math.sin(time*0.52 + seed*2.0) + Math.cos(time*0.33 + seed*2.9)*0.6;
+    vW.multiplyScalar(Math.pow(0.92, dt*60));
+    sW.addScaledVector(vW, dt);
+    sW.x += Math.sin(time*0.40 + seed)*0.010;
+    sW.y += Math.sin(time*0.55 + seed)*0.012;
+    sW.z += Math.sin(time*0.48 + seed)*0.010;
 
-      bv.x += nx * brownAcc * mergeK * dt;
-      bv.y += ny * brownAcc * 0.75 * mergeK * dt;
-      bv.z += nz * brownAcc * mergeK * dt;
+    _tmp.copy(_homeWorld).applyMatrix4(idiomGroup.matrixWorld);
 
-      bv.x += (-b.x) * brownSpring * mergeK * dt;
-      bv.y += (-b.y) * brownSpring * mergeK * dt;
-      bv.z += (-b.z) * brownSpring * mergeK * dt;
-
-      bv.multiplyScalar(Math.exp(-brownDrag * dt));
-
-      b.addScaledVector(bv, dt);
-      if(b.length() > brownMax){
-        b.normalize().multiplyScalar(brownMax);
-        bv.multiplyScalar(0.35);
-      }
-    }
-
-    const home = envHome[i];
-    const b = envBrown[i];
-
-    const hx = home.x + b.x;
-    const hy = home.y + b.y;
-    const hz = home.z + b.z;
-
-    const s = envScatter[i];
-    const v = envVel[i];
-
-    v.multiplyScalar(Math.pow(0.94, dt*60.0));
-    if(mix > 0.35){
-      const n1 = Math.sin(time*0.7 + seed*0.9);
-      const n2 = Math.cos(time*0.65 + seed*1.1);
-      const n3 = Math.sin(time*0.55 + seed*1.3);
-      v.x += n1 * 0.18 * dt;
-      v.y += n2 * 0.10 * dt;
-      v.z += n3 * 0.18 * dt;
-    }
-    s.addScaledVector(v, dt);
-
-    const x = lerp(hx, s.x, mix);
-    const y = lerp(hy, s.y, mix);
-    const z = lerp(hz, s.z, mix);
+    const x=lerp(_tmp.x, sW.x, mix);
+    const y=lerp(_tmp.y, sW.y, mix);
+    const z=lerp(_tmp.z, sW.z, mix);
 
     _obj.position.set(x,y,z);
     _obj.quaternion.copy(camera.quaternion);
-    _obj.rotateZ(Math.sin(time*0.7 + seed)*0.22);
-    _obj.scale.setScalar(envScale[i] * (1.0 - focus*0.10));
+    _obj.rotateZ(Math.sin(time*0.35 + seed)*0.10);
+    const s=envScale[i]*(1.0 - focus*0.10);
+    _obj.scale.setScalar(s);
     _obj.updateMatrix();
     envMesh.setMatrixAt(i, _obj.matrix);
   }
-  envMesh.instanceMatrix.needsUpdate = true;
+  envMesh.instanceMatrix.needsUpdate=true;
 }
 
 function kickScatterImpulse(){
+  const centerW=new THREE.Vector3(0,0,0).applyMatrix4(idiomGroup.matrixWorld);
+  for(let i=0;i<ENVELOPES;i++){
+    const p=envScatterWorld[i];
+    const dir=new THREE.Vector3().subVectors(p, centerW).normalize();
+    dir.x += (Math.random()-0.5)*0.35;
+    dir.y += (Math.random()-0.2)*0.25;
+    dir.z += (Math.random()-0.5)*0.35;
+    dir.normalize();
+    const kick=2.0 + Math.random()*3.6;
+    envVelWorld[i].addScaledVector(dir, kick);
+  }
+  // 粒子也给一点冲量（一次性）
   for(let i=0;i<MAX_PARTICLES;i++){
-    const sx = (Math.random()-0.5);
-    const sy = (Math.random()-0.2);
-    const sz = (Math.random()-0.5);
-    const len = Math.max(1e-4, Math.sqrt(sx*sx+sy*sy+sz*sz));
-    const k = 2.2 + Math.random()*3.8;
+    const sx=(Math.random()-0.5), sy=(Math.random()-0.2), sz=(Math.random()-0.5);
+    const len=Math.max(1e-4, Math.sqrt(sx*sx+sy*sy+sz*sz));
+    const k=0.75 + Math.random()*1.75;
     aVel[i*3+0] += (sx/len)*k;
     aVel[i*3+1] += (sy/len)*k;
     aVel[i*3+2] += (sz/len)*k;
   }
-  idiomGeo.attributes.aVel.needsUpdate = true;
-
-  for(let i=0;i<ENVELOPES;i++){
-    const p = envScatter[i];
-    const dir = p.clone().normalize();
-    dir.x += (Math.random()-0.5)*0.45;
-    dir.y += (Math.random()-0.2)*0.35;
-    dir.z += (Math.random()-0.5)*0.45;
-    dir.normalize();
-    const kick = 5.2 + Math.random()*6.8;
-    envVel[i].addScaledVector(dir, kick);
-  }
+  idiomGeo.attributes.aVel.needsUpdate=true;
 }
 
-// ---------------------------
-// 背景烟花（保持自然的小粒子）
-// ---------------------------
-function smoothstep(a,b,x){
-  const t = clamp((x-a)/(b-a), 0, 1);
-  return t*t*(3-2*t);
+/* ========= 散开态目标：PNG 跑马 + 银河 ========= */
+function horseTargetFromPNGs(i, time){
+  if(!horseReady || horseFramesPts.length===0) return [0,0,0];
+
+  // 跑步帧率：你可调 10~14 更自然
+  const fps = 12.0;
+  const f = (time * fps) % horseFramesPts.length;
+  const i0 = Math.floor(f);
+  const i1 = (i0 + 1) % horseFramesPts.length;
+  const t = f - i0;
+
+  const pts0 = horseFramesPts[i0];
+  const pts1 = horseFramesPts[i1];
+  const n = horseFrameN;
+
+  const idx = horseIdx[i] % n;
+  const ax=pts0[idx*3+0], ay=pts0[idx*3+1], az=pts0[idx*3+2];
+  const bx=pts1[idx*3+0], by=pts1[idx*3+1], bz=pts1[idx*3+2];
+
+  let x = ax + (bx-ax)*t;
+  let y = ay + (by-ay)*t;
+  let z = az + (bz-az)*t;
+
+  // 轻微整体起伏（不破形）
+  const run = time*6.0;
+  y += Math.sin(run)*0.05;
+  x += Math.sin(run*0.5)*0.03;
+
+  return [x,y,z];
 }
 
-class Fireworks {
-  constructor(maxParticles=6500, maxRockets=8){
-    this.max = maxParticles;
-    this.pos = new Float32Array(this.max*3);
-    this.vel = new Float32Array(this.max*3);
-    this.col = new Float32Array(this.max*3);
-    this.life= new Float32Array(this.max);
-    this.age = new Float32Array(this.max);
-    this.active = new Uint8Array(this.max);
-
-    this.geo = new THREE.BufferGeometry();
-    this.geo.setAttribute("position", new THREE.BufferAttribute(this.pos,3));
-    this.geo.setAttribute("color", new THREE.BufferAttribute(this.col,3));
-
-    this.mat = new THREE.ShaderMaterial({
-      transparent:true,
-      depthWrite:false,
-      blending: THREE.AdditiveBlending,
-      uniforms:{ uTime:{value:0} },
-      vertexShader:/*glsl*/`
-        uniform float uTime;
-        attribute vec3 color;
-        varying vec3 vColor;
-        void main(){
-          vColor = color;
-          vec4 mv = modelViewMatrix * vec4(position,1.0);
-          gl_Position = projectionMatrix * mv;
-          float dist = max(0.001, -mv.z);
-          gl_PointSize = clamp(1.35*(210.0/dist), 0.55, 3.2);
-        }
-      `,
-      fragmentShader:/*glsl*/`
-        precision highp float;
-        varying vec3 vColor;
-        void main(){
-          vec2 uv = gl_PointCoord - 0.5;
-          float d = length(uv);
-          float core = smoothstep(0.18, 0.0, d);
-          float halo = smoothstep(0.55, 0.16, d) * 0.38;
-          float a = core + halo;
-          if(a < 0.01) discard;
-          gl_FragColor = vec4(vColor*(1.10 + 0.55*halo), a);
-        }
-      `
-    });
-
-    this.points = new THREE.Points(this.geo, this.mat);
-    this.points.frustumCulled = false;
-    scene.add(this.points);
-    this.points.layers.enable(BLOOM_LAYER);
-
-    this.rockets = [];
-    this.maxRockets = maxRockets;
-    this.spawnTimer = 0;
-  }
-
-  hsvToRgb(h,s,v){
-    const i = Math.floor(h*6);
-    const f = h*6 - i;
-    const p = v*(1-s);
-    const q = v*(1-f*s);
-    const t = v*(1-(1-f)*s);
-    const m = i % 6;
-    const r = [v,q,p,p,t,v][m];
-    const g = [t,v,v,q,p,p][m];
-    const b = [p,p,t,v,v,q][m];
-    return [r,g,b];
-  }
-
-  allocParticle(){
-    for(let i=0;i<this.max;i++){
-      if(this.active[i]===0) return i;
-    }
-    return -1;
-  }
-
-  spawnRocket(){
-    if(this.rockets.length >= this.maxRockets) return;
-
-    const ox = (Math.random()-0.5)*18;
-    const oz = -10 - Math.random()*22;
-    const targetY = 6.0 + Math.random()*6.5;
-
-    this.rockets.push({
-      x: ox, y: 0.8 + Math.random()*0.8, z: oz,
-      vx: (Math.random()-0.5)*0.6,
-      vy: 7.5 + Math.random()*2.8,
-      vz: (Math.random()-0.5)*0.6,
-      targetY,
-      col: [1.0, 0.92, 0.70]
-    });
-  }
-
-  spawnBurst(origin, count=170){
-    const baseH = Math.random();
-    const baseS = 0.70 + Math.random()*0.28;
-    const baseV = 0.82 + Math.random()*0.18;
-
-    for(let n=0;n<count;n++){
-      const idx = this.allocParticle();
-      if(idx<0) break;
-
-      this.active[idx]=1;
-      this.age[idx]=0;
-      this.life[idx]=1.35 + Math.random()*1.00;
-
-      const h = (baseH + (Math.random()-0.5)*0.08 + 1.0) % 1.0;
-      const s = clamp(baseS + (Math.random()-0.5)*0.10, 0.55, 1.0);
-      const v = clamp(baseV + (Math.random()-0.5)*0.08, 0.65, 1.0);
-      const [r,g,b]=this.hsvToRgb(h,s,v);
-
-      this.col[idx*3+0]=r;
-      this.col[idx*3+1]=g;
-      this.col[idx*3+2]=b;
-
-      this.pos[idx*3+0]=origin.x + (Math.random()-0.5)*0.10;
-      this.pos[idx*3+1]=origin.y + (Math.random()-0.5)*0.10;
-      this.pos[idx*3+2]=origin.z + (Math.random()-0.5)*0.10;
-
-      const u=Math.random();
-      const v2=Math.random();
-      const theta=u*Math.PI*2;
-      const phi=Math.acos(2*v2-1);
-
-      const speed = 3.2 + Math.pow(Math.random(), 0.55)*5.0;
-      const sx = Math.sin(phi)*Math.cos(theta);
-      const sy = Math.cos(phi);
-      const sz = Math.sin(phi)*Math.sin(theta);
-
-      this.vel[idx*3+0]=sx*speed;
-      this.vel[idx*3+1]=sy*speed*0.78 + 1.1;
-      this.vel[idx*3+2]=sz*speed;
-    }
-  }
-
-  update(dt){
-    this.spawnTimer -= dt;
-    if(this.spawnTimer <= 0){
-      this.spawnTimer = 0.55 + Math.random()*0.65;
-      this.spawnRocket();
-    }
-
-    for(let r=this.rockets.length-1;r>=0;r--){
-      const rocket = this.rockets[r];
-
-      rocket.vx *= Math.pow(0.985, dt*60);
-      rocket.vy *= Math.pow(0.992, dt*60);
-      rocket.vz *= Math.pow(0.985, dt*60);
-
-      rocket.x += rocket.vx*dt;
-      rocket.y += rocket.vy*dt;
-      rocket.z += rocket.vz*dt;
-
-      if(Math.random() < 0.35){
-        const idx = this.allocParticle();
-        if(idx>=0){
-          this.active[idx]=1;
-          this.age[idx]=0;
-          this.life[idx]=0.55 + Math.random()*0.35;
-
-          this.col[idx*3+0]=rocket.col[0]*0.95;
-          this.col[idx*3+1]=rocket.col[1]*0.80;
-          this.col[idx*3+2]=rocket.col[2]*0.55;
-
-          this.pos[idx*3+0]=rocket.x + (Math.random()-0.5)*0.08;
-          this.pos[idx*3+1]=rocket.y + (Math.random()-0.5)*0.08;
-          this.pos[idx*3+2]=rocket.z + (Math.random()-0.5)*0.08;
-
-          this.vel[idx*3+0]=(Math.random()-0.5)*1.0;
-          this.vel[idx*3+1]=-(2.0 + Math.random()*2.0);
-          this.vel[idx*3+2]=(Math.random()-0.5)*1.0;
-        }
-      }
-
-      if(rocket.y >= rocket.targetY){
-        this.spawnBurst(new THREE.Vector3(rocket.x, rocket.y, rocket.z), IS_MOBILE ? 130 : 190);
-        this.rockets.splice(r,1);
-      }
-    }
-
-    for(let i=0;i<this.max;i++){
-      if(this.active[i]===0) continue;
-
-      this.age[i] += dt;
-      const t = this.age[i]/this.life[i];
-      if(t >= 1){
-        this.active[i]=0;
-        this.pos[i*3+0]=9999;
-        this.pos[i*3+1]=9999;
-        this.pos[i*3+2]=9999;
-        continue;
-      }
-
-      this.vel[i*3+1] -= 3.0 * dt;
-      const dampK = Math.pow(0.986, dt*60);
-      this.vel[i*3+0] *= dampK;
-      this.vel[i*3+1] *= dampK;
-      this.vel[i*3+2] *= dampK;
-
-      this.pos[i*3+0] += this.vel[i*3+0]*dt;
-      this.pos[i*3+1] += this.vel[i*3+1]*dt;
-      this.pos[i*3+2] += this.vel[i*3+2]*dt;
-    }
-
-    this.geo.attributes.position.needsUpdate = true;
-    this.geo.attributes.color.needsUpdate = true;
-  }
+function galaxyTarget(i, time){
+  const s=aSeed[i];
+  const r=lerp(2.8, 5.6, Math.pow(s, 0.55));
+  const ang=time*(0.42 + s*0.30) + s*18.0;
+  const y=(Math.sin(time*0.65 + s*9.0)*0.55) + (s-0.5)*1.2;
+  const x=Math.cos(ang)*r;
+  const z=Math.sin(ang)*r + (s-0.5)*0.85;
+  return [x,y,z];
 }
-const fireworks = new Fireworks(IS_MOBILE ? 5200 : 6800, IS_MOBILE ? 6 : 8);
 
-// ---------------------------
-// 相机控制
-// ---------------------------
+/* ========= 粒子物理更新（目标 = lerp(成语, 散开, mix)） ========= */
+function updateIdiom(dt, time){
+  if(mode===Mode.MERGE) idiomGroup.rotation.y += dt*0.22;
+  else idiomGroup.rotation.y = damp(idiomGroup.rotation.y, 0.0, 3.0, dt);
+
+  const spring=7.8, drag=3.8;
+
+  for(let i=0;i<MAX_PARTICLES;i++){
+    const px=aPos[i*3+0], py=aPos[i*3+1], pz=aPos[i*3+2];
+    let vx=aVel[i*3+0], vy=aVel[i*3+1], vz=aVel[i*3+2];
+
+    const itx=aIdiomTar[i*3+0], ity=aIdiomTar[i*3+1], itz=aIdiomTar[i*3+2];
+
+    let stx=0, sty=0, stz=0;
+    if(aKind[i] === 0.0){
+      const h = horseTargetFromPNGs(i, time);
+      stx=h[0]; sty=h[1]; stz=h[2];
+    }else{
+      const g = galaxyTarget(i, time);
+      stx=g[0]; sty=g[1]; stz=g[2];
+    }
+
+    const tx=lerp(itx, stx, mix);
+    const ty=lerp(ity, sty, mix);
+    const tz=lerp(itz, stz, mix);
+
+    vx += (tx-px)*spring*dt;
+    vy += (ty-py)*spring*dt;
+    vz += (tz-pz)*spring*dt;
+
+    const dd=Math.exp(-drag*dt);
+    vx*=dd; vy*=dd; vz*=dd;
+
+    aPos[i*3+0]=px + vx*dt;
+    aPos[i*3+1]=py + vy*dt;
+    aPos[i*3+2]=pz + vz*dt;
+
+    aVel[i*3+0]=vx; aVel[i*3+1]=vy; aVel[i*3+2]=vz;
+  }
+
+  idiomGeo.attributes.position.needsUpdate=true;
+  idiomGeo.attributes.aVel.needsUpdate=true;
+  idiomMat.uniforms.uTime.value=time;
+  idiomMat.uniforms.uMix.value=mix;
+  idiomMat.uniforms.uFocus.value=focus;
+}
+
+/* ========= 相机（散开态可拖动旋转） ========= */
 let yaw=0.0, pitch=0.14, radius=10.4;
 let yawT=yaw, pitchT=pitch;
-
 let dragging=false, lastX=0, lastY=0, lastTap=0;
 
-canvas.addEventListener("pointerdown",(e)=>{
-  dragging=true; lastX=e.clientX; lastY=e.clientY;
-});
+canvas.addEventListener("pointerdown",(e)=>{ dragging=true; lastX=e.clientX; lastY=e.clientY; });
 window.addEventListener("pointerup",()=>dragging=false);
 window.addEventListener("pointermove",(e)=>{
   if(!dragging) return;
-  if(mode !== Mode.SCATTER) return;
-  const dx=e.clientX-lastX;
-  const dy=e.clientY-lastY;
+  if(mode!==Mode.SCATTER) return;
+  const dx=e.clientX-lastX, dy=e.clientY-lastY;
   lastX=e.clientX; lastY=e.clientY;
   yawT += dx*0.0042;
   pitchT += dy*0.0032;
 });
-
 canvas.addEventListener("click", ()=>{
-  const now = performance.now();
-  if(now - lastTap < 360){
-    triggerRedPacketFlow();
-  }
-  lastTap = now;
+  const now=performance.now();
+  if(now-lastTap<360) triggerRedPacketFlow(); // 双击抓红包
+  lastTap=now;
 });
 
-// ---------------------------
-// 红包开封流程
-// ---------------------------
-function pickIdiom(){
-  return IDIOMS[Math.floor(Math.random()*IDIOMS.length)];
+function applyCamera(dt, time){
+  if(mode===Mode.MERGE){
+    yawT += dt*0.10;
+    pitchT = damp(pitchT, 0.14, 2.8, dt);
+  }else if(mode===Mode.FOCUS){
+    pitchT = damp(pitchT, 0.12, 3.0, dt);
+  }else{
+    pitchT = clamp(pitchT, -0.22, 0.62);
+  }
+
+  yaw=damp(yaw,yawT,6.0,dt);
+  pitch=damp(pitch,pitchT,6.0,dt);
+
+  const r=radius;
+  const cx=Math.sin(yaw)*Math.cos(pitch)*r;
+  const cy=2.25 + Math.sin(pitch)*r*0.33;
+  const cz=Math.cos(yaw)*Math.cos(pitch)*r;
+  camera.position.set(cx,cy,cz);
+  camera.lookAt(0,2.25,0);
+
+  goldPoint.position.set(
+    Math.sin(yaw*0.7)*2.0,
+    5.0 + Math.sin(time*0.7)*0.12,
+    3.0 + Math.cos(yaw*0.7)*1.2
+  );
 }
-function pickVideo(){
-  return HORSE_VIDEOS[Math.floor(Math.random()*HORSE_VIDEOS.length)];
-}
+
+/* ========= 红包开封 ========= */
+let focusLock=false;
+function pickVideo(){ return HORSE_VIDEOS[(Math.random()*HORSE_VIDEOS.length)|0]; }
 
 async function triggerRedPacketFlow(){
-  if(mode !== Mode.FOCUS) setMode(Mode.FOCUS);
+  if(mode!==Mode.SCATTER && mode!==Mode.FOCUS) return;
+  if(focusLock) return;
+  focusLock=true;
 
-  const idiom = pickIdiom();
-  focusTitleEl.textContent = "红包到 · 好运到";
-  focusTextEl.textContent = `恭喜你抓到一个红包！\n\n${idiom}`;
+  if(mode!==Mode.FOCUS) setMode(Mode.FOCUS);
 
-  packetEl.classList.remove("open");
-  void packetEl.offsetWidth;
-  packetEl.classList.add("open");
+  const idiom=currentIdiom || pickIdiom();
+  focusTitleEl.textContent="红包到 · 好运到";
+  focusTextEl.textContent=`恭喜你抓到一个红包！\n\n${idiom}`;
 
-  const url = pickVideo();
+  packetEl.classList.remove("open"); void packetEl.offsetWidth; packetEl.classList.add("open");
+
   try{
+    const url=pickVideo();
     horseVideo.pause();
-    horseVideo.src = url;
+    horseVideo.src=url;
     horseVideo.load();
     await horseVideo.play().catch(()=>{});
   }catch(e){}
+
+  setTimeout(()=>{ focusLock=false; }, 650);
 }
 
-// ---------------------------
-// 手势识别（明确区分：握拳=凝聚；三指捏合=抓红包）
-// ---------------------------
-let hands = null;
-let handEnabled = false;
-let lastLandmarks = null;
-let lastLandmarksTs = 0;
+/* ========= 手势识别（严格区分） ========= */
+let hands=null;
+let handEnabled=false;
+let lastLandmarks=null;
+let lastLandmarksTs=0;
 
 function dist3(a,b){
   const dx=a.x-b.x, dy=a.y-b.y, dz=(a.z||0)-(b.z||0);
   return Math.sqrt(dx*dx+dy*dy+dz*dz);
 }
-
 function computeGesture(landmarks){
   const wrist=landmarks[0];
-  const handSize=Math.max(1e-6, dist3(wrist, landmarks[9]));
+  const handSize=Math.max(1e-6, dist3(wrist, landmarks[9])); // wrist->middle_mcp
 
   function extended(tip,pip){
     const dt=dist3(landmarks[tip], wrist);
     const dp=dist3(landmarks[pip], wrist);
     return dt > dp*1.12;
   }
+  const thumbExt=extended(4,2);
+  const indexExt=extended(8,6);
+  const middleExt=extended(12,10);
+  const ringExt=extended(16,14);
+  const pinkyExt=extended(20,18);
+  const extCount=[thumbExt,indexExt,middleExt,ringExt,pinkyExt].filter(Boolean).length;
 
-  const thumbExt = extended(4,2);
-  const indexExt = extended(8,6);
-  const middleExt= extended(12,10);
-  const ringExt  = extended(16,14);
-  const pinkyExt = extended(20,18);
+  const dTI=dist3(landmarks[4], landmarks[8]) / handSize;
+  const dTM=dist3(landmarks[4], landmarks[12]) / handSize;
+  const dIM=dist3(landmarks[8], landmarks[12]) / handSize;
+  const tipWristIdx=dist3(landmarks[8], wrist) / handSize;
+  const tipWristMid=dist3(landmarks[12], wrist) / handSize;
 
-  const extCount = [thumbExt,indexExt,middleExt,ringExt,pinkyExt].filter(Boolean).length;
-  const fist = (extCount <= 1);
-
-  // ✅ 三指捏合：拇指+食指+中指都要靠近（且不能是握拳）
-  const th = landmarks[4], ix = landmarks[8], md = landmarks[12];
-  const dTI = dist3(th, ix) / handSize;
-  const dTM = dist3(th, md) / handSize;
-  const dIM = dist3(ix, md) / handSize;
-
-  const threePinch = (!fist) && (dTI < 0.40) && (dTM < 0.44) && (dIM < 0.40);
+  // ✅ 三指捏合：距离近 + 非握拳 + 指尖离手腕不近
+  const triPinch = (dTI < 0.32 && dTM < 0.34 && dIM < 0.30)
+                && (extCount >= 2)
+                && (tipWristIdx > 0.75 && tipWristMid > 0.75);
 
   const openHand = (extCount >= 4);
 
-  const palmIdx=[0,5,9,13,17];
   const palm={x:0,y:0,z:0};
-  for(const i of palmIdx){ palm.x+=landmarks[i].x; palm.y+=landmarks[i].y; palm.z+=landmarks[i].z; }
-  palm.x/=palmIdx.length; palm.y/=palmIdx.length; palm.z/=palmIdx.length;
+  for(const i of [0,5,9,13,17]){ palm.x+=landmarks[i].x; palm.y+=landmarks[i].y; palm.z+=landmarks[i].z; }
+  palm.x/=5; palm.y/=5; palm.z/=5;
 
-  return { palm, openHand, fist, threePinch };
+  const palmClose =
+    dist3(landmarks[8],  palm)/handSize < 0.65 &&
+    dist3(landmarks[12], palm)/handSize < 0.65 &&
+    dist3(landmarks[16], palm)/handSize < 0.70 &&
+    dist3(landmarks[20], palm)/handSize < 0.72;
+
+  // ✅ 五指握拳：扩展少 + 指尖靠近掌心 + 排除 triPinch
+  const fist = (extCount <= 1) && palmClose && !triPinch;
+
+  return { palm, openHand, fist, triPinch };
 }
 
-let lastPalmX=null, lastPalmY=null;
-let prevOpen=false, prevFist=false, prevThreePinch=false;
-let pinchCooldown=0;
+let prevFist=false, prevOpen=false, prevTri=false;
 
-function handleGesture(g, dt){
-  if(g.fist && !prevFist){
-    const newIdiom = pickIdiom();
-    rebuildIdiomTargets(newIdiom, { snap:false });
-    recomputeEnvHomeRadius();
+function onFistStart(){
+  // 收拢：只在“边沿”触发一次；且不在收拢态重复换成语
+  if(mode !== Mode.MERGE){
+    const idiom=pickIdiom();
+    rebuildIdiomTargets(idiom);
+    for(let i=0;i<ENVELOPES;i++) envHomeLocal[i]=sampleEnvelopeHomeLocal(i);
     setMode(Mode.MERGE);
-    statusText.textContent = `收拢中 → 凝聚：${newIdiom}`;
-  }else if(g.openHand && !prevOpen){
-    setMode(Mode.SCATTER);
-    statusText.textContent = "散开态：雄武奔跑马形粒子 + 银河环绕（移动手掌可旋转视角）";
+    statusText.textContent=`收拢态：${idiom}（稳定）`;
   }else{
-    pinchCooldown = Math.max(0, pinchCooldown - dt);
-    if(g.threePinch && !prevThreePinch && pinchCooldown<=0 && !g.fist && !g.openHand){
-      triggerRedPacketFlow();
-      pinchCooldown = 0.55;
-    }
+    statusText.textContent=`收拢态：${currentIdiom}（稳定）`;
   }
+}
+function onOpenStart(){
+  setMode(Mode.SCATTER);
+  statusText.textContent = horseReady ? "散开态：PNG 跑马 + 银河环绕（稳定）" : "散开态：PNG 未就绪（检查路径）";
+}
+function onTriPinchStart(){
+  if(mode===Mode.SCATTER) triggerRedPacketFlow();
+}
 
-  if(mode===Mode.SCATTER && !g.fist && !g.threePinch){
-    const x=g.palm.x, y=g.palm.y;
-    if(lastPalmX!=null){
-      const dx=x-lastPalmX;
-      const dy=y-lastPalmY;
-      yawT += (-dx)*4.2;
-      pitchT += ( dy)*3.0;
-    }
-    lastPalmX=x; lastPalmY=y;
-  }else{
-    lastPalmX=lastPalmY=null;
-  }
-
-  prevOpen = g.openHand;
-  prevFist = g.fist;
-  prevThreePinch = g.threePinch;
+function handleGesture(g){
+  if(g.fist && !prevFist) onFistStart();
+  if(g.openHand && !prevOpen) onOpenStart();
+  if(g.triPinch && !prevTri) onTriPinchStart();
+  prevFist=g.fist; prevOpen=g.openHand; prevTri=g.triPinch;
 }
 
 async function startHands(){
-  if(!window.Hands){
-    statusText.textContent="手势组件未加载（网络问题？）";
-    return;
-  }
-  if(!navigator.mediaDevices?.getUserMedia){
-    statusText.textContent="当前浏览器不支持摄像头 API";
-    return;
-  }
+  if(!window.Hands) throw new Error("MediaPipe Hands missing");
+  if(!navigator.mediaDevices?.getUserMedia) throw new Error("getUserMedia unsupported");
 
-  hands = new window.Hands({
-    locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1675469240/${file}`
-  });
-  hands.setOptions({
-    maxNumHands: 1,
-    modelComplexity: 1,
-    minDetectionConfidence: 0.6,
-    minTrackingConfidence: 0.6
-  });
+  hands=new window.Hands({ locateFile:(f)=>`https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1675469240/${f}` });
+  hands.setOptions({ maxNumHands:1, modelComplexity:1, minDetectionConfidence:0.6, minTrackingConfidence:0.6 });
   hands.onResults((results)=>{
-    const lm = results.multiHandLandmarks?.[0] || null;
-    if(lm){
-      lastLandmarks = lm;
-      lastLandmarksTs = performance.now();
-    }
+    const lm=results.multiHandLandmarks?.[0] || null;
+    if(lm){ lastLandmarks=lm; lastLandmarksTs=performance.now(); }
   });
 
-  const stream = await navigator.mediaDevices.getUserMedia({
-    audio:false,
-    video:{ facingMode:"user", width:{ideal:640}, height:{ideal:480} }
-  });
-
+  const stream=await navigator.mediaDevices.getUserMedia({ audio:false, video:{ facingMode:"user", width:{ideal:640}, height:{ideal:480} } });
   videoEl.srcObject=stream;
   await videoEl.play();
 
   handEnabled=true;
   led.classList.add("on");
-  statusText.textContent="手势已启用：握拳=凝聚成语 / 张开=奔跑马+银河 / 三指捏合=抓红包";
+  statusText.textContent = "手势已启用：握拳收拢 / 张开散开 / 三指捏合抓红包";
 
   let busy=false, lastSent=0;
   async function pump(){
@@ -1626,261 +971,43 @@ btnStart.addEventListener("click", async ()=>{
   }
 });
 
-btnHelp.addEventListener("click", ()=>{
-  tips.style.display = (tips.style.display==="none") ? "flex" : "none";
-});
+btnHelp.addEventListener("click", ()=>{ tips.style.display = (tips.style.display==="none") ? "flex" : "none"; });
 
 btnReset.addEventListener("click", ()=>{
-  const newIdiom = pickIdiom();
-  rebuildIdiomTargets(newIdiom, { snap:true });
-  recomputeEnvHomeRadius();
+  const idiom=pickIdiom();
+  rebuildIdiomTargets(idiom);
 
   for(let i=0;i<ENVELOPES;i++){
-    envHome[i]=sampleEnvelopeHomeWorld();
-    envScatter[i]=sampleScatterWorld();
-    envVel[i].set(0,0,0);
-    envBrown[i].set(0,0,0);
-    envBrownVel[i].set(0,0,0);
+    envHomeLocal[i]=sampleEnvelopeHomeLocal(i);
+    envScatterWorld[i]=sampleScatterWorld();
+    envVelWorld[i].set(0,0,0);
   }
-
   hideFocusOverlay();
   setMode(Mode.MERGE);
-  mix = 0; targetMix = 0;
-
-  prevOpen = prevFist = prevThreePinch = false;
-  pinchCooldown = 0;
-
-  statusText.textContent=`已重置：合拢稳定态：${newIdiom}`;
+  statusText.textContent=`已重置：收拢态（${idiom}）`;
+  prevFist=prevOpen=prevTri=false;
 });
 
-// ---------------------------
-// ✅ 核心：散开态的“雄武奔跑马”动画（腿摆动 + 身体起伏 + 前倾冲刺感）
-// ---------------------------
-function horseAnimatedTarget(refIdx, time){
-  const x0 = horseCloud.ptsX[refIdx];
-  const y0 = horseCloud.ptsY[refIdx];
-  const z0 = horseCloud.ptsZ[refIdx];
-  const part = horseCloud.ptsPart[refIdx];
-
-  // 马整体：原地奔跑的“上下起伏 + 轻微前后摆”
-  const run = time * 6.2;         // 奔跑节奏
-  const bob = Math.sin(run) * 0.055;
-  const sway= Math.sin(run*0.5) * 0.030;
-
-  // 让马更“雄武”：整体放大一点
-  const scale = IS_MOBILE ? 1.05 : 1.10;
-
-  let x = x0 * scale;
-  let y = y0 * scale;
-  let z = z0 * 1.0;
-
-  // 身体与头：更稳，只有整体起伏
-  if(part === HorsePart.BODY || part === HorsePart.HEAD || part === HorsePart.MANE || part === HorsePart.TAIL){
-    x += sway;
-    y += bob;
-    // 头/鬃稍微更有力量感
-    if(part === HorsePart.HEAD) y += Math.sin(run*0.7) * 0.018;
-    if(part === HorsePart.MANE) y += Math.sin(run*1.0 + 1.2) * 0.014;
-    if(part === HorsePart.TAIL) x -= Math.sin(run*0.9 + 0.8) * 0.020;
-    return [x,y,z];
-  }
-
-  // 四腿：摆动更明显（制造“奔跑”）
-  // 每条腿相位不同：对角腿同步
-  const ampA = 0.32;   // 大摆
-  const ampB = 0.18;   // 小摆
-  let phase = 0;
-
-  if(part === HorsePart.LEG_FL) phase = 0.0;
-  if(part === HorsePart.LEG_BR) phase = 0.0;
-  if(part === HorsePart.LEG_FR) phase = Math.PI;
-  if(part === HorsePart.LEG_BL) phase = Math.PI;
-
-  // 腿摆动角（在髋部附近摆动）
-  const a = Math.sin(run + phase) * ampA + Math.sin(run*2.0 + phase) * ampB;
-
-  // 找一个粗略“髋部锚点”（根据腿的左右/前后）
-  let hipX = 0, hipY = 0;
-  if(part === HorsePart.LEG_FL){ hipX = 1.05; hipY = -0.05; }
-  if(part === HorsePart.LEG_FR){ hipX = 0.90; hipY =  0.00; }
-  if(part === HorsePart.LEG_BL){ hipX = -0.70; hipY = -0.10; }
-  if(part === HorsePart.LEG_BR){ hipX = -0.90; hipY = -0.05; }
-
-  hipX *= scale; hipY *= scale;
-
-  // 以髋部为旋转中心
-  const lx = x - hipX;
-  const ly = y - hipY;
-  const c = Math.cos(a), s = Math.sin(a);
-  const rx = lx*c - ly*s;
-  const ry = lx*s + ly*c;
-
-  x = hipX + rx + sway*0.6;
-  y = hipY + ry + bob*0.9;
-
-  // 蹄子触地：当腿往后甩时，略向下压（更有力）
-  const stomp = Math.max(0, Math.sin(run + phase));
-  y -= stomp * 0.06;
-
-  // 前后腿层次：微调 Z
-  if(part === HorsePart.LEG_FR || part === HorsePart.LEG_BR) z -= 0.10;
-  else z += 0.05;
-
-  return [x,y,z];
-}
-
-// ---------------------------
-// 渲染循环
-// ---------------------------
+/* ========= 动画循环 ========= */
 let time=0;
 let lastTime=performance.now();
 
-function applyCamera(dt){
-  if(mode===Mode.MERGE){
-    yawT = damp(yawT, 0.0, 2.4, dt);
-    pitchT = damp(pitchT, 0.14, 2.8, dt);
-  }else if(mode===Mode.FOCUS){
-    yawT = damp(yawT, 0.0, 3.0, dt);
-    pitchT = damp(pitchT, 0.12, 3.0, dt);
-  }else{
-    pitchT = clamp(pitchT, -0.22, 0.62);
-  }
-
-  yaw = damp(yaw, yawT, 6.0, dt);
-  pitch = damp(pitch, pitchT, 6.0, dt);
-
-  const r=radius;
-  const cx = Math.sin(yaw)*Math.cos(pitch)*r;
-  const cy = 2.25 + Math.sin(pitch)*r*0.33;
-  const cz = Math.cos(yaw)*Math.cos(pitch)*r;
-  camera.position.set(cx,cy,cz);
-  camera.lookAt(0,2.25,0);
-
-  goldPoint.position.set(
-    Math.sin(yaw*0.7)*2.0,
-    5.0 + Math.sin(time*0.7)*0.12,
-    3.0 + Math.cos(yaw*0.7)*1.2
-  );
-}
-
-function updateIdiom(dt){
-  // 凝聚态绕Y轴旋转；散开态弱一些
-  const rotSpeed =
-    (mode===Mode.MERGE)  ? 0.22 :
-    (mode===Mode.SCATTER)? 0.10 : 0.0;
-  idiomGroup.rotation.y += dt * rotSpeed;
-
-  const springMerge = 18.0;
-  const springScatter = 14.0;
-  const drag = 7.8;
-
-  // 银河倾角
-  const tilt = 0.42;
-  const ct = Math.cos(tilt), st = Math.sin(tilt);
-
-  for(let i=0;i<MAX_PARTICLES;i++){
-    const px=aPos[i*3+0], py=aPos[i*3+1], pz=aPos[i*3+2];
-    let vx=aVel[i*3+0], vy=aVel[i*3+1], vz=aVel[i*3+2];
-
-    const scatterK = mix;
-    const mergeK = 1.0 - scatterK;
-
-    // MERGE 目标：成语
-    const mx=aTar[i*3+0], my=aTar[i*3+1], mz=aTar[i*3+2];
-
-    // SCATTER 目标：马 or 银河
-    let sx=0, sy=0, sz=0;
-
-    if(aKind[i] === 0.0){
-      // ✅ “雄武奔跑马”：使用程序化点云 + 动画
-      const ref = horseRef[i];
-      const t = horseAnimatedTarget(ref, time);
-      sx = t[0];
-      sy = t[1];
-      sz = t[2];
-
-      // 轻微“气势”粒子呼吸（不破形）
-      const s = aSeed[i];
-      sx += Math.sin(time*1.2 + s*11.0) * 0.010;
-      sy += Math.cos(time*1.0 + s*13.0) * 0.008;
-      sz += Math.sin(time*1.1 + s*9.0)  * 0.010;
-
-    }else{
-      // 银河：围绕马旋转
-      const s = aSeed[i];
-      const r = aOrbR[i];
-      const ang = aOrbA[i] + time * aOrbS[i] * (0.92 + s*0.24);
-
-      const rr = r * (0.96 + 0.04*Math.sin(time*0.8 + s*10.0));
-      let x = Math.cos(ang) * rr;
-      let z = Math.sin(ang) * rr;
-      let y = aOrbY[i] + Math.sin(time*0.9 + s*8.0) * 0.10;
-
-      // 倾斜盘
-      const y2 = y*ct - z*st;
-      const z2 = y*st + z*ct;
-
-      sx = x;
-      sy = y2;
-      sz = z2;
-
-      sx += Math.sin(time*1.7 + s*21.0) * 0.010;
-      sy += Math.cos(time*1.3 + s*17.0) * 0.008;
-      sz += Math.sin(time*1.5 + s*19.0) * 0.010;
-    }
-
-    // 在 MERGE 和 SCATTER 之间插值（收拢时只显示成语）
-    const tx = lerp(mx, sx, scatterK);
-    const ty = lerp(my, sy, scatterK);
-    const tz = lerp(mz, sz, scatterK);
-
-    const spring = springMerge*mergeK + springScatter*scatterK;
-    vx += (tx - px) * spring * dt;
-    vy += (ty - py) * spring * dt;
-    vz += (tz - pz) * spring * dt;
-
-    // 散开态的“流体感”（更自然）
-    if(scatterK > 0.2){
-      const s = aSeed[i];
-      const wob = scatterK * 0.06;
-      vx += Math.sin(time*0.7 + s*9.0) * wob * dt;
-      vy += Math.cos(time*0.65 + s*8.0) * (wob*0.7) * dt;
-      vz += Math.sin(time*0.55 + s*7.0) * wob * dt;
-    }
-
-    const d = Math.exp(-drag*dt);
-    vx *= d; vy *= d; vz *= d;
-
-    aPos[i*3+0] = px + vx;
-    aPos[i*3+1] = py + vy;
-    aPos[i*3+2] = pz + vz;
-
-    aVel[i*3+0]=vx; aVel[i*3+1]=vy; aVel[i*3+2]=vz;
-  }
-
-  idiomGeo.attributes.position.needsUpdate = true;
-  idiomGeo.attributes.aVel.needsUpdate = true;
-
-  idiomMat.uniforms.uTime.value = time;
-  idiomMat.uniforms.uFocus.value = focus;
-}
-
 function updateMood(dt){
   if(mode===Mode.MERGE){
-    bloomPass.strength = damp(bloomPass.strength, 1.08, 2.8, dt);
-    bloomPass.radius   = damp(bloomPass.radius,   0.60, 2.8, dt);
-    bloomPass.threshold= damp(bloomPass.threshold,0.17, 2.8, dt);
-    renderer.toneMappingExposure = damp(renderer.toneMappingExposure, 1.08, 2.2, dt);
+    bloomPass.strength=damp(bloomPass.strength,1.14,2.8,dt);
+    bloomPass.radius  =damp(bloomPass.radius,  0.62,2.8,dt);
+    bloomPass.threshold=damp(bloomPass.threshold,0.16,2.8,dt);
+    renderer.toneMappingExposure=damp(renderer.toneMappingExposure,1.08,2.2,dt);
   }else if(mode===Mode.SCATTER){
-    bloomPass.strength = damp(bloomPass.strength, 1.18, 2.8, dt);
-    bloomPass.radius   = damp(bloomPass.radius,   0.66, 2.8, dt);
-    bloomPass.threshold= damp(bloomPass.threshold,0.16, 2.8, dt);
-    renderer.toneMappingExposure = damp(renderer.toneMappingExposure, 1.10, 2.2, dt);
+    bloomPass.strength=damp(bloomPass.strength,1.22,2.8,dt);
+    bloomPass.radius  =damp(bloomPass.radius,  0.68,2.8,dt);
+    bloomPass.threshold=damp(bloomPass.threshold,0.15,2.8,dt);
+    renderer.toneMappingExposure=damp(renderer.toneMappingExposure,1.10,2.2,dt);
   }else{
-    bloomPass.strength = damp(bloomPass.strength, 1.22, 2.8, dt);
-    bloomPass.radius   = damp(bloomPass.radius,   0.70, 2.8, dt);
-    bloomPass.threshold= damp(bloomPass.threshold,0.15, 2.8, dt);
-    renderer.toneMappingExposure = damp(renderer.toneMappingExposure, 1.12, 2.2, dt);
+    bloomPass.strength=damp(bloomPass.strength,1.26,2.8,dt);
+    bloomPass.radius  =damp(bloomPass.radius,  0.74,2.8,dt);
+    bloomPass.threshold=damp(bloomPass.threshold,0.14,2.8,dt);
+    renderer.toneMappingExposure=damp(renderer.toneMappingExposure,1.12,2.2,dt);
   }
 }
 
@@ -1890,39 +1017,30 @@ function animate(){
   lastTime=now;
   time += dt;
 
-  if(handEnabled && lastLandmarks && (now-lastLandmarksTs) < 180){
-    const g = computeGesture(lastLandmarks);
-    handleGesture(g, dt);
+  if(handEnabled && lastLandmarks && (now-lastLandmarksTs)<180){
+    const g=computeGesture(lastLandmarks);
+    handleGesture(g);
   }
 
-  // 收拢更丝滑：mix 下降慢一点
-  const mixLambda = (targetMix < mix) ? 1.65 : 2.4;
-  mix = damp(mix, targetMix, mixLambda, dt);
-
+  mix = damp(mix, targetMix, 2.8, dt);
   targetFocus = (mode===Mode.FOCUS) ? 1 : 0;
   focus = damp(focus, targetFocus, 4.0, dt);
-
   bloomMixPass.material.uniforms.uBloomIntensity.value = lerp(1.0, 0.34, focus);
 
-  applyCamera(dt);
-  updateIdiom(dt);
+  applyCamera(dt, time);
+  updateIdiom(dt, time);
   updateEnvelopes(time, dt);
-  fireworks.update(dt);
   updateMood(dt);
 
   camera.layers.set(BLOOM_LAYER);
   bloomComposer.render();
-
   camera.layers.set(0);
   finalComposer.render();
 
   requestAnimationFrame(animate);
 }
-requestAnimationFrame(animate);
 
-// ---------------------------
-// Resize
-// ---------------------------
+/* ========= Resize ========= */
 function onResize(){
   const w=window.innerWidth, h=window.innerHeight;
   camera.aspect=w/h; camera.updateProjectionMatrix();
@@ -1930,22 +1048,26 @@ function onResize(){
   renderer.setSize(w,h,false);
   bloomComposer.setSize(w,h);
   finalComposer.setSize(w,h);
-  bloomPass.setSize?.(w,h);
 }
 window.addEventListener("resize", onResize);
 
-// ---------------------------
-// 初始提示 & 初始红包
-// ---------------------------
-statusText.textContent = `已加载：合拢稳定态：${currentIdiom}（可点击“启用手势识别”）`;
+/* ========= 初始化：先加载 PNG 帧点云，再开始渲染 ========= */
+horseVideo.muted=true; horseVideo.loop=true; horseVideo.playsInline=true;
 
-horseVideo.muted = true;
-horseVideo.loop = true;
-horseVideo.playsInline = true;
+(async ()=>{
+  try{
+    await buildHorsePointCloudsFromPNGs();
+    statusText.textContent = `已加载：收拢态（${currentIdiom}）· 张手散开为 PNG 跑马`;
+  }catch(e){
+    statusText.textContent = "PNG 跑马加载失败：请检查 HORSE_FRAMES 路径/文件名（大小写也要一致）";
+    console.error(e);
+  }
 
-for(let i=0;i<ENVELOPES;i++){
-  envHome[i] = sampleEnvelopeHomeWorld();
-}
+  // 红包初始位置
+  for(let i=0;i<ENVELOPES;i++) envHomeLocal[i]=sampleEnvelopeHomeLocal(i);
+
+  requestAnimationFrame(animate);
+})();
 </script>
 </body>
 </html>
