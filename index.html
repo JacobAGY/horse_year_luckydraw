@@ -485,9 +485,9 @@ bloomComposer.addPass(new RenderPass(scene, camera));
 
 const bloomPass = new UnrealBloomPass(
   new THREE.Vector2(window.innerWidth, window.innerHeight),
-  1.18,
-  0.62,
-  0.16
+  1.10,
+  0.60,
+  0.17
 );
 bloomComposer.addPass(bloomPass);
 
@@ -566,7 +566,7 @@ const MA_TEX = makeMaGlyphTexture();
 // ---------------------------
 function sampleTextPoints(text, {
   fontSize = 190,
-  step = IS_MOBILE ? 4 : 3,
+  step = IS_MOBILE ? 3 : 2,     // 更密一点：更“凝聚”
   threshold = 8,
   worldWidth = 7.4
 } = {}){
@@ -663,15 +663,10 @@ const idiomGroup = new THREE.Group();
 idiomGroup.position.set(0, 2.25, 0);
 scene.add(idiomGroup);
 
-/**
- * ✅ 关键修复：提前声明，避免 rebuildIdiomTargets() 在红包模块初始化前写入时报 TDZ
- */
-let envHomeRingR = 3.2;
-
 let currentIdiom = "";
 let idiomCount = 0;
 
-const MAX_PARTICLES = IS_MOBILE ? 12000 : 20000;
+const MAX_PARTICLES = IS_MOBILE ? 14000 : 22000;
 
 const idiomGeo = new THREE.BufferGeometry();
 const aPos = new Float32Array(MAX_PARTICLES*3);
@@ -685,28 +680,56 @@ idiomGeo.setAttribute("aTar", new THREE.BufferAttribute(aTar, 3));
 idiomGeo.setAttribute("aSeed", new THREE.BufferAttribute(aSeed,1));
 
 for(let i=0;i<MAX_PARTICLES;i++){
-  aPos[i*3+0]=(Math.random()-0.5)*6;
-  aPos[i*3+1]=2+(Math.random()-0.5)*3;
-  aPos[i*3+2]=(Math.random()-0.5)*6;
+  // 初始就更靠近文本区域，避免“永远散着”
+  aPos[i*3+0]=(Math.random()-0.5)*3.2;
+  aPos[i*3+1]=(Math.random()-0.5)*1.8;
+  aPos[i*3+2]=(Math.random()-0.5)*1.2;
 
-  aVel[i*3+0]=(Math.random()-0.5)*0.2;
-  aVel[i*3+1]=(Math.random()-0.5)*0.2;
-  aVel[i*3+2]=(Math.random()-0.5)*0.2;
+  aVel[i*3+0]=0;
+  aVel[i*3+1]=0;
+  aVel[i*3+2]=0;
 
   aTar[i*3+0]=0; aTar[i*3+1]=0; aTar[i*3+2]=0;
   aSeed[i]=Math.random();
+}
+
+// 给红包采样用：记录成语目标范围
+let idiomBounds = { minX:-3, maxX:3, minY:-1.5, maxY:1.5 };
+
+function resetIdiomToTargets(jitter=0.06){
+  // 关键：重置速度并把点拉回目标附近，确保“凝聚成成语”
+  for(let i=0;i<MAX_PARTICLES;i++){
+    const tx=aTar[i*3+0], ty=aTar[i*3+1], tz=aTar[i*3+2];
+    aPos[i*3+0]=tx + (Math.random()-0.5)*jitter;
+    aPos[i*3+1]=ty + (Math.random()-0.5)*jitter;
+    aPos[i*3+2]=tz + (Math.random()-0.5)*jitter*0.35;
+    aVel[i*3+0]=0;
+    aVel[i*3+1]=0;
+    aVel[i*3+2]=0;
+  }
+  idiomGeo.attributes.position.needsUpdate = true;
+  idiomGeo.attributes.aVel.needsUpdate = true;
 }
 
 function rebuildIdiomTargets(text){
   currentIdiom = text;
   const pts = sampleTextPoints(text, {
     fontSize: 190,
-    step: IS_MOBILE ? 4 : 3,
-    worldWidth: IS_MOBILE ? 6.8 : 7.6
+    step: IS_MOBILE ? 3 : 2,
+    worldWidth: IS_MOBILE ? 6.9 : 7.8
   });
 
   const targetN = Math.min(MAX_PARTICLES, Math.floor(pts.length/3));
   idiomCount = targetN;
+
+  // 计算 bounds（用于红包分布，不会绕Y轴集体旋转，不会挤一团）
+  let minX= 1e9, maxX=-1e9, minY= 1e9, maxY=-1e9;
+  for(let i=0;i<targetN;i++){
+    const x = pts[i*3+0], y = pts[i*3+1];
+    if(x<minX) minX=x; if(x>maxX) maxX=x;
+    if(y<minY) minY=y; if(y>maxY) maxY=y;
+  }
+  idiomBounds = { minX, maxX, minY, maxY };
 
   for(let i=0;i<MAX_PARTICLES;i++){
     const idx = (i % targetN) * 3;
@@ -717,8 +740,8 @@ function rebuildIdiomTargets(text){
   idiomGeo.setDrawRange(0, MAX_PARTICLES);
   idiomGeo.attributes.aTar.needsUpdate = true;
 
-  idiomGeo.computeBoundingSphere();
-  envHomeRingR = Math.max(2.6, Math.min(5.2, (idiomGeo.boundingSphere?.radius || 3.4) * 1.10));
+  // 让重建后的文本立即“成形”，避免你看到散着
+  resetIdiomToTargets(0.055);
 }
 
 const idiomMat = new THREE.ShaderMaterial({
@@ -733,10 +756,7 @@ const idiomMat = new THREE.ShaderMaterial({
   },
   vertexShader: /* glsl */`
     uniform float uTime;
-    uniform float uMix;
     uniform float uFocus;
-    attribute vec3 aVel;
-    attribute vec3 aTar;
     attribute float aSeed;
     varying float vSeed;
     varying float vGlow;
@@ -745,23 +765,24 @@ const idiomMat = new THREE.ShaderMaterial({
 
       vec3 p = position;
 
-      float t = uTime*(0.7 + aSeed*1.3);
+      float t = uTime*(0.55 + aSeed*1.15);
 
-      p.x += cos(t + aSeed*12.0) * (0.02 + aSeed*0.05);
-      p.y += sin(t*0.9 + aSeed*10.0) * (0.03 + aSeed*0.06);
-      p.z += sin(t*1.1 + aSeed* 8.0) * (0.02 + aSeed*0.05);
+      // 轻微呼吸，不影响文字可读性
+      p.x += cos(t + aSeed*12.0) * (0.010 + aSeed*0.020);
+      p.y += sin(t*0.9 + aSeed*10.0) * (0.012 + aSeed*0.024);
+      p.z += sin(t*1.1 + aSeed* 8.0) * (0.008 + aSeed*0.018);
 
-      p *= (1.0 + uFocus*(0.06 + aSeed*0.12));
+      p *= (1.0 + uFocus*(0.04 + aSeed*0.10));
 
       vec4 mv = modelViewMatrix * vec4(p, 1.0);
       gl_Position = projectionMatrix * mv;
 
       float dist = max(0.001, -mv.z);
 
-      float base = 0.95;
-      float tw = 0.86 + 0.14*sin(uTime*2.2 + aSeed*9.0);
+      float base = 0.92;
+      float tw = 0.86 + 0.14*sin(uTime*2.0 + aSeed*9.0);
 
-      gl_PointSize = clamp(base*tw*(120.0/dist), 0.55, 2.0);
+      gl_PointSize = clamp(base*tw*(120.0/dist), 0.7, 2.2);
 
       vGlow = 0.55 + 0.45*sin(uTime*2.0 + aSeed*11.0);
     }
@@ -783,8 +804,8 @@ const idiomMat = new THREE.ShaderMaterial({
       vec3 col = mix(warm, gold, k);
       col = mix(col, red, smoothstep(0.78, 0.98, vSeed)*0.45);
 
-      float a = m.a * (0.55 + 0.65*vGlow);
-      gl_FragColor = vec4(col * (1.15 + 0.55*m.a), a);
+      float a = m.a * (0.58 + 0.60*vGlow);
+      gl_FragColor = vec4(col * (1.12 + 0.50*m.a), a);
     }
   `
 });
@@ -796,14 +817,17 @@ idiomPoints.layers.enable(BLOOM_LAYER);
 rebuildIdiomTargets(IDIOMS[Math.floor(Math.random()*IDIOMS.length)]);
 
 // ---------------------------
-// 红包系统
+// 红包系统（关键改造：不绑定成语组、不绕Y轴集体旋转、不凝聚成一团，散开时真正“飘散”）
 // ---------------------------
-const ENVELOPES = IS_MOBILE ? 160 : 240;
-const envGroup = new THREE.Group();
-idiomGroup.add(envGroup);
-envGroup.position.set(0,0,0);
+const ENVELOPES = IS_MOBILE ? 170 : 260;
 
-// ✅ 删除了这里原本的：let envHomeRingR = 3.2;（因为已提前声明）
+// ✅ 独立的红包组：不再 add 到 idiomGroup（避免跟着成语整体绕Y轴转）
+const envGroup = new THREE.Group();
+envGroup.position.set(0, 2.25, 0);
+scene.add(envGroup);
+
+// 用于 home 分布的“安全半径”
+let envHomeRadius = 4.2;
 
 function makeRedEnvelopeTexture(){
   const c = document.createElement("canvas");
@@ -864,72 +888,106 @@ envMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
 envGroup.add(envMesh);
 envMesh.layers.enable(BLOOM_LAYER);
 
-const envHomeLocal = new Array(ENVELOPES);
-const envScatterWorld = new Array(ENVELOPES);
-const envVelWorld = new Array(ENVELOPES);
+const envHome = new Array(ENVELOPES);         // world-space home
+const envScatter = new Array(ENVELOPES);      // world-space scatter base
+const envVel = new Array(ENVELOPES);          // world-space velocity
 const envScale = new Array(ENVELOPES);
 const envSeed = new Array(ENVELOPES);
 
-function sampleEnvelopeHomeLocal(){
-  const ang = Math.random() * Math.PI * 2;
-  const r = envHomeRingR * (0.75 + Math.random() * 0.55);
-  const y = (Math.random()-0.5) * 1.9;
-  const z = (Math.random()-0.5) * 1.5;
-  return new THREE.Vector3(Math.cos(ang)*r, y, z);
+// 让红包“围绕成语，但不形成一圈、不挤一团”：在文本外缘的“壳层”采样
+function recomputeEnvHomeRadius(){
+  const w = Math.max(3.4, (idiomBounds.maxX - idiomBounds.minX));
+  const h = Math.max(1.8, (idiomBounds.maxY - idiomBounds.minY));
+  envHomeRadius = Math.max(3.6, Math.min(5.6, Math.sqrt(w*w + h*h) * 0.95 + 1.2));
 }
+
+function sampleEnvelopeHomeWorld(){
+  // 以文本中心(0,2.25,0)为基准
+  // 采样一个“外壳”：半径在 [R*0.85, R*1.25]，并加入少量深度
+  const R = envHomeRadius;
+  const ang = Math.random() * Math.PI * 2;
+  const r = R * (0.85 + Math.random()*0.40);
+  const y = (Math.random()-0.5) * 2.4;         // 上下漂浮范围
+  const z = (Math.random()-0.5) * 2.8;         // 深度分布，避免贴一张纸
+
+  return new THREE.Vector3(
+    Math.cos(ang)*r,
+    y,
+    z
+  );
+}
+
+// 散开态：更远、更松、更有层次
 function sampleScatterWorld(){
-  const R = 7.0;
+  const R = 10.5;
   const u = Math.random();
   const v = Math.random();
   const theta = u * Math.PI * 2;
   const phi = Math.acos(2 * v - 1);
-  const rr = (0.45 + Math.pow(Math.random(), 0.65) * 0.55) * R;
+  const rr = (0.35 + Math.pow(Math.random(), 0.55) * 0.65) * R;
+
   const x = rr * Math.sin(phi) * Math.cos(theta);
-  const y = rr * Math.cos(phi) * 0.75 + 2.2;
-  const z = rr * Math.sin(phi) * Math.sin(theta);
+  const y = rr * Math.cos(phi) * 0.70 + 2.0;
+  const z = rr * Math.sin(phi) * Math.sin(theta) - 1.5;
   return new THREE.Vector3(x,y,z);
 }
 
+recomputeEnvHomeRadius();
+
 for(let i=0;i<ENVELOPES;i++){
-  envHomeLocal[i] = sampleEnvelopeHomeLocal();
-  envScatterWorld[i] = sampleScatterWorld();
-  envVelWorld[i] = new THREE.Vector3(0,0,0);
-  envScale[i] = lerp(0.75, 1.65, Math.random());
+  envHome[i] = sampleEnvelopeHomeWorld();
+  envScatter[i] = sampleScatterWorld();
+  envVel[i] = new THREE.Vector3(0,0,0);
+  envScale[i] = lerp(0.80, 1.70, Math.random());
   envSeed[i] = Math.random()*1000;
 }
 
 const _obj = new THREE.Object3D();
-const _tmp = new THREE.Vector3();
-const _homeWorld = new THREE.Vector3();
 
 function updateEnvelopes(time, dt){
+  const scatterDrift = 0.18; // 散开态持续漂移强度
+
   for(let i=0;i<ENVELOPES;i++){
     const seed = envSeed[i];
-    const wob = Math.sin(time*(0.8 + (seed%1.0)*1.2) + seed) * 0.10;
 
-    _homeWorld.copy(envHomeLocal[i]);
-    _homeWorld.y += wob;
+    // home 轻微漂浮（不绕Y轴整体旋转）
+    const home = envHome[i];
+    const hx = home.x;
+    const hy = home.y + Math.sin(time*(0.9 + (seed%1.0)*1.2) + seed) * 0.10;
+    const hz = home.z + Math.cos(time*0.8 + seed) * 0.06;
 
-    const sW = envScatterWorld[i];
-    const vW = envVelWorld[i];
+    // scatter 漂移 + 阻尼
+    const s = envScatter[i];
+    const v = envVel[i];
 
-    vW.multiplyScalar(Math.pow(0.92, dt*60.0));
-    sW.addScaledVector(vW, dt);
-    sW.y += Math.sin(time*0.9 + seed)*0.015;
+    // 阻尼（略弱，保持“飘散感”）
+    v.multiplyScalar(Math.pow(0.94, dt*60.0));
 
-    idiomGroup.updateMatrixWorld(true);
-    _tmp.copy(_homeWorld).applyMatrix4(idiomGroup.matrixWorld);
+    // 散开态做一点“空气流”式的扰动（更自然）
+    if(mix > 0.35){
+      const n1 = Math.sin(time*0.7 + seed*0.9);
+      const n2 = Math.cos(time*0.65 + seed*1.1);
+      const n3 = Math.sin(time*0.55 + seed*1.3);
+      v.x += n1 * scatterDrift * dt;
+      v.y += n2 * scatterDrift * dt * 0.55;
+      v.z += n3 * scatterDrift * dt;
+    }
 
-    const x = lerp(_tmp.x, sW.x, mix);
-    const y = lerp(_tmp.y, sW.y, mix);
-    const z = lerp(_tmp.z, sW.z, mix);
+    s.addScaledVector(v, dt);
+
+    // 最终位置：home → scatter 过渡（mix=0 时在 home，mix=1 时在 scatter）
+    const x = lerp(hx, s.x, mix);
+    const y = lerp(hy, s.y, mix);
+    const z = lerp(hz, s.z, mix);
 
     _obj.position.set(x,y,z);
-    _obj.quaternion.copy(camera.quaternion);
-    _obj.rotateZ(Math.sin(time*0.7 + seed)*0.18*(1.0-mix));
 
-    const s = envScale[i] * (1.0 - focus*0.08);
-    _obj.scale.setScalar(s);
+    // 仍然做 billboard，但每个红包自身有一点独立旋转（不是集体绕Y）
+    _obj.quaternion.copy(camera.quaternion);
+    _obj.rotateZ(Math.sin(time*0.9 + seed)*0.22);
+
+    const s0 = envScale[i] * (1.0 - focus*0.10);
+    _obj.scale.setScalar(s0);
 
     _obj.updateMatrix();
     envMesh.setMatrixAt(i, _obj.matrix);
@@ -938,38 +996,35 @@ function updateEnvelopes(time, dt){
 }
 
 function kickScatterImpulse(){
+  // 成语点：强一点的爆散
   for(let i=0;i<MAX_PARTICLES;i++){
     const sx = (Math.random()-0.5);
     const sy = (Math.random()-0.2);
     const sz = (Math.random()-0.5);
     const len = Math.max(1e-4, Math.sqrt(sx*sx+sy*sy+sz*sz));
-    const k = 1.2 + Math.random()*2.4;
+    const k = 2.0 + Math.random()*3.4;
     aVel[i*3+0] += (sx/len)*k;
     aVel[i*3+1] += (sy/len)*k;
     aVel[i*3+2] += (sz/len)*k;
   }
   idiomGeo.attributes.aVel.needsUpdate = true;
 
-  const center = new THREE.Vector3();
-  center.copy(idiomGroup.position);
-  idiomGroup.updateMatrixWorld(true);
-  center.applyMatrix4(idiomGroup.matrixWorld);
-
+  // 红包：真正四处飘散（从当前位置向外 + 随机扰动）
   for(let i=0;i<ENVELOPES;i++){
-    const p = envScatterWorld[i];
-    const dir = new THREE.Vector3().subVectors(p, center).normalize();
-    dir.x += (Math.random()-0.5)*0.35;
-    dir.y += (Math.random()-0.2)*0.25;
-    dir.z += (Math.random()-0.5)*0.35;
+    const p = envScatter[i];
+    const dir = p.clone().normalize();
+    dir.x += (Math.random()-0.5)*0.45;
+    dir.y += (Math.random()-0.2)*0.35;
+    dir.z += (Math.random()-0.5)*0.45;
     dir.normalize();
 
-    const kick = 2.4 + Math.random()*4.2;
-    envVelWorld[i].addScaledVector(dir, kick);
+    const kick = 5.0 + Math.random()*6.5;
+    envVel[i].addScaledVector(dir, kick);
   }
 }
 
 // ---------------------------
-// 背景烟花（不受手势影响）
+// 背景烟花（更小粒子 + 更自然：火箭上升→爆炸）
 // ---------------------------
 function smoothstep(a,b,x){
   const t = clamp((x-a)/(b-a), 0, 1);
@@ -977,7 +1032,7 @@ function smoothstep(a,b,x){
 }
 
 class Fireworks {
-  constructor(maxParticles=7000){
+  constructor(maxParticles=6500, maxRockets=8){
     this.max = maxParticles;
     this.pos = new Float32Array(this.max*3);
     this.vel = new Float32Array(this.max*3);
@@ -1004,7 +1059,9 @@ class Fireworks {
           vec4 mv = modelViewMatrix * vec4(position,1.0);
           gl_Position = projectionMatrix * mv;
           float dist = max(0.001, -mv.z);
-          gl_PointSize = clamp(2.2*(200.0/dist), 0.6, 6.0);
+
+          // ✅ 更小的烟花粒子
+          gl_PointSize = clamp(1.35*(210.0/dist), 0.55, 3.2);
         }
       `,
       fragmentShader:/*glsl*/`
@@ -1013,11 +1070,14 @@ class Fireworks {
         void main(){
           vec2 uv = gl_PointCoord - 0.5;
           float d = length(uv);
-          float core = smoothstep(0.25, 0.0, d);
-          float halo = smoothstep(0.6, 0.15, d) * 0.55;
+
+          // 更“自然”的火花：核心更小、边缘更柔
+          float core = smoothstep(0.18, 0.0, d);
+          float halo = smoothstep(0.55, 0.16, d) * 0.38;
           float a = core + halo;
           if(a < 0.01) discard;
-          gl_FragColor = vec4(vColor*(1.25 + 0.75*halo), a);
+
+          gl_FragColor = vec4(vColor*(1.10 + 0.55*halo), a);
         }
       `
     });
@@ -1026,6 +1086,9 @@ class Fireworks {
     this.points.frustumCulled = false;
     scene.add(this.points);
     this.points.layers.enable(BLOOM_LAYER);
+
+    this.rockets = [];
+    this.maxRockets = maxRockets;
 
     this.spawnTimer = 0;
   }
@@ -1043,56 +1106,129 @@ class Fireworks {
     return [r,g,b];
   }
 
-  spawnBurst(origin, count=180){
+  allocParticle(){
+    for(let i=0;i<this.max;i++){
+      if(this.active[i]===0) return i;
+    }
+    return -1;
+  }
+
+  spawnRocket(){
+    if(this.rockets.length >= this.maxRockets) return;
+
+    const ox = (Math.random()-0.5)*18;
+    const oz = -10 - Math.random()*22;
+    const targetY = 6.0 + Math.random()*6.5;
+
+    const rocket = {
+      x: ox,
+      y: 0.8 + Math.random()*0.8,
+      z: oz,
+      vx: (Math.random()-0.5)*0.6,
+      vy: 7.5 + Math.random()*2.8,
+      vz: (Math.random()-0.5)*0.6,
+      targetY,
+      // 火箭颜色略偏暖白
+      col: [1.0, 0.92, 0.70]
+    };
+    this.rockets.push(rocket);
+  }
+
+  spawnBurst(origin, count=170){
+    // 一次爆炸的色相一致，但会有轻微偏移
+    const baseH = Math.random();
+    const baseS = 0.70 + Math.random()*0.28;
+    const baseV = 0.82 + Math.random()*0.18;
+
     for(let n=0;n<count;n++){
-      let idx = -1;
-      for(let i=0;i<this.max;i++){
-        if(this.active[i]===0){ idx=i; break; }
-      }
+      const idx = this.allocParticle();
       if(idx<0) break;
 
       this.active[idx]=1;
       this.age[idx]=0;
-      this.life[idx]=1.1 + Math.random()*0.9;
+      this.life[idx]=1.35 + Math.random()*1.00;
 
-      const h = Math.random();
-      const s = 0.75 + Math.random()*0.25;
-      const v = 0.85 + Math.random()*0.15;
+      // 色相轻微扩散，更自然
+      const h = (baseH + (Math.random()-0.5)*0.08 + 1.0) % 1.0;
+      const s = clamp(baseS + (Math.random()-0.5)*0.10, 0.55, 1.0);
+      const v = clamp(baseV + (Math.random()-0.5)*0.08, 0.65, 1.0);
       const [r,g,b]=this.hsvToRgb(h,s,v);
 
       this.col[idx*3+0]=r;
       this.col[idx*3+1]=g;
       this.col[idx*3+2]=b;
 
-      this.pos[idx*3+0]=origin.x + (Math.random()-0.5)*0.15;
-      this.pos[idx*3+1]=origin.y + (Math.random()-0.5)*0.15;
-      this.pos[idx*3+2]=origin.z + (Math.random()-0.5)*0.15;
+      this.pos[idx*3+0]=origin.x + (Math.random()-0.5)*0.10;
+      this.pos[idx*3+1]=origin.y + (Math.random()-0.5)*0.10;
+      this.pos[idx*3+2]=origin.z + (Math.random()-0.5)*0.10;
 
-      const u=Math.random(), v2=Math.random();
+      // 更自然的速度分布：中心密、外缘疏（非纯球面均匀）
+      const u=Math.random();
+      const v2=Math.random();
       const theta=u*Math.PI*2;
       const phi=Math.acos(2*v2-1);
-      const sp=3.8 + Math.random()*4.2;
-      const vx=Math.sin(phi)*Math.cos(theta)*sp;
-      const vy=Math.cos(phi)*sp*0.75 + 1.2;
-      const vz=Math.sin(phi)*Math.sin(theta)*sp;
 
-      this.vel[idx*3+0]=vx;
-      this.vel[idx*3+1]=vy;
-      this.vel[idx*3+2]=vz;
+      const speed = 3.2 + Math.pow(Math.random(), 0.55)*5.0;
+      const sx = Math.sin(phi)*Math.cos(theta);
+      const sy = Math.cos(phi);
+      const sz = Math.sin(phi)*Math.sin(theta);
+
+      this.vel[idx*3+0]=sx*speed;
+      this.vel[idx*3+1]=sy*speed*0.78 + 1.1;
+      this.vel[idx*3+2]=sz*speed;
     }
   }
 
   update(dt, time){
     this.spawnTimer -= dt;
-
     if(this.spawnTimer <= 0){
-      this.spawnTimer = 0.9 + Math.random()*0.9;
-      const ox = (Math.random()-0.5)*16;
-      const oy = 5.0 + Math.random()*6.5;
-      const oz = -12 - Math.random()*18;
-      this.spawnBurst(new THREE.Vector3(ox,oy,oz), IS_MOBILE ? 120 : 190);
+      this.spawnTimer = 0.55 + Math.random()*0.65;
+      this.spawnRocket();
     }
 
+    // 更新火箭：上升、尾焰（少量粒子），到达高度则爆炸
+    for(let r=this.rockets.length-1;r>=0;r--){
+      const rocket = this.rockets[r];
+
+      // 轻微空气阻力
+      rocket.vx *= Math.pow(0.985, dt*60);
+      rocket.vy *= Math.pow(0.992, dt*60);
+      rocket.vz *= Math.pow(0.985, dt*60);
+
+      rocket.x += rocket.vx*dt;
+      rocket.y += rocket.vy*dt;
+      rocket.z += rocket.vz*dt;
+
+      // 尾焰：更少、更细
+      if(Math.random() < 0.35){
+        const idx = this.allocParticle();
+        if(idx>=0){
+          this.active[idx]=1;
+          this.age[idx]=0;
+          this.life[idx]=0.55 + Math.random()*0.35;
+
+          this.col[idx*3+0]=rocket.col[0]*0.95;
+          this.col[idx*3+1]=rocket.col[1]*0.80;
+          this.col[idx*3+2]=rocket.col[2]*0.55;
+
+          this.pos[idx*3+0]=rocket.x + (Math.random()-0.5)*0.08;
+          this.pos[idx*3+1]=rocket.y + (Math.random()-0.5)*0.08;
+          this.pos[idx*3+2]=rocket.z + (Math.random()-0.5)*0.08;
+
+          this.vel[idx*3+0]=(Math.random()-0.5)*1.0;
+          this.vel[idx*3+1]=-(2.0 + Math.random()*2.0);
+          this.vel[idx*3+2]=(Math.random()-0.5)*1.0;
+        }
+      }
+
+      if(rocket.y >= rocket.targetY){
+        // 爆炸点略向后（更像远处天空）
+        this.spawnBurst(new THREE.Vector3(rocket.x, rocket.y, rocket.z), IS_MOBILE ? 130 : 190);
+        this.rockets.splice(r,1);
+      }
+    }
+
+    // 更新爆炸粒子
     for(let i=0;i<this.max;i++){
       if(this.active[i]===0) continue;
 
@@ -1106,14 +1242,23 @@ class Fireworks {
         continue;
       }
 
-      this.vel[i*3+1] -= 3.2 * dt;
-      this.vel[i*3+0] *= Math.pow(0.985, dt*60);
-      this.vel[i*3+1] *= Math.pow(0.985, dt*60);
-      this.vel[i*3+2] *= Math.pow(0.985, dt*60);
+      // 重力 + 空阻
+      this.vel[i*3+1] -= 3.0 * dt;
+      const dampK = Math.pow(0.986, dt*60);
+      this.vel[i*3+0] *= dampK;
+      this.vel[i*3+1] *= dampK;
+      this.vel[i*3+2] *= dampK;
 
+      // 位置更新
       this.pos[i*3+0] += this.vel[i*3+0]*dt;
       this.pos[i*3+1] += this.vel[i*3+1]*dt;
       this.pos[i*3+2] += this.vel[i*3+2]*dt;
+
+      // 让亮度更自然地衰减（通过颜色轻微衰减）
+      const fade = 1.0 - smoothstep(0.35, 1.0, t);
+      this.col[i*3+0] *= (0.9992 + fade*0.0008);
+      this.col[i*3+1] *= (0.9992 + fade*0.0008);
+      this.col[i*3+2] *= (0.9992 + fade*0.0008);
     }
 
     this.geo.attributes.position.needsUpdate = true;
@@ -1121,7 +1266,7 @@ class Fireworks {
     this.mat.uniforms.uTime.value = time;
   }
 }
-const fireworks = new Fireworks(IS_MOBILE ? 5200 : 7800);
+const fireworks = new Fireworks(IS_MOBILE ? 5200 : 6800, IS_MOBILE ? 6 : 8);
 
 // ---------------------------
 // 相机控制
@@ -1234,9 +1379,13 @@ let pinchCooldown=0;
 
 function handleGesture(g, dt){
   if(g.closeHand){
+    // 合拢态：成语必须“清晰凝聚”
     rebuildIdiomTargets(pickIdiom());
-    for(let i=0;i<ENVELOPES;i++) envHomeLocal[i] = sampleEnvelopeHomeLocal();
+    recomputeEnvHomeRadius();
+    for(let i=0;i<ENVELOPES;i++) envHome[i] = sampleEnvelopeHomeWorld();
+
     setMode(Mode.MERGE);
+    mix = 0; targetMix = 0; // 更快回到合拢态
   }else if(g.openHand){
     setMode(Mode.SCATTER);
   }
@@ -1337,13 +1486,17 @@ btnHelp.addEventListener("click", ()=>{
 
 btnReset.addEventListener("click", ()=>{
   rebuildIdiomTargets(pickIdiom());
+  recomputeEnvHomeRadius();
+
   for(let i=0;i<ENVELOPES;i++){
-    envHomeLocal[i]=sampleEnvelopeHomeLocal();
-    envScatterWorld[i]=sampleScatterWorld();
-    envVelWorld[i].set(0,0,0);
+    envHome[i]=sampleEnvelopeHomeWorld();
+    envScatter[i]=sampleScatterWorld();
+    envVel[i].set(0,0,0);
   }
+
   hideFocusOverlay();
   setMode(Mode.MERGE);
+  mix = 0; targetMix = 0;
   statusText.textContent="已重置：合拢态（随机成语）";
 });
 
@@ -1355,9 +1508,11 @@ let lastTime=performance.now();
 
 function applyCamera(dt){
   if(mode===Mode.MERGE){
-    yawT += dt*0.18;
+    // 合拢态尽量稳定、便于看清成语
+    yawT = damp(yawT, 0.0, 2.2, dt);
     pitchT = damp(pitchT, 0.14, 2.8, dt);
   }else if(mode===Mode.FOCUS){
+    yawT = damp(yawT, 0.0, 3.0, dt);
     pitchT = damp(pitchT, 0.12, 3.0, dt);
   }else{
     pitchT = clamp(pitchT, -0.22, 0.62);
@@ -1381,10 +1536,14 @@ function applyCamera(dt){
 }
 
 function updateIdiom(dt){
-  idiomGroup.rotation.y += dt * (0.45 + 0.25*(1.0-mix));
+  // ✅ 合拢态不绕Y轴转（让文字稳定、清晰）
+  // ✅ 散开态可以稍微转一点，增强动感
+  const rotSpeed = (mode===Mode.SCATTER) ? 0.28 : 0.0;
+  idiomGroup.rotation.y += dt * rotSpeed;
 
-  const spring = 7.2;
-  const drag   = 3.6;
+  // 更强的弹簧（更快“凝聚”）
+  const spring = 16.0;
+  const drag   = 7.2;
 
   for(let i=0;i<MAX_PARTICLES;i++){
     const px=aPos[i*3+0], py=aPos[i*3+1], pz=aPos[i*3+2];
@@ -1392,20 +1551,25 @@ function updateIdiom(dt){
 
     const tx=aTar[i*3+0], ty=aTar[i*3+1], tz=aTar[i*3+2];
 
-    if(mix < 0.999){
-      const ax = (tx - px) * spring * (1.0-mix);
-      const ay = (ty - py) * spring * (1.0-mix);
-      const az = (tz - pz) * spring * (1.0-mix);
+    // mix 越接近 0（合拢），吸附越强；mix 越接近 1（散开），吸附越弱
+    const attract = (1.0 - mix);
+    const ax = (tx - px) * spring * attract;
+    const ay = (ty - py) * spring * attract;
+    const az = (tz - pz) * spring * attract;
 
-      vx += ax*dt; vy += ay*dt; vz += az*dt;
+    vx += ax*dt; vy += ay*dt; vz += az*dt;
+
+    // 散开态持续“漂浮”一点点
+    if(mix > 0.5){
+      const s = aSeed[i];
+      vx += Math.sin(time*0.7 + s*9.0) * 0.18 * dt;
+      vy += Math.cos(time*0.65 + s*8.0) * 0.10 * dt;
+      vz += Math.sin(time*0.55 + s*7.0) * 0.18 * dt;
     }
 
     vx *= Math.exp(-drag*dt);
     vy *= Math.exp(-drag*dt);
     vz *= Math.exp(-drag*dt);
-
-    const keep = 0.55 + 0.45*mix;
-    vx *= keep; vy *= keep; vz *= keep;
 
     aPos[i*3+0] = px + vx*dt;
     aPos[i*3+1] = py + vy*dt;
@@ -1424,19 +1588,19 @@ function updateIdiom(dt){
 
 function updateMood(dt){
   if(mode===Mode.MERGE){
-    bloomPass.strength = damp(bloomPass.strength, 1.14, 2.8, dt);
-    bloomPass.radius   = damp(bloomPass.radius,   0.62, 2.8, dt);
-    bloomPass.threshold= damp(bloomPass.threshold,0.16, 2.8, dt);
+    bloomPass.strength = damp(bloomPass.strength, 1.10, 2.8, dt);
+    bloomPass.radius   = damp(bloomPass.radius,   0.60, 2.8, dt);
+    bloomPass.threshold= damp(bloomPass.threshold,0.17, 2.8, dt);
     renderer.toneMappingExposure = damp(renderer.toneMappingExposure, 1.08, 2.2, dt);
   }else if(mode===Mode.SCATTER){
-    bloomPass.strength = damp(bloomPass.strength, 1.22, 2.8, dt);
-    bloomPass.radius   = damp(bloomPass.radius,   0.68, 2.8, dt);
-    bloomPass.threshold= damp(bloomPass.threshold,0.15, 2.8, dt);
+    bloomPass.strength = damp(bloomPass.strength, 1.20, 2.8, dt);
+    bloomPass.radius   = damp(bloomPass.radius,   0.66, 2.8, dt);
+    bloomPass.threshold= damp(bloomPass.threshold,0.16, 2.8, dt);
     renderer.toneMappingExposure = damp(renderer.toneMappingExposure, 1.10, 2.2, dt);
   }else{
-    bloomPass.strength = damp(bloomPass.strength, 1.28, 2.8, dt);
-    bloomPass.radius   = damp(bloomPass.radius,   0.74, 2.8, dt);
-    bloomPass.threshold= damp(bloomPass.threshold,0.14, 2.8, dt);
+    bloomPass.strength = damp(bloomPass.strength, 1.24, 2.8, dt);
+    bloomPass.radius   = damp(bloomPass.radius,   0.70, 2.8, dt);
+    bloomPass.threshold= damp(bloomPass.threshold,0.15, 2.8, dt);
     renderer.toneMappingExposure = damp(renderer.toneMappingExposure, 1.12, 2.2, dt);
   }
 }
@@ -1452,11 +1616,11 @@ function animate(){
     handleGesture(g, dt);
   }
 
-  mix = damp(mix, targetMix, 2.6, dt);
+  mix = damp(mix, targetMix, 2.4, dt);
   targetFocus = (mode===Mode.FOCUS) ? 1 : 0;
   focus = damp(focus, targetFocus, 4.0, dt);
 
-  bloomMixPass.material.uniforms.uBloomIntensity.value = lerp(1.0, 0.32, focus);
+  bloomMixPass.material.uniforms.uBloomIntensity.value = lerp(1.0, 0.34, focus);
 
   applyCamera(dt);
   updateIdiom(dt);
@@ -1493,7 +1657,11 @@ window.addEventListener("resize", onResize);
 // ---------------------------
 statusText.textContent = "已加载：握拳合拢 / 张开散开 / 捏合抓红包（建议点击“启用手势识别”）";
 
-for(let i=0;i<ENVELOPES;i++) envHomeLocal[i] = sampleEnvelopeHomeLocal();
+// 初始红包 home/scatter
+for(let i=0;i<ENVELOPES;i++){
+  envHome[i] = sampleEnvelopeHomeWorld();
+  envScatter[i] = sampleScatterWorld();
+}
 
 horseVideo.muted = true;
 horseVideo.loop = true;
