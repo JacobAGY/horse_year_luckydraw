@@ -4,11 +4,19 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
-  <title>马年祝福 · 成语粒子 · PNG 跑马 · 红包布朗漂浮 · 手势交互</title>
+  <title>马年祝福 · 手势粒子成语 · 粒子奔马银河 · 红包布朗漂浮 · 烟花背景</title>
 
+  <!-- ES Module Shims (Import Maps) -->
   <script async src="https://unpkg.com/es-module-shims@1.10.0/dist/es-module-shims.js"></script>
   <link rel="preconnect" href="https://unpkg.com" crossorigin>
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+
+  <link rel="modulepreload" href="https://unpkg.com/three@0.182.0/build/three.module.js">
+  <link rel="modulepreload" href="https://unpkg.com/three@0.182.0/examples/jsm/postprocessing/EffectComposer.js">
+  <link rel="modulepreload" href="https://unpkg.com/three@0.182.0/examples/jsm/postprocessing/RenderPass.js">
+  <link rel="modulepreload" href="https://unpkg.com/three@0.182.0/examples/jsm/postprocessing/UnrealBloomPass.js">
+  <link rel="modulepreload" href="https://unpkg.com/three@0.182.0/examples/jsm/postprocessing/OutputPass.js">
+  <link rel="modulepreload" href="https://unpkg.com/three@0.182.0/examples/jsm/postprocessing/ShaderPass.js">
 
   <script type="importmap-shim">
   {
@@ -19,57 +27,278 @@
   }
   </script>
 
+  <!-- MediaPipe Hands -->
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1675469240/hands.js" crossorigin="anonymous"></script>
 
   <style>
     :root{
       --gold:#d4af37;
       --red:#b11226;
+      --ink:#070a0c;
       --panel: rgba(10,10,12,.58);
       --panel2: rgba(4,6,9,.42);
       --line: rgba(212,175,55,.35);
       --text: rgba(255,255,255,.92);
       --muted: rgba(255,255,255,.65);
     }
-    html,body{height:100%;margin:0;overflow:hidden;background:radial-gradient(120% 120% at 50% 30%, #14060a 0%, #070607 55%, #040405 100%);color:var(--text);font-family: ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;}
-    #app{position:fixed;inset:0;}
-    canvas#gl{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;}
-    .cinema-vignette{position:absolute;inset:0;pointer-events:none;background:radial-gradient(120% 120% at 50% 45%, rgba(0,0,0,0) 42%, rgba(0,0,0,.62) 100%),radial-gradient(90% 70% at 50% 0%, rgba(212,175,55,.14) 0%, rgba(0,0,0,0) 60%),linear-gradient(180deg, rgba(177,18,38,.12) 0%, rgba(0,0,0,0) 40%);mix-blend-mode:screen;opacity:.95;}
-    .hud{position:absolute;left:12px;right:12px;top:12px;display:flex;gap:10px;align-items:flex-start;pointer-events:none;}
-    .panel{pointer-events:auto;flex:1 1 auto;max-width:980px;padding:12px 12px 10px;border:1px solid var(--line);border-radius:14px;background:linear-gradient(180deg, var(--panel) 0%, var(--panel2) 100%);box-shadow:0 14px 40px rgba(0,0,0,.45);backdrop-filter:blur(10px);}
-    .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
-    .brand{display:flex;gap:10px;align-items:center;min-width:320px;}
-    .badge{width:12px;height:12px;border-radius:999px;background:var(--gold);box-shadow:0 0 0 2px rgba(212,175,55,.18),0 0 18px rgba(212,175,55,.45);}
-    .title{font-weight:800;letter-spacing:.3px;font-size:14px;line-height:1.2;}
-    .subtitle{font-size:12px;color:var(--muted);margin-top:2px;}
-    .controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-left:auto;}
-    button{pointer-events:auto;appearance:none;border:1px solid rgba(212,175,55,.38);color:var(--text);background:linear-gradient(180deg, rgba(177,18,38,.35), rgba(0,0,0,.22));border-radius:12px;padding:10px 12px;font-size:12px;font-weight:800;letter-spacing:.2px;box-shadow:0 10px 24px rgba(0,0,0,.35);cursor:pointer;user-select:none;}
-    button.secondary{border-color: rgba(255,255,255,.14);background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(0,0,0,.18));color: rgba(255,255,255,.86);}
-    button:disabled{opacity:.65;cursor:not-allowed;}
-    .tips{margin-top:10px;padding-top:10px;border-top:1px solid rgba(212,175,55,.22);display:flex;gap:10px;flex-wrap:wrap;font-size:12px;color:rgba(255,255,255,.78);}
-    .chip{border:1px solid rgba(255,255,255,.12);background: rgba(255,255,255,.06);border-radius:999px;padding:6px 10px;display:inline-flex;gap:8px;align-items:center;}
-    .chip b{color:rgba(255,255,255,.92);font-weight:900;}
-    .status{margin-left:auto;font-size:12px;color:rgba(255,255,255,.70);display:flex;align-items:center;gap:8px;}
-    .led{width:8px;height:8px;border-radius:999px;background:rgba(255,255,255,.18);box-shadow:0 0 0 2px rgba(255,255,255,.06);}
-    .led.on{background: var(--gold);box-shadow:0 0 0 2px rgba(212,175,55,.16), 0 0 16px rgba(212,175,55,.55);}
 
-    .focusOverlay{position:absolute;inset:0;display:flex;align-items:flex-end;justify-content:center;padding:16px 12px 22px;pointer-events:none;opacity:0;transform:translate3d(0,10px,0);transition:opacity .25s ease, transform .25s ease;}
-    .focusOverlay.show{opacity:1;transform:translate3d(0,0,0);}
-    .focusCard{pointer-events:auto;width:min(900px, calc(100vw - 24px));border-radius:18px;border:1px solid rgba(212,175,55,.45);background: linear-gradient(180deg, rgba(0,0,0,.55), rgba(8,10,12,.66));box-shadow: 0 22px 70px rgba(0,0,0,.62);backdrop-filter: blur(12px);padding:14px 14px 12px;position:relative;overflow:hidden;}
-    .focusTop{display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap;position:relative;}
-    .packet{width:150px;height:190px;border-radius:16px;background: linear-gradient(180deg, rgba(177,18,38,.98), rgba(120,8,22,.98));border:1px solid rgba(212,175,55,.55);box-shadow:0 18px 55px rgba(0,0,0,.6);position:relative;overflow:hidden;transform-origin:50% 0%;}
-    .packet .seal{position:absolute;left:50%;top:54%;width:62px;height:62px;transform:translate(-50%,-50%);border-radius:999px;background: radial-gradient(circle at 30% 30%, rgba(255,245,220,.95), rgba(212,175,55,.92) 60%, rgba(90,60,10,.85) 100%);box-shadow:0 0 0 2px rgba(212,175,55,.20), 0 0 26px rgba(212,175,55,.45);}
-    .packet .lid{position:absolute;left:0;top:0;width:100%;height:52%;background: linear-gradient(180deg, rgba(215,30,55,.98), rgba(140,10,30,.98));border-bottom:1px solid rgba(212,175,55,.35);transform-origin:50% 100%;transform: rotateX(0deg);}
-    .packet.open .lid{animation: openLid .55s ease forwards;}
-    @keyframes openLid{0%{transform: rotateX(0deg);}100%{transform: rotateX(-125deg);}}
-    .focusTextWrap{flex:1 1 340px;min-width:260px;}
-    .focusTitle{margin:0;font-size:15px;letter-spacing:.5px;font-weight:900;}
-    .focusLine{margin:8px 0 0;font-size:14px;line-height:1.6;color: rgba(255,255,255,.88);white-space:pre-wrap;text-shadow: 0 0 18px rgba(212,175,55,.12);}
-    .videoWrap{margin-top:12px;border-radius:16px;overflow:hidden;border:1px solid rgba(255,255,255,.12);box-shadow: 0 16px 46px rgba(0,0,0,.55);}
-    .videoWrap video{width:100%;height:auto;display:block;background:#000;}
-    .small{margin-top:10px;font-size:12px;color: rgba(255,255,255,.65);display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;}
-    .kbd{border:1px solid rgba(255,255,255,.14);background: rgba(255,255,255,.06);border-radius:10px;padding:6px 10px;}
-    video#cam{position:absolute;right:12px;bottom:12px;width:120px;height:160px;opacity:0;pointer-events:none;}
+    html,body{
+      height:100%;
+      margin:0;
+      background: radial-gradient(120% 120% at 50% 30%, #14060a 0%, #070607 55%, #040405 100%);
+      color:var(--text);
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      overflow:hidden;
+    }
+
+    #app{ position:fixed; inset:0; }
+    canvas#gl{ position:absolute; inset:0; width:100%; height:100%; display:block; touch-action:none; }
+
+    .cinema-vignette{
+      position:absolute; inset:0;
+      pointer-events:none;
+      background:
+        radial-gradient(120% 120% at 50% 45%, rgba(0,0,0,0) 42%, rgba(0,0,0,.62) 100%),
+        radial-gradient(90% 70% at 50% 0%, rgba(212,175,55,.14) 0%, rgba(0,0,0,0) 60%),
+        linear-gradient(180deg, rgba(177,18,38,.12) 0%, rgba(0,0,0,0) 40%);
+      mix-blend-mode:screen;
+      opacity:.95;
+    }
+    .film-grain{
+      position:absolute; inset:-20%;
+      pointer-events:none;
+      background-image:
+        repeating-linear-gradient(0deg, rgba(255,255,255,.025) 0 1px, rgba(0,0,0,0) 1px 3px),
+        repeating-linear-gradient(90deg, rgba(255,255,255,.018) 0 1px, rgba(0,0,0,0) 1px 4px);
+      opacity:.22;
+      transform:rotate(2deg);
+      animation: grain 7s linear infinite;
+      mix-blend-mode:overlay;
+      filter: blur(.2px);
+    }
+    @keyframes grain{
+      0%{ transform:translate3d(-2%, -2%, 0) rotate(2deg); }
+      50%{ transform:translate3d(2%, 1%, 0) rotate(2deg); }
+      100%{ transform:translate3d(-2%, -2%, 0) rotate(2deg); }
+    }
+
+    .hud{
+      position:absolute; left:12px; right:12px; top:12px;
+      display:flex; gap:10px; align-items:flex-start;
+      pointer-events:none;
+    }
+    .panel{
+      pointer-events:auto;
+      flex:1 1 auto;
+      max-width:980px;
+      padding:12px 12px 10px;
+      border:1px solid var(--line);
+      border-radius:14px;
+      background:linear-gradient(180deg, var(--panel) 0%, var(--panel2) 100%);
+      box-shadow: 0 14px 40px rgba(0,0,0,.45);
+      backdrop-filter: blur(10px);
+    }
+    .row{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+
+    .brand{ display:flex; gap:10px; align-items:center; min-width:320px; }
+    .badge{
+      width:12px; height:12px; border-radius:999px;
+      background: var(--gold);
+      box-shadow: 0 0 0 2px rgba(212,175,55,.18), 0 0 18px rgba(212,175,55,.45);
+    }
+    .title{ font-weight:800; letter-spacing:.3px; font-size:14px; line-height:1.2; }
+    .subtitle{ font-size:12px; color:var(--muted); margin-top:2px; }
+
+    .controls{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-left:auto; }
+
+    button{
+      pointer-events:auto;
+      appearance:none;
+      border:1px solid rgba(212,175,55,.38);
+      color:var(--text);
+      background:linear-gradient(180deg, rgba(177,18,38,.35), rgba(0,0,0,.22));
+      border-radius:12px;
+      padding:10px 12px;
+      font-size:12px;
+      font-weight:800;
+      letter-spacing:.2px;
+      box-shadow: 0 10px 24px rgba(0,0,0,.35);
+      cursor:pointer;
+      user-select:none;
+    }
+    button.secondary{
+      border-color: rgba(255,255,255,.14);
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(0,0,0,.18));
+      color: rgba(255,255,255,.86);
+    }
+
+    .tips{
+      margin-top:10px;
+      padding-top:10px;
+      border-top:1px solid rgba(212,175,55,.22);
+      display:flex; gap:10px; flex-wrap:wrap;
+      font-size:12px; color:rgba(255,255,255,.78);
+    }
+    .chip{
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.06);
+      border-radius:999px;
+      padding:6px 10px;
+      display:inline-flex; gap:8px; align-items:center;
+    }
+    .chip b{ color:rgba(255,255,255,.92); font-weight:900; }
+
+    .status{
+      margin-left:auto;
+      font-size:12px;
+      color:rgba(255,255,255,.70);
+      display:flex; align-items:center; gap:8px;
+    }
+    .led{
+      width:8px; height:8px; border-radius:999px;
+      background: rgba(255,255,255,.18);
+      box-shadow:0 0 0 2px rgba(255,255,255,.06);
+    }
+    .led.on{
+      background: var(--gold);
+      box-shadow: 0 0 0 2px rgba(212,175,55,.16), 0 0 16px rgba(212,175,55,.55);
+    }
+
+    .focusOverlay{
+      position:absolute; inset:0;
+      display:flex;
+      align-items:flex-end;
+      justify-content:center;
+      padding:16px 12px 22px;
+      pointer-events:none;
+      opacity:0;
+      transform: translate3d(0, 10px, 0);
+      transition: opacity .25s ease, transform .25s ease;
+    }
+    .focusOverlay.show{
+      opacity:1;
+      transform: translate3d(0,0,0);
+    }
+    .focusCard{
+      pointer-events:auto;
+      width:min(860px, calc(100vw - 24px));
+      border-radius:18px;
+      border:1px solid rgba(212,175,55,.45);
+      background: linear-gradient(180deg, rgba(0,0,0,.55), rgba(8,10,12,.66));
+      box-shadow: 0 22px 70px rgba(0,0,0,.62);
+      backdrop-filter: blur(12px);
+      padding:14px 14px 12px;
+      position:relative;
+      overflow:hidden;
+    }
+    .focusCard:before{
+      content:"";
+      position:absolute; inset:-2px;
+      background:
+        radial-gradient(80% 120% at 25% 0%, rgba(212,175,55,.18), rgba(0,0,0,0) 60%),
+        radial-gradient(80% 120% at 75% 0%, rgba(177,18,38,.16), rgba(0,0,0,0) 60%);
+      pointer-events:none;
+    }
+    .focusTop{
+      display:flex;
+      gap:12px;
+      align-items:flex-start;
+      flex-wrap:wrap;
+      position:relative;
+    }
+    .packet{
+      width:150px;
+      height:190px;
+      border-radius:16px;
+      background: linear-gradient(180deg, rgba(177,18,38,.98), rgba(120,8,22,.98));
+      border:1px solid rgba(212,175,55,.55);
+      box-shadow: 0 18px 55px rgba(0,0,0,.6);
+      position:relative;
+      overflow:hidden;
+      transform-origin: 50% 0%;
+    }
+    .packet:before{
+      content:"";
+      position:absolute; inset:-20%;
+      background:
+        radial-gradient(45% 70% at 30% 20%, rgba(212,175,55,.22), rgba(0,0,0,0) 60%),
+        radial-gradient(45% 70% at 80% 70%, rgba(212,175,55,.15), rgba(0,0,0,0) 60%);
+      pointer-events:none;
+    }
+    .packet .seal{
+      position:absolute;
+      left:50%; top:54%;
+      width:62px; height:62px;
+      transform:translate(-50%,-50%);
+      border-radius:999px;
+      background: radial-gradient(circle at 30% 30%, rgba(255,245,220,.95), rgba(212,175,55,.92) 60%, rgba(90,60,10,.85) 100%);
+      box-shadow: 0 0 0 2px rgba(212,175,55,.20), 0 0 26px rgba(212,175,55,.45);
+    }
+    .packet .lid{
+      position:absolute;
+      left:0; top:0;
+      width:100%; height:52%;
+      background: linear-gradient(180deg, rgba(215,30,55,.98), rgba(140,10,30,.98));
+      border-bottom:1px solid rgba(212,175,55,.35);
+      transform-origin: 50% 100%;
+      transform: rotateX(0deg);
+    }
+    .packet.open .lid{ animation: openLid .55s ease forwards; }
+    @keyframes openLid{ 0%{ transform: rotateX(0deg); } 100%{ transform: rotateX(-125deg); } }
+
+    .focusTextWrap{ flex:1 1 320px; min-width: 260px; }
+    .focusTitle{ margin:0; font-size:15px; letter-spacing:.5px; position:relative; font-weight:900; }
+    .focusLine{
+      margin:8px 0 0;
+      font-size:14px;
+      line-height:1.6;
+      color: rgba(255,255,255,.88);
+      position:relative;
+      white-space:pre-wrap;
+      text-shadow: 0 0 18px rgba(212,175,55,.12);
+    }
+
+    .videoWrap{
+      margin-top:12px;
+      border-radius:16px;
+      overflow:hidden;
+      border:1px solid rgba(255,255,255,.12);
+      position:relative;
+      box-shadow: 0 16px 46px rgba(0,0,0,.55);
+    }
+    .videoWrap video{
+      width:100%;
+      height:auto;
+      display:block;
+      background:#000;
+    }
+
+    .small{
+      margin-top:10px;
+      font-size:12px;
+      color: rgba(255,255,255,.65);
+      position:relative;
+      display:flex;
+      gap:10px;
+      align-items:center;
+      justify-content:space-between;
+      flex-wrap:wrap;
+    }
+    .kbd{
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.06);
+      border-radius:10px;
+      padding:6px 10px;
+    }
+
+    video#cam{
+      position:absolute;
+      right:12px; bottom:12px;
+      width:120px; height:160px;
+      opacity:0;
+      pointer-events:none;
+      transform: translateZ(0);
+    }
   </style>
 </head>
 
@@ -77,6 +306,7 @@
 <div id="app">
   <canvas id="gl"></canvas>
   <div class="cinema-vignette"></div>
+  <div class="film-grain"></div>
 
   <div class="hud">
     <div class="panel">
@@ -84,8 +314,8 @@
         <div class="brand">
           <span class="badge"></span>
           <div>
-            <div class="title">马年祝福 · 成语粒子（收拢态）· PNG 跑马（散开态）· 红包布朗漂浮</div>
-            <div class="subtitle">Three.js / WebGL · MediaPipe Hands · Bloom</div>
+            <div class="title">马年祝福 · 粒子成语（凝聚）/ 粒子奔马银河（散开）</div>
+            <div class="subtitle">手势：握拳→凝聚；张开→散开；三指捏合→抓红包</div>
           </div>
         </div>
 
@@ -97,15 +327,16 @@
 
         <div class="status">
           <span id="led" class="led"></span>
-          <span id="statusText">加载中：正在准备 PNG 跑马点云…</span>
+          <span id="statusText">默认：凝聚态（可点击“启用手势识别”）</span>
         </div>
       </div>
 
       <div class="tips" id="tips" style="display:none;">
-        <span class="chip"><b>五指握拳</b> → 丝滑收拢：稳定成语 + 绕Y轴旋转</span>
-        <span class="chip"><b>张开五指</b> → 散开：PNG 跑马 + 银河环绕</span>
-        <span class="chip"><b>三指捏合</b>（拇指+食指+中指）→ 抓红包</span>
-        <span class="chip"><b>双击画面</b> → 抓红包（无手势备选）</span>
+        <span class="chip"><b>握拳</b> → 凝聚成语（稳定态，不会持续变换）</span>
+        <span class="chip"><b>张开五指</b> → 散开：粒子奔马 + 银河环</span>
+        <span class="chip"><b>三指捏合</b>（拇指+食指+中指）→ 抓红包（进入开封卡片）</span>
+        <span class="chip"><b>散开态移动手掌</b> → 旋转视角</span>
+        <span class="chip"><b>双击画面</b> → 触发抓红包（无手势备选）</span>
       </div>
     </div>
   </div>
@@ -128,8 +359,8 @@
       </div>
 
       <div class="small">
-        <span class="kbd">握拳：收拢（丝滑过渡）</span>
-        <span class="kbd">张开：散开（PNG 跑马）</span>
+        <span class="kbd">握拳：凝聚</span>
+        <span class="kbd">张开：散开</span>
         <span class="kbd">三指捏合 / 双击：抓红包</span>
       </div>
     </div>
@@ -146,27 +377,34 @@ import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js"
 import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
 import { ShaderPass } from "three/addons/postprocessing/ShaderPass.js";
 
-/* ========= 基础数据 ========= */
+/**
+ * 重要：把你的 A-F 帧 PNG 放到仓库中（GitHub Pages 可访问）
+ * 例如：/assets/horse/horse_run_a.png ... /assets/horse/horse_run_f.png
+ * 你也可以改成你真实的路径/文件名。
+ */
+const HORSE_FRAMES = [
+  "assets/horse/horse_run_a.png",
+  "assets/horse/horse_run_b.png",
+  "assets/horse/horse_run_c.png",
+  "assets/horse/horse_run_d.png",
+  "assets/horse/horse_run_e.png",
+  "assets/horse/horse_run_f.png"
+];
+
 const IDIOMS = [
   "马到成功","龙马精神","一马当先","万马奔腾","马上发财","马上如意",
   "策马扬鞭","快马加鞭","一马平川","天马行空","马到功成","马跃钱程",
-  "人强马壮","金戈铁马","骏马奔腾","马蹄生风","马年大吉","金马迎春","马到福来"
+  "人强马壮","金戈铁马","骏马奔腾","马蹄生风",
+  "马年大吉","马年行大运","马年祥瑞","金马迎春","宝马香车",
+  "马到财来","马到福来","马到运来",
+  "马上有钱","马上有房","马上有对象","马力全开"
 ];
 
-// 你自己的跑马视频（可空）
 const HORSE_VIDEOS = [
   "assets/videos/horse1.mp4",
-  "assets/videos/horse2.mp4"
-];
-
-// ✅ 你的 PNG 跑马帧：a-f（按实际文件名改）
-const HORSE_FRAMES = [
-  "assets/horse_frames/horse_a.png",
-  "assets/horse_frames/horse_b.png",
-  "assets/horse_frames/horse_c.png",
-  "assets/horse_frames/horse_d.png",
-  "assets/horse_frames/horse_e.png",
-  "assets/horse_frames/horse_f.png"
+  "assets/videos/horse2.mp4",
+  "assets/videos/horse3.mp4",
+  "assets/videos/horse4.mp4"
 ];
 
 const IS_MOBILE = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
@@ -174,9 +412,11 @@ const DPR_CAP = IS_MOBILE ? 1.25 : 2.0;
 
 const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
 const lerp  = (a,b,t)=>a+(b-a)*t;
-const damp  = (current, target, lambda, dt) => current + (target-current)*(1-Math.exp(-lambda*dt));
+const damp = (current, target, lambda, dt) => {
+  const t = 1 - Math.exp(-lambda * dt);
+  return current + (target - current) * t;
+};
 
-/* ========= DOM ========= */
 const canvas = document.getElementById("gl");
 const statusText = document.getElementById("statusText");
 const led = document.getElementById("led");
@@ -192,8 +432,15 @@ const focusTextEl = document.getElementById("focusText");
 const packetEl = document.getElementById("packet");
 const horseVideo = document.getElementById("horseVideo");
 
-/* ========= Three 基础 ========= */
-const renderer = new THREE.WebGLRenderer({ canvas, antialias:true, alpha:false, powerPreference:"high-performance" });
+// ---------------------------
+// Three.js 基础
+// ---------------------------
+const renderer = new THREE.WebGLRenderer({
+  canvas,
+  antialias: true,
+  alpha: false,
+  powerPreference: "high-performance"
+});
 renderer.setPixelRatio(Math.min(DPR_CAP, window.devicePixelRatio || 1));
 renderer.setSize(window.innerWidth, window.innerHeight, false);
 renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -207,367 +454,641 @@ const camera = new THREE.PerspectiveCamera(52, window.innerWidth/window.innerHei
 camera.position.set(0, 2.3, 10.4);
 
 scene.add(new THREE.AmbientLight(0xffffff, 0.20));
-const key = new THREE.DirectionalLight(0xfff2d6, 1.05); key.position.set(6,9,6); scene.add(key);
-const goldPoint = new THREE.PointLight(0xd4af37, 1.25, 28, 2); goldPoint.position.set(0,5.2,3.2); scene.add(goldPoint);
-const redPoint  = new THREE.PointLight(0xb11226, 0.85, 22, 2); redPoint.position.set(-2.8,3.4,2.6); scene.add(redPoint);
 
-/* ========= 后期 Bloom ========= */
+const key = new THREE.DirectionalLight(0xfff2d6, 1.05);
+key.position.set(6, 9, 6);
+scene.add(key);
+
+const goldPoint = new THREE.PointLight(0xd4af37, 1.25, 22, 2);
+goldPoint.position.set(0, 5.2, 3.2);
+scene.add(goldPoint);
+
+const redPoint = new THREE.PointLight(0xb11226, 0.85, 18, 2);
+redPoint.position.set(-2.8, 3.4, 2.6);
+scene.add(redPoint);
+
+// ---------------------------
+// 后期辉光（Bloom）
+// ---------------------------
 const BLOOM_LAYER = 1;
 
 const bloomComposer = new EffectComposer(renderer);
 bloomComposer.addPass(new RenderPass(scene, camera));
-const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.18, 0.62, 0.16);
+
+const bloomPass = new UnrealBloomPass(
+  new THREE.Vector2(window.innerWidth, window.innerHeight),
+  1.18,
+  0.62,
+  0.16
+);
 bloomComposer.addPass(bloomPass);
 
 const finalComposer = new EffectComposer(renderer);
 finalComposer.addPass(new RenderPass(scene, camera));
-const bloomMixPass = new ShaderPass(new THREE.ShaderMaterial({
-  uniforms: { baseTexture:{value:null}, bloomTexture:{value:bloomComposer.renderTarget2.texture}, uBloomIntensity:{value:1.0} },
-  vertexShader:`varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}`,
-  fragmentShader:`uniform sampler2D baseTexture;uniform sampler2D bloomTexture;uniform float uBloomIntensity;varying vec2 vUv;
-  void main(){vec4 base=texture2D(baseTexture,vUv);vec4 bloom=texture2D(bloomTexture,vUv);gl_FragColor=base+bloom*uBloomIntensity;}`
-}), "baseTexture");
+
+const bloomMixPass = new ShaderPass(
+  new THREE.ShaderMaterial({
+    uniforms: {
+      baseTexture: { value: null },
+      bloomTexture: { value: bloomComposer.renderTarget2.texture },
+      uBloomIntensity: { value: 1.0 }
+    },
+    vertexShader: /* glsl */`
+      varying vec2 vUv;
+      void main(){ vUv=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }
+    `,
+    fragmentShader: /* glsl */`
+      uniform sampler2D baseTexture;
+      uniform sampler2D bloomTexture;
+      uniform float uBloomIntensity;
+      varying vec2 vUv;
+      void main(){
+        vec4 base = texture2D(baseTexture, vUv);
+        vec4 bloom = texture2D(bloomTexture, vUv);
+        gl_FragColor = base + bloom * uBloomIntensity;
+      }
+    `
+  }),
+  "baseTexture"
+);
 finalComposer.addPass(bloomMixPass);
 finalComposer.addPass(new OutputPass());
 
-/* ========= 粒子纹理（马字） ========= */
+// ---------------------------
+// 生成 “马” 字粒子纹理（凝聚态用）
+// ---------------------------
 function makeMaGlyphTexture(){
-  const c=document.createElement("canvas"); c.width=256; c.height=256;
-  const ctx=c.getContext("2d");
+  const c = document.createElement("canvas");
+  c.width = 256; c.height = 256;
+  const ctx = c.getContext("2d");
   ctx.clearRect(0,0,256,256);
-  const g=ctx.createRadialGradient(128,128,0,128,128,118);
-  g.addColorStop(0,"rgba(212,175,55,0.22)"); g.addColorStop(0.65,"rgba(212,175,55,0.06)"); g.addColorStop(1,"rgba(212,175,55,0)");
-  ctx.fillStyle=g; ctx.fillRect(0,0,256,256);
-  ctx.save(); ctx.translate(128,145);
-  ctx.textAlign="center"; ctx.textBaseline="middle";
-  ctx.font="900 160px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
-  ctx.lineJoin="round"; ctx.lineWidth=10;
-  ctx.strokeStyle="rgba(177,18,38,0.55)"; ctx.strokeText("马",0,0);
-  ctx.fillStyle="rgba(255,245,220,0.92)"; ctx.fillText("马",0,0);
+
+  const g = ctx.createRadialGradient(128,128,0,128,128,118);
+  g.addColorStop(0, "rgba(212,175,55,0.22)");
+  g.addColorStop(0.65, "rgba(212,175,55,0.06)");
+  g.addColorStop(1, "rgba(212,175,55,0)");
+  ctx.fillStyle = g;
+  ctx.fillRect(0,0,256,256);
+
+  ctx.save();
+  ctx.translate(128, 145);
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.font = "900 160px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+  ctx.lineJoin = "round";
+  ctx.lineWidth = 10;
+  ctx.strokeStyle = "rgba(177,18,38,0.55)";
+  ctx.strokeText("马", 0, 0);
+  ctx.fillStyle = "rgba(255,245,220,0.92)";
+  ctx.fillText("马", 0, 0);
   ctx.restore();
-  const tex=new THREE.CanvasTexture(c);
-  tex.colorSpace=THREE.SRGBColorSpace; tex.minFilter=THREE.LinearFilter; tex.magFilter=THREE.LinearFilter; tex.generateMipmaps=false;
+
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.minFilter = THREE.LinearFilter;
+  tex.magFilter = THREE.LinearFilter;
+  tex.generateMipmaps = false;
   return tex;
 }
 const MA_TEX = makeMaGlyphTexture();
 
-/* ========= 文本采样（成语点位） ========= */
-function sampleTextPoints2D(text, { fontSize=200, step=IS_MOBILE?3:2, threshold=10, worldWidth=7.8 } = {}){
-  const dpr=Math.max(1, Math.min(2, window.devicePixelRatio || 1));
-  const c=document.createElement("canvas");
-  const ctx=c.getContext("2d", { willReadFrequently:true });
-  const font=`900 ${fontSize}px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial`;
-  ctx.font=font;
-  const metrics=ctx.measureText(text);
-  const pad=Math.ceil(fontSize*0.46);
-  const cssW=Math.ceil(metrics.width + pad*2);
-  const cssH=Math.ceil(fontSize*1.32 + pad*2);
-  c.width=Math.ceil(cssW*dpr); c.height=Math.ceil(cssH*dpr);
+// ---------------------------
+// 文字采样：把成语变成点位（二维 -> 三维厚度）
+// ---------------------------
+function sampleTextPoints(text, {
+  fontSize = 190,
+  step = IS_MOBILE ? 3 : 2,     // 更密，厚重
+  threshold = 8,
+  worldWidth = 7.6
+} = {}){
+  const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+  const c = document.createElement("canvas");
+  const ctx = c.getContext("2d", { willReadFrequently: true });
+
+  const font = `900 ${fontSize}px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial`;
+  ctx.font = font;
+  const metrics = ctx.measureText(text);
+  const pad = Math.ceil(fontSize * 0.42);
+  const cssW = Math.ceil(metrics.width + pad * 2);
+  const cssH = Math.ceil(fontSize * 1.25 + pad * 2);
+
+  c.width  = Math.ceil(cssW * dpr);
+  c.height = Math.ceil(cssH * dpr);
+
   ctx.setTransform(dpr,0,0,dpr,0,0);
   ctx.clearRect(0,0,cssW,cssH);
-  ctx.font=font; ctx.textAlign="center"; ctx.textBaseline="middle";
-  ctx.lineJoin="round"; ctx.lineWidth=Math.max(10, Math.round(fontSize*0.06));
-  ctx.strokeStyle="rgba(177,18,38,1)"; ctx.strokeText(text, cssW/2, cssH/2);
-  ctx.fillStyle="rgba(255,255,255,1)"; ctx.fillText(text, cssW/2, cssH/2);
 
-  const img=ctx.getImageData(0,0,c.width,c.height).data;
-  const pts=[];
-  const stepPx=Math.max(1, Math.round(step*dpr));
+  ctx.font = font;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.lineJoin = "round";
+  ctx.lineWidth = Math.max(10, Math.round(fontSize*0.06));
+  ctx.strokeStyle = "rgba(177,18,38,1)";
+  ctx.strokeText(text, cssW/2, cssH/2);
+  ctx.fillStyle = "rgba(255,255,255,1)";
+  ctx.fillText(text, cssW/2, cssH/2);
+
+  const img = ctx.getImageData(0,0,c.width,c.height).data;
+  const pts = [];
+  const stepPx = Math.max(1, Math.round(step * dpr));
+
   for(let y=0;y<c.height;y+=stepPx){
     for(let x=0;x<c.width;x+=stepPx){
-      const a=img[(y*c.width+x)*4+3];
-      if(a>threshold) pts.push([x/dpr, y/dpr]);
+      const a = img[(y*c.width + x)*4 + 3];
+      if(a > threshold) pts.push([x/dpr, y/dpr]);
     }
   }
-  const scale=worldWidth/cssW;
-  const out=new Float32Array(pts.length*2);
+
+  const scale = worldWidth / cssW;
+  const out = new Float32Array(pts.length*3);
   for(let i=0;i<pts.length;i++){
     const [xCss,yCss]=pts[i];
-    out[i*2+0]=(xCss-cssW/2)*scale;
-    out[i*2+1]=(cssH/2-yCss)*scale;
+    const px=(xCss - cssW/2)*scale;
+    const py=(cssH/2 - yCss)*scale;
+    out[i*3+0]=px;
+    out[i*3+1]=py;
+    out[i*3+2]=0;
   }
   return out;
 }
 
-/* ========= PNG 贴纸采样为点云（关键新增） ========= */
-function loadImage(url){
-  return new Promise((resolve, reject)=>{
-    const img = new Image();
-    img.decoding = "async";
-    img.onload = ()=>resolve(img);
-    img.onerror = ()=>reject(new Error("Failed to load image: " + url));
-    img.src = url;
-  });
-}
-
-function sampleCanvasPoints(canvas, {
-  maxPoints=18000,
-  threshold=10,
-  step=IS_MOBILE?3:2,
-  worldWidth=5.8,
-  centerY=-0.25,
-  thickness=0.95
+// ---------------------------
+// 采样 PNG：把马帧图片变成点位（散开态奔马用）
+// ---------------------------
+function sampleImagePoints(imgEl, {
+  step = IS_MOBILE ? 3 : 2,
+  alphaThreshold = 18,
+  brightnessThreshold = 12, // 防止透明但暗点
+  worldWidth = 6.8
 } = {}){
-  const W=canvas.width, H=canvas.height;
-  const ctx=canvas.getContext("2d", { willReadFrequently:true });
-  const data=ctx.getImageData(0,0,W,H).data;
+  const c = document.createElement("canvas");
+  const w = imgEl.naturalWidth || imgEl.width;
+  const h = imgEl.naturalHeight || imgEl.height;
+  c.width = w; c.height = h;
+  const ctx = c.getContext("2d", { willReadFrequently: true });
+  ctx.clearRect(0,0,w,h);
+  ctx.drawImage(imgEl, 0,0,w,h);
 
-  const candidates=[];
-  for(let y=0;y<H;y+=step){
-    for(let x=0;x<W;x+=step){
-      const a=data[(y*W+x)*4+3];
-      if(a>threshold) candidates.push([x,y]);
+  const data = ctx.getImageData(0,0,w,h).data;
+
+  // 先找一个紧边界（按 alpha），避免大块空白影响采样密度
+  let minX=w, minY=h, maxX=0, maxY=0, found=false;
+  for(let y=0;y<h;y+=2){
+    for(let x=0;x<w;x+=2){
+      const i=(y*w+x)*4;
+      const a=data[i+3];
+      if(a>alphaThreshold){
+        found=true;
+        if(x<minX)minX=x;
+        if(y<minY)minY=y;
+        if(x>maxX)maxX=x;
+        if(y>maxY)maxY=y;
+      }
+    }
+  }
+  if(!found){
+    return new Float32Array(0);
+  }
+  // 留一点边
+  const pad = 4;
+  minX = Math.max(0, minX-pad);
+  minY = Math.max(0, minY-pad);
+  maxX = Math.min(w-1, maxX+pad);
+  maxY = Math.min(h-1, maxY+pad);
+
+  const pts = [];
+  for(let y=minY;y<=maxY;y+=step){
+    for(let x=minX;x<=maxX;x+=step){
+      const i=(y*w+x)*4;
+      const r=data[i], g=data[i+1], b=data[i+2], a=data[i+3];
+      if(a<=alphaThreshold) continue;
+      const lum = (0.2126*r + 0.7152*g + 0.0722*b);
+      if(lum <= brightnessThreshold) continue;
+      pts.push([x,y]);
     }
   }
 
-  const n=Math.min(maxPoints, candidates.length);
-  for(let i=0;i<n;i++){
-    const j=i + ((Math.random()*(candidates.length-i))|0);
-    const t=candidates[i]; candidates[i]=candidates[j]; candidates[j]=t;
-  }
+  const boxW = (maxX-minX+1);
+  const scale = worldWidth / boxW;
+  const cx = (minX+maxX)*0.5;
+  const cy = (minY+maxY)*0.5;
 
-  const scale=worldWidth/W;
-  const out=new Float32Array(n*3);
-  for(let i=0;i<n;i++){
-    const x=candidates[i][0], y=candidates[i][1];
-    const wx=(x - W/2)*scale;
-    const wy=(H/2 - y)*scale + centerY;
-    // 固定厚度（一次性随机，之后不会抖）
-    const wz=(Math.random()+Math.random()-1)*(thickness*0.22) + (Math.random()+Math.random()-1)*(thickness*0.14);
-    out[i*3+0]=wx; out[i*3+1]=wy; out[i*3+2]=wz;
+  const out = new Float32Array(pts.length*3);
+  for(let i=0;i<pts.length;i++){
+    const [x,y]=pts[i];
+    const px = (x - cx)*scale;
+    const py = (cy - y)*scale;
+    out[i*3+0]=px;
+    out[i*3+1]=py;
+    out[i*3+2]=0;
   }
   return out;
 }
 
-/* ========= 模式 & 过渡 ========= */
+async function loadHorseFrames(urls){
+  const loader = new THREE.TextureLoader();
+  // 用 image 元素保证能拿到像素采样
+  const frames = [];
+  for(const url of urls){
+    const img = await new Promise((resolve,reject)=>{
+      const im = new Image();
+      im.crossOrigin = "anonymous";
+      im.onload = ()=>resolve(im);
+      im.onerror = ()=>reject(new Error("Failed to load: "+url));
+      im.src = url;
+    }).catch(()=>null);
+    if(!img) continue;
+    frames.push(sampleImagePoints(img, { worldWidth: IS_MOBILE ? 6.0 : 6.8 }));
+  }
+  return frames;
+}
+
+// ---------------------------
+// 模式 & 过渡（凝聚/散开/红包卡片）
+// ---------------------------
 const Mode = { MERGE:"MERGE", SCATTER:"SCATTER", FOCUS:"FOCUS" };
 let mode = Mode.MERGE;
-let mix = 0, targetMix = 0;      // 0=成语，1=散开马+银河
+
+// mix: 0=凝聚成语，1=散开奔马银河
+let mix = 0, targetMix = 0;
+
+// focus: 0=无卡片，1=红包卡片
 let focus = 0, targetFocus = 0;
+
+function setMode(next){
+  if(mode === next) return;
+  mode = next;
+
+  if(mode === Mode.MERGE){
+    targetMix = 0;
+    targetFocus = 0;
+    hideFocusOverlay();
+  }else if(mode === Mode.SCATTER){
+    targetMix = 1;
+    targetFocus = 0;
+    hideFocusOverlay();
+    kickScatterImpulse();
+  }else{
+    targetMix = 1;
+    targetFocus = 1;
+    showFocusOverlay();
+  }
+}
 
 function showFocusOverlay(){ focusOverlay.classList.add("show"); }
 function hideFocusOverlay(){ focusOverlay.classList.remove("show"); packetEl.classList.remove("open"); }
 
-function setMode(next){
-  if(mode===next) return;
-  mode=next;
-  if(mode===Mode.MERGE){ targetMix=0; targetFocus=0; hideFocusOverlay(); }
-  if(mode===Mode.SCATTER){ targetMix=1; targetFocus=0; hideFocusOverlay(); kickScatterImpulse(); }
-  if(mode===Mode.FOCUS){ targetMix=1; targetFocus=1; showFocusOverlay(); }
-}
-
-/* ========= 成语粒子系统 ========= */
+// ---------------------------
+// 粒子系统（统一一套粒子：mix 在“成语<->奔马银河”之间插值）
+// ---------------------------
 const idiomGroup = new THREE.Group();
 idiomGroup.position.set(0, 2.25, 0);
 scene.add(idiomGroup);
 
-let envHomeRingR = 3.4;
 let currentIdiom = "";
+let idiomCount = 0;
 
-const MAX_PARTICLES = IS_MOBILE ? 16000 : 26000;
+const MAX_PARTICLES = IS_MOBILE ? 18000 : 26000;   // 更厚重，但仍可控
+const HORSE_PART = 0.42;                           // 散开态：多少粒子用于马
+const GALAXY_PART = 0.50;                          // 散开态：多少粒子用于银河
+const horseN = Math.floor(MAX_PARTICLES * HORSE_PART);
+const galaxyN = Math.floor(MAX_PARTICLES * GALAXY_PART);
+// 剩余少量粒子做环境漂浮填充
 
-const idiomGeo = new THREE.BufferGeometry();
-const aPos      = new Float32Array(MAX_PARTICLES*3);
-const aVel      = new Float32Array(MAX_PARTICLES*3);
-const aIdiomTar = new Float32Array(MAX_PARTICLES*3);
-const aSeed     = new Float32Array(MAX_PARTICLES);
-const aKind     = new Float32Array(MAX_PARTICLES); // 0=horse, 1=galaxy
-idiomGeo.setAttribute("position", new THREE.BufferAttribute(aPos,3));
-idiomGeo.setAttribute("aVel", new THREE.BufferAttribute(aVel,3));
-idiomGeo.setAttribute("aIdiomTar", new THREE.BufferAttribute(aIdiomTar,3));
-idiomGeo.setAttribute("aSeed", new THREE.BufferAttribute(aSeed,1));
-idiomGeo.setAttribute("aKind", new THREE.BufferAttribute(aKind,1));
+// CPU模拟位置/速度 + 两套目标（mergeTarget / scatterTarget）
+const geo = new THREE.BufferGeometry();
+const aPos = new Float32Array(MAX_PARTICLES*3);
+const aVel = new Float32Array(MAX_PARTICLES*3);
+const aTarMerge = new Float32Array(MAX_PARTICLES*3);
+const aTarScatter = new Float32Array(MAX_PARTICLES*3);
+const aSeed= new Float32Array(MAX_PARTICLES);
+const aRole= new Float32Array(MAX_PARTICLES); // 0=马, 1=银河, 2=填充
+
+geo.setAttribute("position", new THREE.BufferAttribute(aPos, 3));
+geo.setAttribute("aVel", new THREE.BufferAttribute(aVel, 3));
+geo.setAttribute("aSeed", new THREE.BufferAttribute(aSeed,1));
+geo.setAttribute("aRole", new THREE.BufferAttribute(aRole,1));
 
 for(let i=0;i<MAX_PARTICLES;i++){
   aPos[i*3+0]=(Math.random()-0.5)*6;
-  aPos[i*3+1]=(Math.random()-0.5)*3;
+  aPos[i*3+1]=(Math.random()-0.5)*4;
   aPos[i*3+2]=(Math.random()-0.5)*6;
+
   aVel[i*3+0]=(Math.random()-0.5)*0.15;
   aVel[i*3+1]=(Math.random()-0.5)*0.15;
   aVel[i*3+2]=(Math.random()-0.5)*0.15;
+
   aSeed[i]=Math.random();
-  aKind[i]=(aSeed[i] < 0.44) ? 0.0 : 1.0;
+
+  if(i < horseN) aRole[i]=0;
+  else if(i < horseN + galaxyN) aRole[i]=1;
+  else aRole[i]=2;
+
+  aTarMerge[i*3+0]=0; aTarMerge[i*3+1]=0; aTarMerge[i*3+2]=0;
+  aTarScatter[i*3+0]=0; aTarScatter[i*3+1]=0; aTarScatter[i*3+2]=0;
 }
 
-/* ========= PNG 帧点云：horseFramesPts[] ========= */
-let horseFramesPts = [];      // 每帧 Float32Array xyz...
-let horseFrameN = 1;          // 点数（按第0帧）
-let horseReady = false;
-const horseIdx = new Uint32Array(MAX_PARTICLES);
+// 成语目标（稳定态：只在“进入凝聚态”时重建一次）
+function rebuildMergeTargets(text){
+  currentIdiom = text;
+  const pts = sampleTextPoints(text, {
+    fontSize: 190,
+    step: IS_MOBILE ? 3 : 2,
+    worldWidth: IS_MOBILE ? 7.0 : 7.8
+  });
+  const targetN = Math.max(1, Math.min(MAX_PARTICLES, Math.floor(pts.length/3)));
+  idiomCount = targetN;
 
-function initHorseIndexMapping(){
-  horseFrameN = Math.max(1, horseFramesPts[0] ? (horseFramesPts[0].length/3) : 1);
+  // 做“厚度”：每个粒子在 Z 方向给一个可重复的扰动
+  const depth = IS_MOBILE ? 0.36 : 0.52;
+
   for(let i=0;i<MAX_PARTICLES;i++){
-    if(aKind[i] === 0.0){
-      // 固定映射：每个马粒子固定一个点索引，保证“像马且稳定”
-      horseIdx[i] = (Math.random() * horseFrameN) | 0;
+    const idx = (i % targetN) * 3;
+    const zJ = (aSeed[i]-0.5)*depth;
+    aTarMerge[i*3+0] = pts[idx+0] + (aSeed[i]-0.5)*0.03;
+    aTarMerge[i*3+1] = pts[idx+1] + (aSeed[i]-0.5)*0.04;
+    aTarMerge[i*3+2] = pts[idx+2] + zJ;
+  }
+}
+
+// 散开目标：马帧 + 银河环（每帧更新 aTarScatter，保证“像银河一样有无数星点环流”）
+let horseFrames = [];
+let horseReady = false;
+
+let horseFrameIdx = 0;
+let horseFrameAcc = 0;
+const HORSE_FPS = 10.0;
+
+function updateScatterTargets(time, dt){
+  // 1) 奔马：用帧序列采样点位
+  if(horseReady && horseFrames.length){
+    horseFrameAcc += dt * HORSE_FPS;
+    if(horseFrameAcc >= 1){
+      horseFrameAcc = 0;
+      horseFrameIdx = (horseFrameIdx + 1) % horseFrames.length;
+    }
+
+    const frame = horseFrames[horseFrameIdx];
+    const n = Math.max(1, Math.floor(frame.length/3));
+
+    // 让马稍微“原地奔跑有力量”：加入轻微上下起伏 + 前后摆动（不位移出画面）
+    const bob = Math.sin(time*6.0) * 0.08;
+    const sway = Math.sin(time*3.2) * 0.06;
+
+    for(let i=0;i<horseN;i++){
+      const idx = (i % n) * 3;
+      // 马整体稍偏左一点，让银河能“包裹”更明显
+      aTarScatter[i*3+0] = frame[idx+0] * 1.0 + (-0.25) + sway;
+      aTarScatter[i*3+1] = frame[idx+1] * 1.0 + (0.05) + bob;
+      aTarScatter[i*3+2] = frame[idx+2] + (aSeed[i]-0.5) * 0.12; // 少量厚度
+    }
+  }else{
+    // 还没加载到马帧：先用一个紧凑椭圆占位，避免只剩“亮点”
+    for(let i=0;i<horseN;i++){
+      const t = aSeed[i]*Math.PI*2;
+      const r = 0.9 + (aSeed[i]*0.8);
+      aTarScatter[i*3+0] = Math.cos(t)*r*1.3 - 0.2;
+      aTarScatter[i*3+1] = Math.sin(t)*r*0.7 + 0.2;
+      aTarScatter[i*3+2] = (aSeed[i]-0.5)*0.35;
     }
   }
-}
 
-async function buildHorsePointCloudsFromPNGs(){
-  const imgs = await Promise.all(HORSE_FRAMES.map(loadImage));
-  const canvas = document.createElement("canvas");
-  const ctx = canvas.getContext("2d", { willReadFrequently:true });
+  // 2) 银河环：大量“星点”组成的环状粒子流，持续旋转 + 轻微湍动
+  const baseR = 4.8;
+  const thickness = 0.55;
+  const omega = 0.42; // 角速度（慢）
+  const tilt = 0.22;  // 环倾角，增强立体感
 
-  // 统一用最大尺寸，避免帧间点位比例变化
-  let W=0,H=0;
-  for(const img of imgs){ W=Math.max(W, img.naturalWidth); H=Math.max(H, img.naturalHeight); }
-  // 如果你的 PNG 很大，这里会自动压一下，提升性能
-  const maxSide = IS_MOBILE ? 1000 : 1400;
-  const scale = Math.min(1, maxSide / Math.max(W,H));
-  canvas.width = Math.max(2, Math.floor(W*scale));
-  canvas.height= Math.max(2, Math.floor(H*scale));
+  const start = horseN;
+  const end = horseN + galaxyN;
+  for(let i=start;i<end;i++){
+    const s = aSeed[i];
+    // 多环分层（两三圈叠加）
+    const ringBand = (s*3.0)%1.0;
+    const rr = baseR + (ringBand-0.5)*1.45 + (Math.sin(s*120.0 + time*0.9))*0.10;
+    const ang = s*Math.PI*2 + time*omega + Math.sin(time*0.35 + s*90.0)*0.06;
 
-  const maxPts = IS_MOBILE ? 11000 : 19000;
+    // 让银河围绕“马的中心”，整体略偏左（对齐马）
+    const cx = -0.25, cy = 0.15, cz = 0.0;
 
-  horseFramesPts = [];
-  for(let k=0;k<imgs.length;k++){
-    ctx.clearRect(0,0,canvas.width, canvas.height);
-    // 居中绘制（防止帧尺寸不一导致“跳”）
-    const dw = imgs[k].naturalWidth * scale;
-    const dh = imgs[k].naturalHeight* scale;
-    const dx = (canvas.width - dw)/2;
-    const dy = (canvas.height- dh)/2;
-    ctx.drawImage(imgs[k], dx, dy, dw, dh);
+    // 环的 3D：z 与 y 做倾斜耦合
+    const yOff = (Math.sin(ang*2.0 + s*30.0))*0.18 + (ringBand-0.5)*0.22;
+    const zOff = (Math.cos(ang*1.5 + s*40.0))*0.18;
 
-    const pts = sampleCanvasPoints(canvas, {
-      maxPoints: maxPts,
-      step: IS_MOBILE ? 3 : 2,
-      worldWidth: IS_MOBILE ? 5.0 : 5.9,
-      centerY: -0.25,
-      thickness: IS_MOBILE ? 0.72 : 0.95
-    });
+    const x = cx + Math.cos(ang)*rr;
+    const z = cz + Math.sin(ang)*rr;
+    const y = cy + yOff + (aSeed[i]-0.5)*thickness;
 
-    horseFramesPts.push(pts);
+    // 施加倾角（绕 X 轴一点点）
+    const y2 = y*Math.cos(tilt) - z*Math.sin(tilt);
+    const z2 = y*Math.sin(tilt) + z*Math.cos(tilt);
+
+    aTarScatter[i*3+0] = x + (Math.sin(time*0.9 + s*200.0))*0.05;
+    aTarScatter[i*3+1] = y2;
+    aTarScatter[i*3+2] = z2 + zOff;
   }
 
-  initHorseIndexMapping();
-  horseReady = true;
+  // 3) 余量粒子：轻微漂浮填充（让散开不空）
+  for(let i=end;i<MAX_PARTICLES;i++){
+    const s=aSeed[i];
+    const rr = 6.2 + Math.sin(s*30.0+time*0.6)*0.4;
+    const ang = s*Math.PI*2 + time*0.12;
+    aTarScatter[i*3+0] = Math.cos(ang)*rr*0.65;
+    aTarScatter[i*3+1] = 0.4 + Math.sin(time*0.7+s*20.0)*0.6;
+    aTarScatter[i*3+2] = Math.sin(ang)*rr*0.65;
+  }
 }
 
-/* ========= 成语目标：只在触发时重建，保证稳定 ========= */
-function pickIdiom(){ return IDIOMS[(Math.random()*IDIOMS.length)|0]; }
-
-function rebuildIdiomTargets(text){
-  currentIdiom = text;
-  const pts2 = sampleTextPoints2D(text, { fontSize: IS_MOBILE?190:210, step: IS_MOBILE?3:2, worldWidth: IS_MOBILE?7.0:8.2 });
-  const targetN = Math.max(1, Math.floor(pts2.length/2));
-  const thickness = IS_MOBILE ? 0.55 : 0.85;
-
-  for(let i=0;i<MAX_PARTICLES;i++){
-    const idx = (i % targetN) * 2;
-    const x = pts2[idx+0], y = pts2[idx+1];
-    const z = (aSeed[i]-0.5)*thickness + (aSeed[i]*aSeed[i]-0.33)*thickness*0.25;
-    aIdiomTar[i*3+0]=x; aIdiomTar[i*3+1]=y; aIdiomTar[i*3+2]=z;
-  }
-  idiomGeo.attributes.aIdiomTar.needsUpdate = true;
-
-  // 粗估包围半径（给红包环）
-  let minX=1e9,maxX=-1e9,minY=1e9,maxY=-1e9;
-  for(let k=0;k<pts2.length;k+=2){
-    const x=pts2[k], y=pts2[k+1];
-    if(x<minX) minX=x; if(x>maxX) maxX=x;
-    if(y<minY) minY=y; if(y>maxY) maxY=y;
-  }
-  const w=Math.max(2.0,(maxX-minX)), h=Math.max(1.2,(maxY-minY));
-  envHomeRingR = clamp(Math.max(w,h)*0.62*1.10, 2.8, 5.6);
-}
-
-rebuildIdiomTargets(pickIdiom());
-
-const idiomMat = new THREE.ShaderMaterial({
-  transparent:true, depthWrite:false, blending:THREE.AdditiveBlending,
-  uniforms:{ uTime:{value:0}, uMix:{value:0}, uFocus:{value:0}, uMap:{value:MA_TEX} },
-  vertexShader:`
-    uniform float uTime; uniform float uMix; uniform float uFocus;
-    attribute vec3 aVel; attribute vec3 aIdiomTar; attribute float aSeed; attribute float aKind;
-    varying float vSeed; varying float vGlow;
+// Shader：凝聚态用“马”字纹理点；散开态马/银河用圆形星点（不再是线）
+const mat = new THREE.ShaderMaterial({
+  transparent: true,
+  depthWrite: false,
+  blending: THREE.AdditiveBlending,
+  uniforms: {
+    uTime: { value: 0 },
+    uMix: { value: 0 },
+    uFocus: { value: 0 },
+    uMap: { value: MA_TEX }
+  },
+  vertexShader: /* glsl */`
+    uniform float uTime;
+    uniform float uMix;
+    uniform float uFocus;
+    attribute float aSeed;
+    attribute float aRole;
+    varying float vSeed;
+    varying float vRole;
+    varying float vMode; // 0=凝聚,1=散开
     void main(){
-      vSeed=aSeed;
-      vec3 p=position;
+      vSeed = aSeed;
+      vRole = aRole;
+      vMode = smoothstep(0.25, 0.92, uMix);
 
-      // 收拢态微动更小，稳定观感
-      float wob=mix(0.10,0.30,uMix);
-      float t=uTime*(0.65 + aSeed*1.25);
-      p.x += cos(t + aSeed*12.0) * (0.010 + aSeed*0.020) * wob;
-      p.y += sin(t*0.9 + aSeed*10.0) * (0.012 + aSeed*0.024) * wob;
-      p.z += sin(t*1.1 + aSeed* 8.0) * (0.010 + aSeed*0.020) * wob;
+      vec3 p = position;
 
-      p *= (1.0 + uFocus*(0.05 + aSeed*0.10));
+      // 微漂移（不影响“稳定态”，幅度很小）
+      float t = uTime*(0.65 + aSeed*1.35);
+      p.x += cos(t + aSeed*12.0) * (0.010 + aSeed*0.025) * (1.0 - uFocus*0.6);
+      p.y += sin(t*0.9 + aSeed*10.0) * (0.012 + aSeed*0.030) * (1.0 - uFocus*0.6);
+      p.z += sin(t*1.1 + aSeed* 8.0) * (0.010 + aSeed*0.025) * (1.0 - uFocus*0.6);
 
-      vec4 mv=modelViewMatrix*vec4(p,1.0);
-      gl_Position=projectionMatrix*mv;
+      vec4 mv = modelViewMatrix * vec4(p, 1.0);
+      gl_Position = projectionMatrix * mv;
 
-      float dist=max(0.001, -mv.z);
-      float base=0.95;
-      float tw=0.90 + 0.10*sin(uTime*2.1 + aSeed*9.0);
-      float size=mix(1.00,1.10,uMix);
-      gl_PointSize=clamp(base*tw*size*(120.0/dist), 0.65, 2.30);
+      float dist = max(0.001, -mv.z);
 
-      vGlow=0.55 + 0.45*sin(uTime*2.0 + aSeed*11.0);
+      // 点大小：凝聚态略大（“厚重”）；银河态更细小、数量更多
+      float baseMerge = 1.05;
+      float baseScatterHorse = 0.95;
+      float baseScatterGalaxy = 0.72;
+
+      float tw = 0.84 + 0.16*sin(uTime*2.1 + aSeed*10.0);
+
+      float sizeScatter = mix(baseScatterHorse, baseScatterGalaxy, step(0.5, aRole));
+      float base = mix(baseMerge, sizeScatter, vMode);
+
+      gl_PointSize = clamp(base*tw*(155.0/dist), 0.65, 3.2);
     }
   `,
-  fragmentShader:`
+  fragmentShader: /* glsl */`
     precision highp float;
     uniform sampler2D uMap;
-    varying float vSeed; varying float vGlow;
+    uniform float uTime;
+    varying float vSeed;
+    varying float vRole;
+    varying float vMode;
+
+    // 圆形星点（银河/马散开态）
+    float starAlpha(vec2 uv){
+      vec2 p = uv - 0.5;
+      float d = length(p);
+      float core = smoothstep(0.28, 0.0, d);
+      float halo = smoothstep(0.62, 0.14, d) * 0.55;
+      return core + halo;
+    }
+
     void main(){
-      vec4 m=texture2D(uMap, gl_PointCoord);
-      if(m.a < 0.06) discard;
+      // 凝聚态：使用“马”字贴图做粒子点（更有中式味道）
+      vec4 glyph = texture2D(uMap, gl_PointCoord);
+      float aGlyph = glyph.a;
 
-      vec3 gold=vec3(0.83,0.69,0.22);
-      vec3 red =vec3(0.70,0.07,0.15);
-      vec3 warm=vec3(1.00,0.92,0.72);
+      // 散开态：使用星点
+      float aStar = starAlpha(gl_PointCoord);
 
-      float k=smoothstep(0.20, 0.95, vSeed);
-      vec3 col=mix(warm, gold, k);
-      col=mix(col, red, smoothstep(0.78,0.98,vSeed)*0.45);
+      float a = mix(aGlyph, aStar, vMode);
+      if(a < 0.02) discard;
 
-      float a=m.a*(0.52 + 0.62*vGlow);
-      gl_FragColor=vec4(col*(1.10 + 0.65*m.a), a);
+      // 颜色：凝聚态更金红；银河更偏白金；马更暖金
+      vec3 gold = vec3(0.83,0.69,0.22);
+      vec3 red  = vec3(0.70,0.07,0.15);
+      vec3 warm = vec3(1.00,0.92,0.72);
+      vec3 cool = vec3(0.92,0.96,1.00);
+
+      // vRole：0=马,1=银河,2=填充
+      vec3 scatterCol = mix(warm, cool, step(0.5, vRole));                 // 银河更白
+      scatterCol = mix(scatterCol, gold, 0.35 + 0.25*sin(uTime*0.7+vSeed*9.0));
+
+      vec3 mergeCol = mix(warm, gold, smoothstep(0.20, 0.95, vSeed));
+      mergeCol = mix(mergeCol, red, smoothstep(0.78, 0.98, vSeed)*0.40);
+
+      vec3 col = mix(mergeCol, scatterCol, vMode);
+
+      float tw = 0.78 + 0.22*sin(uTime*2.0 + vSeed*11.0);
+      gl_FragColor = vec4(col * (1.08 + 0.55*a), a * tw);
     }
   `
 });
 
-const idiomPoints = new THREE.Points(idiomGeo, idiomMat);
-idiomPoints.frustumCulled=false;
-idiomPoints.layers.enable(BLOOM_LAYER);
-idiomGroup.add(idiomPoints);
+const points = new THREE.Points(geo, mat);
+points.frustumCulled = false;
+idiomGroup.add(points);
+points.layers.enable(BLOOM_LAYER);
 
-/* ========= 红包系统（缩小一半 + 大小不一 + 布朗漂浮） ========= */
-function makeRedEnvelopeTexture(){
-  const c=document.createElement("canvas"); c.width=256; c.height=320;
-  const ctx=c.getContext("2d");
-  const g=ctx.createLinearGradient(0,0,0,320);
-  g.addColorStop(0,"#d01a35"); g.addColorStop(1,"#7b081a");
-  ctx.fillStyle=g; ctx.fillRect(0,0,256,320);
-  ctx.strokeStyle="rgba(212,175,55,.85)"; ctx.lineWidth=10; ctx.strokeRect(14,14,228,292);
-  for(let i=0;i<18;i++){
-    const x=Math.random()*256, y=Math.random()*320, r=18+Math.random()*46;
-    ctx.beginPath(); ctx.fillStyle=`rgba(212,175,55,${0.04+Math.random()*0.06})`; ctx.arc(x,y,r,0,Math.PI*2); ctx.fill();
+// 初始成语（稳定）
+function pickIdiom(){
+  return IDIOMS[Math.floor(Math.random()*IDIOMS.length)];
+}
+rebuildMergeTargets(pickIdiom());
+
+// ---------------------------
+// 红包系统（修复：不再“上下分离”，而是围绕成语四周包裹 + 布朗运动）
+// 关键修复点：InstancedMesh 放到 scene（世界坐标写入不会被父级二次变换）
+// ---------------------------
+const ENVELOPES = IS_MOBILE ? 180 : 280;
+
+// 环半径：根据成语宽度动态给一个“包裹圈”
+let envHomeRingR = 3.6;
+
+function recalcEnvelopeRing(){
+  // 用成语的目标点估算尺度：取最大 X/Y 的简单近似
+  let maxR = 2.8;
+  for(let i=0;i<Math.min(MAX_PARTICLES, 6000);i+=6){
+    const x=aTarMerge[i*3+0], y=aTarMerge[i*3+1];
+    maxR = Math.max(maxR, Math.sqrt(x*x + y*y));
   }
-  ctx.save(); ctx.translate(128,190);
-  ctx.beginPath(); ctx.fillStyle="rgba(212,175,55,.92)"; ctx.arc(0,0,42,0,Math.PI*2); ctx.fill();
-  ctx.fillStyle="rgba(90,60,10,.80)"; ctx.font="900 54px ui-sans-serif, system-ui, -apple-system";
-  ctx.textAlign="center"; ctx.textBaseline="middle"; ctx.fillText("福",0,2);
+  envHomeRingR = clamp(maxR*1.05, 3.0, 5.6);
+}
+recalcEnvelopeRing();
+
+function makeRedEnvelopeTexture(){
+  const c = document.createElement("canvas");
+  c.width=256; c.height=320;
+  const ctx = c.getContext("2d");
+
+  const g = ctx.createLinearGradient(0,0,0,320);
+  g.addColorStop(0, "#d01a35");
+  g.addColorStop(1, "#7b081a");
+  ctx.fillStyle = g;
+  ctx.fillRect(0,0,256,320);
+
+  ctx.strokeStyle = "rgba(212,175,55,.85)";
+  ctx.lineWidth = 10;
+  ctx.strokeRect(14,14,228,292);
+
+  for(let i=0;i<18;i++){
+    const x = Math.random()*256;
+    const y = Math.random()*320;
+    const r = 18+Math.random()*46;
+    ctx.beginPath();
+    ctx.fillStyle = `rgba(212,175,55,${0.04+Math.random()*0.06})`;
+    ctx.arc(x,y,r,0,Math.PI*2);
+    ctx.fill();
+  }
+
+  ctx.save();
+  ctx.translate(128,190);
+  ctx.beginPath();
+  ctx.fillStyle = "rgba(212,175,55,.92)";
+  ctx.arc(0,0,42,0,Math.PI*2);
+  ctx.fill();
+  ctx.fillStyle = "rgba(90,60,10,.80)";
+  ctx.font = "900 54px ui-sans-serif, system-ui, -apple-system";
+  ctx.textAlign="center"; ctx.textBaseline="middle";
+  ctx.fillText("福", 0, 2);
   ctx.restore();
-  const tex=new THREE.CanvasTexture(c);
-  tex.colorSpace=THREE.SRGBColorSpace; tex.minFilter=THREE.LinearFilter; tex.magFilter=THREE.LinearFilter; tex.generateMipmaps=false;
+
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.minFilter = THREE.LinearFilter;
+  tex.magFilter = THREE.LinearFilter;
+  tex.generateMipmaps = false;
   return tex;
 }
 const ENV_TEX = makeRedEnvelopeTexture();
 
-const ENVELOPES = IS_MOBILE ? 160 : 260;
-const envGroup = new THREE.Group();
-idiomGroup.add(envGroup);
-
-const envGeo = new THREE.PlaneGeometry(0.14, 0.18); // 缩小一半
-const envMat = new THREE.MeshBasicMaterial({ map: ENV_TEX, transparent:true, opacity:0.98, depthWrite:false, toneMapped:false });
+// 红包更小一倍 + 大小不一（scale 分布）
+const envGeo = new THREE.PlaneGeometry(0.14, 0.18, 1, 1);
+const envMat = new THREE.MeshBasicMaterial({
+  map: ENV_TEX,
+  transparent: true,
+  opacity: 0.98,
+  depthWrite: false,
+  toneMapped: false
+});
 const envMesh = new THREE.InstancedMesh(envGeo, envMat, ENVELOPES);
 envMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+scene.add(envMesh);
 envMesh.layers.enable(BLOOM_LAYER);
-envGroup.add(envMesh);
 
 const envHomeLocal = new Array(ENVELOPES);
 const envScatterWorld = new Array(ENVELOPES);
@@ -575,374 +1096,528 @@ const envVelWorld = new Array(ENVELOPES);
 const envScale = new Array(ENVELOPES);
 const envSeed = new Array(ENVELOPES);
 
-function sampleEnvelopeHomeLocal(i){
-  const ang=(i/ENVELOPES)*Math.PI*2 + (Math.random()-0.5)*0.35;
-  const r=envHomeRingR*(0.86 + Math.random()*0.52);
-  const y=(Math.random()-0.5)*1.9;
-  const z=(Math.random()-0.5)*1.7;
+// 布朗运动偏移（稳定态：小幅、慢速）
+const envBrown = new Array(ENVELOPES);
+const envBrownV = new Array(ENVELOPES);
+
+function sampleEnvelopeHomeLocal(){
+  // 让红包“包裹”成语：在一个略带厚度的环上，Y 也有分布
+  const ang = Math.random() * Math.PI * 2;
+  const r = envHomeRingR * (0.85 + Math.random() * 0.45);
+  const y = (Math.random()-0.5) * 2.4;
+  const z = (Math.random()-0.5) * 2.0;
   return new THREE.Vector3(Math.cos(ang)*r, y, z);
 }
 function sampleScatterWorld(){
-  const R=7.2;
-  const u=Math.random(), v=Math.random();
-  const theta=u*Math.PI*2;
-  const phi=Math.acos(2*v-1);
-  const rr=(0.45 + Math.pow(Math.random(),0.65)*0.55)*R;
-  return new THREE.Vector3(
-    rr*Math.sin(phi)*Math.cos(theta),
-    rr*Math.cos(phi)*0.75 + 2.2,
-    rr*Math.sin(phi)*Math.sin(theta)
-  );
+  const R = 7.2;
+  const u = Math.random();
+  const v = Math.random();
+  const theta = u * Math.PI * 2;
+  const phi = Math.acos(2 * v - 1);
+  const rr = (0.45 + Math.pow(Math.random(), 0.65) * 0.55) * R;
+  const x = rr * Math.sin(phi) * Math.cos(theta);
+  const y = rr * Math.cos(phi) * 0.75 + 2.2;
+  const z = rr * Math.sin(phi) * Math.sin(theta);
+  return new THREE.Vector3(x,y,z);
 }
+
 for(let i=0;i<ENVELOPES;i++){
-  envHomeLocal[i]=sampleEnvelopeHomeLocal(i);
-  envScatterWorld[i]=sampleScatterWorld();
-  envVelWorld[i]=new THREE.Vector3(0,0,0);
-  const sizeTier=Math.random();
-  envScale[i]=(sizeTier<0.18)?lerp(0.45,0.70,Math.random())
-           :(sizeTier<0.78)?lerp(0.70,1.05,Math.random())
-           :                 lerp(1.05,1.55,Math.random());
-  envSeed[i]=Math.random()*1000;
+  envHomeLocal[i] = sampleEnvelopeHomeLocal();
+  envScatterWorld[i] = sampleScatterWorld();
+  envVelWorld[i] = new THREE.Vector3(0,0,0);
+
+  // 大小不一：多峰分布（小/中/大）
+  const r = Math.random();
+  let s = 1.0;
+  if(r < 0.55) s = lerp(0.45, 0.78, Math.random());     // 小红包
+  else if(r < 0.90) s = lerp(0.78, 1.10, Math.random()); // 中红包
+  else s = lerp(1.10, 1.55, Math.random());              // 大红包
+  envScale[i] = s;
+
+  envSeed[i] = Math.random()*1000;
+  envBrown[i] = new THREE.Vector3(0,0,0);
+  envBrownV[i] = new THREE.Vector3(0,0,0);
 }
+
 const _obj = new THREE.Object3D();
-const _tmp = new THREE.Vector3();
 const _homeWorld = new THREE.Vector3();
 
-function brown3(seed,t){
-  const a=Math.sin(t*0.55 + seed*1.3);
-  const b=Math.sin(t*0.93 + seed*2.1);
-  const c=Math.sin(t*1.37 + seed*3.7);
-  const d=Math.sin(t*0.71 + seed*5.2);
-  return { x:a*0.38 + b*0.22, y:c*0.34 + a*0.16, z:d*0.38 + b*0.18 };
+function updateEnvelopeBrownian(dt, time){
+  // 只在凝聚态附近明显（mix 越小越明显）
+  const k = (1.0 - mix);
+  const acc = 0.22 * k;
+  const drag = Math.pow(0.92, dt*60.0);
+
+  for(let i=0;i<ENVELOPES;i++){
+    const v = envBrownV[i];
+    v.x = (v.x + (Math.random()-0.5)*acc) * drag;
+    v.y = (v.y + (Math.random()-0.5)*acc) * drag;
+    v.z = (v.z + (Math.random()-0.5)*acc) * drag;
+
+    const o = envBrown[i];
+    o.addScaledVector(v, dt);
+
+    // 约束偏移不至于漂走
+    const lim = 0.35;
+    o.x = clamp(o.x, -lim, lim);
+    o.y = clamp(o.y, -lim, lim);
+    o.z = clamp(o.z, -lim, lim);
+  }
 }
 
 function updateEnvelopes(time, dt){
-  idiomGroup.updateMatrixWorld(true);
+  updateEnvelopeBrownian(dt, time);
 
   for(let i=0;i<ENVELOPES;i++){
-    const seed=envSeed[i];
-    const n=brown3(seed, time);
-    _homeWorld.copy(envHomeLocal[i]);
-    _homeWorld.x += n.x*0.22;
-    _homeWorld.y += n.y*0.22;
-    _homeWorld.z += n.z*0.22;
+    const seed = envSeed[i];
 
-    const sW=envScatterWorld[i];
-    const vW=envVelWorld[i];
+    // homeLocal：围绕成语（idiomGroup 本地坐标）
+    const wob = Math.sin(time*(0.8 + (seed%1.0)*1.2) + seed) * 0.06;
+    const homeLocal = envHomeLocal[i];
 
-    vW.multiplyScalar(Math.pow(0.92, dt*60));
+    // 在凝聚态做布朗小漂移（包裹感）
+    const brown = envBrown[i];
+
+    _homeWorld.set(
+      homeLocal.x + brown.x,
+      homeLocal.y + wob + brown.y,
+      homeLocal.z + brown.z
+    );
+    // 转为世界坐标（让它跟随 idiomGroup 的 Y 轴旋转）
+    idiomGroup.updateMatrixWorld(true);
+    _homeWorld.applyMatrix4(idiomGroup.matrixWorld);
+
+    // scatterWorld：散开态飞散位置（世界坐标）
+    const sW = envScatterWorld[i];
+    const vW = envVelWorld[i];
+
+    // 散开惯性衰减（稳定态不跳）
+    vW.multiplyScalar(Math.pow(0.92, dt*60.0));
     sW.addScaledVector(vW, dt);
-    sW.x += Math.sin(time*0.40 + seed)*0.010;
-    sW.y += Math.sin(time*0.55 + seed)*0.012;
-    sW.z += Math.sin(time*0.48 + seed)*0.010;
+    sW.y += Math.sin(time*0.9 + seed)*0.010;
 
-    _tmp.copy(_homeWorld).applyMatrix4(idiomGroup.matrixWorld);
-
-    const x=lerp(_tmp.x, sW.x, mix);
-    const y=lerp(_tmp.y, sW.y, mix);
-    const z=lerp(_tmp.z, sW.z, mix);
+    const x = lerp(_homeWorld.x, sW.x, mix);
+    const y = lerp(_homeWorld.y, sW.y, mix);
+    const z = lerp(_homeWorld.z, sW.z, mix);
 
     _obj.position.set(x,y,z);
     _obj.quaternion.copy(camera.quaternion);
-    _obj.rotateZ(Math.sin(time*0.35 + seed)*0.10);
-    const s=envScale[i]*(1.0 - focus*0.10);
-    _obj.scale.setScalar(s);
+
+    // 凝聚态：轻微自转，散开态不需要集体绕 Y 轴旋转
+    _obj.rotateZ(Math.sin(time*0.7 + seed)*0.22*(1.0-mix));
+
+    _obj.scale.setScalar(envScale[i] * (1.0 - focus*0.08));
     _obj.updateMatrix();
     envMesh.setMatrixAt(i, _obj.matrix);
   }
-  envMesh.instanceMatrix.needsUpdate=true;
+  envMesh.instanceMatrix.needsUpdate = true;
 }
 
 function kickScatterImpulse(){
-  const centerW=new THREE.Vector3(0,0,0).applyMatrix4(idiomGroup.matrixWorld);
-  for(let i=0;i<ENVELOPES;i++){
-    const p=envScatterWorld[i];
-    const dir=new THREE.Vector3().subVectors(p, centerW).normalize();
-    dir.x += (Math.random()-0.5)*0.35;
-    dir.y += (Math.random()-0.2)*0.25;
-    dir.z += (Math.random()-0.5)*0.35;
-    dir.normalize();
-    const kick=2.0 + Math.random()*3.6;
-    envVelWorld[i].addScaledVector(dir, kick);
-  }
-  // 粒子也给一点冲量（一次性）
+  // 粒子：散开给一个初始冲量
   for(let i=0;i<MAX_PARTICLES;i++){
-    const sx=(Math.random()-0.5), sy=(Math.random()-0.2), sz=(Math.random()-0.5);
-    const len=Math.max(1e-4, Math.sqrt(sx*sx+sy*sy+sz*sz));
-    const k=0.75 + Math.random()*1.75;
+    const sx = (Math.random()-0.5);
+    const sy = (Math.random()-0.2);
+    const sz = (Math.random()-0.5);
+    const len = Math.max(1e-4, Math.sqrt(sx*sx+sy*sy+sz*sz));
+    const k = 1.1 + Math.random()*2.2;
     aVel[i*3+0] += (sx/len)*k;
     aVel[i*3+1] += (sy/len)*k;
     aVel[i*3+2] += (sz/len)*k;
   }
-  idiomGeo.attributes.aVel.needsUpdate=true;
+  geo.attributes.aVel.needsUpdate = true;
+
+  // 红包：散开时飞散
+  const center = new THREE.Vector3(0,2.25,0);
+  for(let i=0;i<ENVELOPES;i++){
+    const p = envScatterWorld[i];
+    const dir = new THREE.Vector3().subVectors(p, center).normalize();
+    dir.x += (Math.random()-0.5)*0.35;
+    dir.y += (Math.random()-0.2)*0.25;
+    dir.z += (Math.random()-0.5)*0.35;
+    dir.normalize();
+    const kick = 2.2 + Math.random()*4.0;
+    envVelWorld[i].addScaledVector(dir, kick);
+  }
 }
 
-/* ========= 散开态目标：PNG 跑马 + 银河 ========= */
-function horseTargetFromPNGs(i, time){
-  if(!horseReady || horseFramesPts.length===0) return [0,0,0];
-
-  // 跑步帧率：你可调 10~14 更自然
-  const fps = 12.0;
-  const f = (time * fps) % horseFramesPts.length;
-  const i0 = Math.floor(f);
-  const i1 = (i0 + 1) % horseFramesPts.length;
-  const t = f - i0;
-
-  const pts0 = horseFramesPts[i0];
-  const pts1 = horseFramesPts[i1];
-  const n = horseFrameN;
-
-  const idx = horseIdx[i] % n;
-  const ax=pts0[idx*3+0], ay=pts0[idx*3+1], az=pts0[idx*3+2];
-  const bx=pts1[idx*3+0], by=pts1[idx*3+1], bz=pts1[idx*3+2];
-
-  let x = ax + (bx-ax)*t;
-  let y = ay + (by-ay)*t;
-  let z = az + (bz-az)*t;
-
-  // 轻微整体起伏（不破形）
-  const run = time*6.0;
-  y += Math.sin(run)*0.05;
-  x += Math.sin(run*0.5)*0.03;
-
-  return [x,y,z];
+// ---------------------------
+// 背景烟花（粒子更小、更自然）
+// ---------------------------
+function smoothstep(a,b,x){
+  const t = clamp((x-a)/(b-a), 0, 1);
+  return t*t*(3-2*t);
 }
 
-function galaxyTarget(i, time){
-  const s=aSeed[i];
-  const r=lerp(2.8, 5.6, Math.pow(s, 0.55));
-  const ang=time*(0.42 + s*0.30) + s*18.0;
-  const y=(Math.sin(time*0.65 + s*9.0)*0.55) + (s-0.5)*1.2;
-  const x=Math.cos(ang)*r;
-  const z=Math.sin(ang)*r + (s-0.5)*0.85;
-  return [x,y,z];
-}
+class Fireworks {
+  constructor(maxParticles=7000){
+    this.max = maxParticles;
+    this.pos = new Float32Array(this.max*3);
+    this.vel = new Float32Array(this.max*3);
+    this.col = new Float32Array(this.max*3);
+    this.life= new Float32Array(this.max);
+    this.age = new Float32Array(this.max);
+    this.active = new Uint8Array(this.max);
 
-/* ========= 粒子物理更新（目标 = lerp(成语, 散开, mix)） ========= */
-function updateIdiom(dt, time){
-  if(mode===Mode.MERGE) idiomGroup.rotation.y += dt*0.22;
-  else idiomGroup.rotation.y = damp(idiomGroup.rotation.y, 0.0, 3.0, dt);
+    this.geo = new THREE.BufferGeometry();
+    this.geo.setAttribute("position", new THREE.BufferAttribute(this.pos,3));
+    this.geo.setAttribute("color", new THREE.BufferAttribute(this.col,3));
 
-  const spring=7.8, drag=3.8;
+    this.mat = new THREE.ShaderMaterial({
+      transparent:true,
+      depthWrite:false,
+      blending: THREE.AdditiveBlending,
+      uniforms:{ uTime:{value:0} },
+      vertexShader:/*glsl*/`
+        attribute vec3 color;
+        varying vec3 vColor;
+        void main(){
+          vColor = color;
+          vec4 mv = modelViewMatrix * vec4(position,1.0);
+          gl_Position = projectionMatrix * mv;
+          float dist = max(0.001, -mv.z);
+          // 更小更细
+          gl_PointSize = clamp(1.25*(220.0/dist), 0.55, 3.2);
+        }
+      `,
+      fragmentShader:/*glsl*/`
+        precision highp float;
+        varying vec3 vColor;
+        void main(){
+          vec2 uv = gl_PointCoord - 0.5;
+          float d = length(uv);
+          float core = smoothstep(0.22, 0.0, d);
+          float halo = smoothstep(0.65, 0.18, d) * 0.45;
+          float a = core + halo;
+          if(a < 0.01) discard;
+          gl_FragColor = vec4(vColor*(1.15 + 0.55*halo), a);
+        }
+      `
+    });
 
-  for(let i=0;i<MAX_PARTICLES;i++){
-    const px=aPos[i*3+0], py=aPos[i*3+1], pz=aPos[i*3+2];
-    let vx=aVel[i*3+0], vy=aVel[i*3+1], vz=aVel[i*3+2];
+    this.points = new THREE.Points(this.geo, this.mat);
+    this.points.frustumCulled = false;
+    scene.add(this.points);
+    this.points.layers.enable(BLOOM_LAYER);
 
-    const itx=aIdiomTar[i*3+0], ity=aIdiomTar[i*3+1], itz=aIdiomTar[i*3+2];
-
-    let stx=0, sty=0, stz=0;
-    if(aKind[i] === 0.0){
-      const h = horseTargetFromPNGs(i, time);
-      stx=h[0]; sty=h[1]; stz=h[2];
-    }else{
-      const g = galaxyTarget(i, time);
-      stx=g[0]; sty=g[1]; stz=g[2];
-    }
-
-    const tx=lerp(itx, stx, mix);
-    const ty=lerp(ity, sty, mix);
-    const tz=lerp(itz, stz, mix);
-
-    vx += (tx-px)*spring*dt;
-    vy += (ty-py)*spring*dt;
-    vz += (tz-pz)*spring*dt;
-
-    const dd=Math.exp(-drag*dt);
-    vx*=dd; vy*=dd; vz*=dd;
-
-    aPos[i*3+0]=px + vx*dt;
-    aPos[i*3+1]=py + vy*dt;
-    aPos[i*3+2]=pz + vz*dt;
-
-    aVel[i*3+0]=vx; aVel[i*3+1]=vy; aVel[i*3+2]=vz;
+    this.spawnTimer = 0;
   }
 
-  idiomGeo.attributes.position.needsUpdate=true;
-  idiomGeo.attributes.aVel.needsUpdate=true;
-  idiomMat.uniforms.uTime.value=time;
-  idiomMat.uniforms.uMix.value=mix;
-  idiomMat.uniforms.uFocus.value=focus;
-}
+  hsvToRgb(h,s,v){
+    const i = Math.floor(h*6);
+    const f = h*6 - i;
+    const p = v*(1-s);
+    const q = v*(1-f*s);
+    const t = v*(1-(1-f)*s);
+    const m = i % 6;
+    const r = [v,q,p,p,t,v][m];
+    const g = [t,v,v,q,p,p][m];
+    const b = [p,p,t,v,v,q][m];
+    return [r,g,b];
+  }
 
-/* ========= 相机（散开态可拖动旋转） ========= */
+  spawnBurst(origin, count=180){
+    for(let n=0;n<count;n++){
+      let idx = -1;
+      for(let i=0;i<this.max;i++){
+        if(this.active[i]===0){ idx=i; break; }
+      }
+      if(idx<0) break;
+
+      this.active[idx]=1;
+      this.age[idx]=0;
+      this.life[idx]=1.1 + Math.random()*0.9;
+
+      const h = Math.random();
+      const s = 0.72 + Math.random()*0.28;
+      const v = 0.80 + Math.random()*0.20;
+      const [r,g,b]=this.hsvToRgb(h,s,v);
+
+      this.col[idx*3+0]=r;
+      this.col[idx*3+1]=g;
+      this.col[idx*3+2]=b;
+
+      this.pos[idx*3+0]=origin.x + (Math.random()-0.5)*0.10;
+      this.pos[idx*3+1]=origin.y + (Math.random()-0.5)*0.10;
+      this.pos[idx*3+2]=origin.z + (Math.random()-0.5)*0.10;
+
+      const u=Math.random(), v2=Math.random();
+      const theta=u*Math.PI*2;
+      const phi=Math.acos(2*v2-1);
+
+      // 更自然：速度分布更温和
+      const sp=3.0 + Math.random()*3.6;
+      const vx=Math.sin(phi)*Math.cos(theta)*sp;
+      const vy=Math.cos(phi)*sp*0.70 + 1.05;
+      const vz=Math.sin(phi)*Math.sin(theta)*sp;
+
+      this.vel[idx*3+0]=vx;
+      this.vel[idx*3+1]=vy;
+      this.vel[idx*3+2]=vz;
+    }
+  }
+
+  update(dt){
+    this.spawnTimer -= dt;
+
+    if(this.spawnTimer <= 0){
+      this.spawnTimer = 0.95 + Math.random()*1.05;
+      const ox = (Math.random()-0.5)*16;
+      const oy = 5.0 + Math.random()*6.0;
+      const oz = -12 - Math.random()*18;
+      this.spawnBurst(new THREE.Vector3(ox,oy,oz), IS_MOBILE ? 115 : 175);
+    }
+
+    for(let i=0;i<this.max;i++){
+      if(this.active[i]===0) continue;
+
+      this.age[i] += dt;
+      const t = this.age[i]/this.life[i];
+      if(t >= 1){
+        this.active[i]=0;
+        this.pos[i*3+0]=9999;
+        this.pos[i*3+1]=9999;
+        this.pos[i*3+2]=9999;
+        continue;
+      }
+
+      // 重力更柔
+      this.vel[i*3+1] -= 2.8 * dt;
+      const d = Math.pow(0.988, dt*60);
+      this.vel[i*3+0] *= d;
+      this.vel[i*3+1] *= d;
+      this.vel[i*3+2] *= d;
+
+      this.pos[i*3+0] += this.vel[i*3+0]*dt;
+      this.pos[i*3+1] += this.vel[i*3+1]*dt;
+      this.pos[i*3+2] += this.vel[i*3+2]*dt;
+    }
+
+    this.geo.attributes.position.needsUpdate = true;
+    this.geo.attributes.color.needsUpdate = true;
+  }
+}
+const fireworks = new Fireworks(IS_MOBILE ? 5200 : 7800);
+
+// ---------------------------
+// 相机控制（散开态可手势拖动）
+// ---------------------------
 let yaw=0.0, pitch=0.14, radius=10.4;
 let yawT=yaw, pitchT=pitch;
+
 let dragging=false, lastX=0, lastY=0, lastTap=0;
 
-canvas.addEventListener("pointerdown",(e)=>{ dragging=true; lastX=e.clientX; lastY=e.clientY; });
+canvas.addEventListener("pointerdown",(e)=>{
+  dragging=true; lastX=e.clientX; lastY=e.clientY;
+});
 window.addEventListener("pointerup",()=>dragging=false);
 window.addEventListener("pointermove",(e)=>{
   if(!dragging) return;
-  if(mode!==Mode.SCATTER) return;
-  const dx=e.clientX-lastX, dy=e.clientY-lastY;
+  if(mode !== Mode.SCATTER) return;
+  const dx=e.clientX-lastX;
+  const dy=e.clientY-lastY;
   lastX=e.clientX; lastY=e.clientY;
   yawT += dx*0.0042;
   pitchT += dy*0.0032;
 });
+
 canvas.addEventListener("click", ()=>{
-  const now=performance.now();
-  if(now-lastTap<360) triggerRedPacketFlow(); // 双击抓红包
-  lastTap=now;
+  const now = performance.now();
+  if(now - lastTap < 360){
+    triggerRedPacketFlow();
+  }
+  lastTap = now;
 });
 
-function applyCamera(dt, time){
-  if(mode===Mode.MERGE){
-    yawT += dt*0.10;
-    pitchT = damp(pitchT, 0.14, 2.8, dt);
-  }else if(mode===Mode.FOCUS){
-    pitchT = damp(pitchT, 0.12, 3.0, dt);
-  }else{
-    pitchT = clamp(pitchT, -0.22, 0.62);
-  }
-
-  yaw=damp(yaw,yawT,6.0,dt);
-  pitch=damp(pitch,pitchT,6.0,dt);
-
-  const r=radius;
-  const cx=Math.sin(yaw)*Math.cos(pitch)*r;
-  const cy=2.25 + Math.sin(pitch)*r*0.33;
-  const cz=Math.cos(yaw)*Math.cos(pitch)*r;
-  camera.position.set(cx,cy,cz);
-  camera.lookAt(0,2.25,0);
-
-  goldPoint.position.set(
-    Math.sin(yaw*0.7)*2.0,
-    5.0 + Math.sin(time*0.7)*0.12,
-    3.0 + Math.cos(yaw*0.7)*1.2
-  );
+// ---------------------------
+// 红包开封流程
+// ---------------------------
+function pickVideo(){
+  return HORSE_VIDEOS[Math.floor(Math.random()*HORSE_VIDEOS.length)];
 }
 
-/* ========= 红包开封 ========= */
-let focusLock=false;
-function pickVideo(){ return HORSE_VIDEOS[(Math.random()*HORSE_VIDEOS.length)|0]; }
-
 async function triggerRedPacketFlow(){
-  if(mode!==Mode.SCATTER && mode!==Mode.FOCUS) return;
-  if(focusLock) return;
-  focusLock=true;
+  if(mode !== Mode.FOCUS){
+    setMode(Mode.FOCUS);
+  }
 
-  if(mode!==Mode.FOCUS) setMode(Mode.FOCUS);
+  // 卡片里显示一条祝福 + 当前成语（稳定）
+  focusTitleEl.textContent = "红包到 · 好运到";
+  focusTextEl.textContent = `恭喜你抓到一个红包！\n\n${currentIdiom || "马到成功"}`;
 
-  const idiom=currentIdiom || pickIdiom();
-  focusTitleEl.textContent="红包到 · 好运到";
-  focusTextEl.textContent=`恭喜你抓到一个红包！\n\n${idiom}`;
+  packetEl.classList.remove("open");
+  void packetEl.offsetWidth;
+  packetEl.classList.add("open");
 
-  packetEl.classList.remove("open"); void packetEl.offsetWidth; packetEl.classList.add("open");
-
+  const url = pickVideo();
   try{
-    const url=pickVideo();
     horseVideo.pause();
-    horseVideo.src=url;
+    horseVideo.src = url;
     horseVideo.load();
     await horseVideo.play().catch(()=>{});
   }catch(e){}
-
-  setTimeout(()=>{ focusLock=false; }, 650);
 }
 
-/* ========= 手势识别（严格区分） ========= */
-let hands=null;
-let handEnabled=false;
-let lastLandmarks=null;
-let lastLandmarksTs=0;
+// ---------------------------
+// 手势识别（严格区分：握拳=凝聚；三指捏合=抓红包）
+// ---------------------------
+let hands = null;
+let handEnabled = false;
+let lastLandmarks = null;
+let lastLandmarksTs = 0;
 
-function dist3(a,b){
+function dist2(a,b){
   const dx=a.x-b.x, dy=a.y-b.y, dz=(a.z||0)-(b.z||0);
   return Math.sqrt(dx*dx+dy*dy+dz*dz);
 }
+
 function computeGesture(landmarks){
   const wrist=landmarks[0];
-  const handSize=Math.max(1e-6, dist3(wrist, landmarks[9])); // wrist->middle_mcp
+  const handSize=Math.max(1e-6, dist2(wrist, landmarks[9]));
 
   function extended(tip,pip){
-    const dt=dist3(landmarks[tip], wrist);
-    const dp=dist3(landmarks[pip], wrist);
+    const dt=dist2(landmarks[tip], wrist);
+    const dp=dist2(landmarks[pip], wrist);
     return dt > dp*1.12;
   }
-  const thumbExt=extended(4,2);
-  const indexExt=extended(8,6);
-  const middleExt=extended(12,10);
-  const ringExt=extended(16,14);
-  const pinkyExt=extended(20,18);
-  const extCount=[thumbExt,indexExt,middleExt,ringExt,pinkyExt].filter(Boolean).length;
 
-  const dTI=dist3(landmarks[4], landmarks[8]) / handSize;
-  const dTM=dist3(landmarks[4], landmarks[12]) / handSize;
-  const dIM=dist3(landmarks[8], landmarks[12]) / handSize;
-  const tipWristIdx=dist3(landmarks[8], wrist) / handSize;
-  const tipWristMid=dist3(landmarks[12], wrist) / handSize;
+  const thumbExt = extended(4,2);
+  const indexExt = extended(8,6);
+  const middleExt= extended(12,10);
+  const ringExt  = extended(16,14);
+  const pinkyExt = extended(20,18);
 
-  // ✅ 三指捏合：距离近 + 非握拳 + 指尖离手腕不近
-  const triPinch = (dTI < 0.32 && dTM < 0.34 && dIM < 0.30)
-                && (extCount >= 2)
-                && (tipWristIdx > 0.75 && tipWristMid > 0.75);
+  const extCount = [thumbExt,indexExt,middleExt,ringExt,pinkyExt].filter(Boolean).length;
 
+  // 五指握拳（凝聚）：伸展手指数很少
+  const closeHand = (extCount <= 1);
+
+  // 张开（散开）
   const openHand = (extCount >= 4);
 
+  // 三指捏合（抓红包）：拇指+食指+中指同时接近
+  const dTI = dist2(landmarks[4], landmarks[8]) / handSize;
+  const dTM = dist2(landmarks[4], landmarks[12]) / handSize;
+  const dIM = dist2(landmarks[8], landmarks[12]) / handSize;
+
+  // 为避免“握拳也误判为捏合”，强制要求：不是 closeHand
+  const pinch3 = (!closeHand) && (dTI < 0.33) && (dTM < 0.40) && (dIM < 0.34);
+
+  // 手掌中心（用于散开态旋转）
+  const palmIdx=[0,5,9,13,17];
   const palm={x:0,y:0,z:0};
-  for(const i of [0,5,9,13,17]){ palm.x+=landmarks[i].x; palm.y+=landmarks[i].y; palm.z+=landmarks[i].z; }
-  palm.x/=5; palm.y/=5; palm.z/=5;
+  for(const i of palmIdx){ palm.x+=landmarks[i].x; palm.y+=landmarks[i].y; palm.z+=landmarks[i].z; }
+  palm.x/=palmIdx.length; palm.y/=palmIdx.length; palm.z/=palmIdx.length;
 
-  const palmClose =
-    dist3(landmarks[8],  palm)/handSize < 0.65 &&
-    dist3(landmarks[12], palm)/handSize < 0.65 &&
-    dist3(landmarks[16], palm)/handSize < 0.70 &&
-    dist3(landmarks[20], palm)/handSize < 0.72;
-
-  // ✅ 五指握拳：扩展少 + 指尖靠近掌心 + 排除 triPinch
-  const fist = (extCount <= 1) && palmClose && !triPinch;
-
-  return { palm, openHand, fist, triPinch };
+  return { openHand, closeHand, pinch3, palm };
 }
 
-let prevFist=false, prevOpen=false, prevTri=false;
+let lastPalmX=null, lastPalmY=null;
 
-function onFistStart(){
-  // 收拢：只在“边沿”触发一次；且不在收拢态重复换成语
-  if(mode !== Mode.MERGE){
-    const idiom=pickIdiom();
-    rebuildIdiomTargets(idiom);
-    for(let i=0;i<ENVELOPES;i++) envHomeLocal[i]=sampleEnvelopeHomeLocal(i);
-    setMode(Mode.MERGE);
-    statusText.textContent=`收拢态：${idiom}（稳定）`;
-  }else{
-    statusText.textContent=`收拢态：${currentIdiom}（稳定）`;
+// 用“边沿触发 + 去抖动”确保动作不会混乱
+let prevClose=false, prevOpen=false;
+let pinchHold=0;
+let pinchCooldown=0;
+
+function onEnterMerge(){
+  // 进入凝聚：选择一个成语并稳定（不会持续变换）
+  rebuildMergeTargets(pickIdiom());
+  recalcEnvelopeRing();
+
+  // 重采样红包环位置（一次性），之后靠布朗运动稳定漂
+  for(let i=0;i<ENVELOPES;i++){
+    envHomeLocal[i] = sampleEnvelopeHomeLocal();
+    envBrown[i].set(0,0,0);
+    envBrownV[i].set(0,0,0);
   }
-}
-function onOpenStart(){
-  setMode(Mode.SCATTER);
-  statusText.textContent = horseReady ? "散开态：PNG 跑马 + 银河环绕（稳定）" : "散开态：PNG 未就绪（检查路径）";
-}
-function onTriPinchStart(){
-  if(mode===Mode.SCATTER) triggerRedPacketFlow();
+
+  setMode(Mode.MERGE);
 }
 
-function handleGesture(g){
-  if(g.fist && !prevFist) onFistStart();
-  if(g.openHand && !prevOpen) onOpenStart();
-  if(g.triPinch && !prevTri) onTriPinchStart();
-  prevFist=g.fist; prevOpen=g.openHand; prevTri=g.triPinch;
+function onEnterScatter(){
+  setMode(Mode.SCATTER);
+}
+
+function handleGesture(g, dt){
+  // 1) 凝聚/散开：只在“状态变化”时触发
+  if(g.closeHand && !prevClose){
+    // 握拳：凝聚（带过渡，不瞬切）
+    onEnterMerge();
+  }else if(g.openHand && !prevOpen){
+    // 张开：散开
+    onEnterScatter();
+  }
+  prevClose = g.closeHand;
+  prevOpen = g.openHand;
+
+  // 2) 三指捏合：按住一小段时间才触发（更稳）
+  pinchCooldown = Math.max(0, pinchCooldown - dt);
+
+  if(g.pinch3 && pinchCooldown<=0){
+    pinchHold += dt;
+    if(pinchHold >= 0.12){
+      pinchHold = 0;
+      pinchCooldown = 0.55;
+      triggerRedPacketFlow();
+    }
+  }else{
+    pinchHold = 0;
+  }
+
+  // 3) 散开态：手掌移动控制视角（非捏合、非握拳）
+  if(mode===Mode.SCATTER && !g.pinch3 && !g.closeHand){
+    const x=g.palm.x, y=g.palm.y;
+    if(lastPalmX!=null){
+      const dx=x-lastPalmX;
+      const dy=y-lastPalmY;
+      yawT += (-dx)*4.2;
+      pitchT += ( dy)*3.0;
+    }
+    lastPalmX=x; lastPalmY=y;
+  }else{
+    lastPalmX=lastPalmY=null;
+  }
 }
 
 async function startHands(){
-  if(!window.Hands) throw new Error("MediaPipe Hands missing");
-  if(!navigator.mediaDevices?.getUserMedia) throw new Error("getUserMedia unsupported");
+  if(!window.Hands){
+    statusText.textContent="手势组件未加载（网络问题？）";
+    return;
+  }
+  if(!navigator.mediaDevices?.getUserMedia){
+    statusText.textContent="当前浏览器不支持摄像头 API";
+    return;
+  }
 
-  hands=new window.Hands({ locateFile:(f)=>`https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1675469240/${f}` });
-  hands.setOptions({ maxNumHands:1, modelComplexity:1, minDetectionConfidence:0.6, minTrackingConfidence:0.6 });
+  hands = new window.Hands({
+    locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1675469240/${file}`
+  });
+  hands.setOptions({
+    maxNumHands: 1,
+    modelComplexity: 1,
+    minDetectionConfidence: 0.6,
+    minTrackingConfidence: 0.6
+  });
   hands.onResults((results)=>{
-    const lm=results.multiHandLandmarks?.[0] || null;
-    if(lm){ lastLandmarks=lm; lastLandmarksTs=performance.now(); }
+    const lm = results.multiHandLandmarks?.[0] || null;
+    if(lm){
+      lastLandmarks = lm;
+      lastLandmarksTs = performance.now();
+    }
   });
 
-  const stream=await navigator.mediaDevices.getUserMedia({ audio:false, video:{ facingMode:"user", width:{ideal:640}, height:{ideal:480} } });
+  const stream = await navigator.mediaDevices.getUserMedia({
+    audio:false,
+    video:{ facingMode:"user", width:{ideal:640}, height:{ideal:480} }
+  });
+
   videoEl.srcObject=stream;
   await videoEl.play();
 
   handEnabled=true;
   led.classList.add("on");
-  statusText.textContent = "手势已启用：握拳收拢 / 张开散开 / 三指捏合抓红包";
+  statusText.textContent="手势已启用：握拳=凝聚；张开=散开；三指捏合=抓红包";
+  prevClose=false; prevOpen=false; pinchHold=0; pinchCooldown=0;
 
   let busy=false, lastSent=0;
   async function pump(){
@@ -965,49 +1640,137 @@ btnStart.addEventListener("click", async ()=>{
     await startHands();
     btnStart.textContent="手势识别已开启";
   }catch(e){
-    statusText.textContent="启用失败：请允许摄像头权限，并确保 HTTPS";
+    statusText.textContent="启用失败：请允许摄像头权限，并确保 HTTPS（GitHub Pages 默认满足）";
     btnStart.disabled=false;
     btnStart.textContent="启用手势识别";
   }
 });
 
-btnHelp.addEventListener("click", ()=>{ tips.style.display = (tips.style.display==="none") ? "flex" : "none"; });
-
-btnReset.addEventListener("click", ()=>{
-  const idiom=pickIdiom();
-  rebuildIdiomTargets(idiom);
-
-  for(let i=0;i<ENVELOPES;i++){
-    envHomeLocal[i]=sampleEnvelopeHomeLocal(i);
-    envScatterWorld[i]=sampleScatterWorld();
-    envVelWorld[i].set(0,0,0);
-  }
-  hideFocusOverlay();
-  setMode(Mode.MERGE);
-  statusText.textContent=`已重置：收拢态（${idiom}）`;
-  prevFist=prevOpen=prevTri=false;
+btnHelp.addEventListener("click", ()=>{
+  tips.style.display = (tips.style.display==="none") ? "flex" : "none";
 });
 
-/* ========= 动画循环 ========= */
+btnReset.addEventListener("click", ()=>{
+  rebuildMergeTargets(pickIdiom());
+  recalcEnvelopeRing();
+
+  for(let i=0;i<ENVELOPES;i++){
+    envHomeLocal[i]=sampleEnvelopeHomeLocal();
+    envScatterWorld[i]=sampleScatterWorld();
+    envVelWorld[i].set(0,0,0);
+    envBrown[i].set(0,0,0);
+    envBrownV[i].set(0,0,0);
+  }
+
+  hideFocusOverlay();
+  setMode(Mode.MERGE);
+  statusText.textContent="已重置：凝聚态（稳定成语）";
+});
+
+// ---------------------------
+// 渲染循环
+// ---------------------------
 let time=0;
 let lastTime=performance.now();
 
+function applyCamera(dt){
+  if(mode===Mode.MERGE){
+    // 凝聚态：成语绕 Y 轴慢旋转，相机也微微环绕
+    yawT += dt*0.14;
+    pitchT = damp(pitchT, 0.14, 2.8, dt);
+  }else if(mode===Mode.FOCUS){
+    pitchT = damp(pitchT, 0.12, 3.0, dt);
+  }else{
+    pitchT = clamp(pitchT, -0.22, 0.62);
+  }
+
+  yaw = damp(yaw, yawT, 6.0, dt);
+  pitch = damp(pitch, pitchT, 6.0, dt);
+
+  const r=radius;
+  const cx = Math.sin(yaw)*Math.cos(pitch)*r;
+  const cy = 2.25 + Math.sin(pitch)*r*0.33;
+  const cz = Math.cos(yaw)*Math.cos(pitch)*r;
+  camera.position.set(cx,cy,cz);
+  camera.lookAt(0,2.25,0);
+
+  goldPoint.position.set(
+    Math.sin(yaw*0.7)*2.0,
+    5.0 + Math.sin(time*0.7)*0.12,
+    3.0 + Math.cos(yaw*0.7)*1.2
+  );
+}
+
+function updateParticles(dt){
+  // 凝聚态：成语绕 Y 轴旋转（只影响显示，不改变目标）
+  if(mode===Mode.MERGE){
+    idiomGroup.rotation.y += dt * 0.18;
+  }else{
+    // 散开态：轻一点的旋转（避免“半圆”错觉）
+    idiomGroup.rotation.y += dt * 0.06;
+  }
+
+  // 更新散开目标（马帧 + 银河）
+  updateScatterTargets(time, dt);
+
+  // 物理：对“目标(merge<->scatter)”做插值，mix 自己过渡 => 丝滑
+  const spring = 10.0;
+  const drag   = 3.8;
+
+  for(let i=0;i<MAX_PARTICLES;i++){
+    const px=aPos[i*3+0], py=aPos[i*3+1], pz=aPos[i*3+2];
+    let vx=aVel[i*3+0], vy=aVel[i*3+1], vz=aVel[i*3+2];
+
+    const mx=aTarMerge[i*3+0], my=aTarMerge[i*3+1], mz=aTarMerge[i*3+2];
+    const sx=aTarScatter[i*3+0], sy=aTarScatter[i*3+1], sz=aTarScatter[i*3+2];
+
+    // 目标位置：merge <-> scatter
+    const tx = lerp(mx, sx, mix);
+    const ty = lerp(my, sy, mix);
+    const tz = lerp(mz, sz, mix);
+
+    // 追随目标（凝聚更紧，散开更松）
+    const k = spring * (0.95 + 0.25*(1.0-mix));
+    vx += (tx - px) * k * dt;
+    vy += (ty - py) * k * dt;
+    vz += (tz - pz) * k * dt;
+
+    // 阻尼
+    const d = Math.exp(-drag*dt);
+    vx *= d; vy *= d; vz *= d;
+
+    // 更新位置
+    aPos[i*3+0] = px + vx*dt;
+    aPos[i*3+1] = py + vy*dt;
+    aPos[i*3+2] = pz + vz*dt;
+
+    aVel[i*3+0]=vx; aVel[i*3+1]=vy; aVel[i*3+2]=vz;
+  }
+
+  geo.attributes.position.needsUpdate = true;
+  geo.attributes.aVel.needsUpdate = true;
+
+  mat.uniforms.uTime.value = time;
+  mat.uniforms.uMix.value = mix;
+  mat.uniforms.uFocus.value = focus;
+}
+
 function updateMood(dt){
   if(mode===Mode.MERGE){
-    bloomPass.strength=damp(bloomPass.strength,1.14,2.8,dt);
-    bloomPass.radius  =damp(bloomPass.radius,  0.62,2.8,dt);
-    bloomPass.threshold=damp(bloomPass.threshold,0.16,2.8,dt);
-    renderer.toneMappingExposure=damp(renderer.toneMappingExposure,1.08,2.2,dt);
+    bloomPass.strength = damp(bloomPass.strength, 1.12, 2.8, dt);
+    bloomPass.radius   = damp(bloomPass.radius,   0.62, 2.8, dt);
+    bloomPass.threshold= damp(bloomPass.threshold,0.16, 2.8, dt);
+    renderer.toneMappingExposure = damp(renderer.toneMappingExposure, 1.08, 2.2, dt);
   }else if(mode===Mode.SCATTER){
-    bloomPass.strength=damp(bloomPass.strength,1.22,2.8,dt);
-    bloomPass.radius  =damp(bloomPass.radius,  0.68,2.8,dt);
-    bloomPass.threshold=damp(bloomPass.threshold,0.15,2.8,dt);
-    renderer.toneMappingExposure=damp(renderer.toneMappingExposure,1.10,2.2,dt);
+    bloomPass.strength = damp(bloomPass.strength, 1.20, 2.8, dt);
+    bloomPass.radius   = damp(bloomPass.radius,   0.68, 2.8, dt);
+    bloomPass.threshold= damp(bloomPass.threshold,0.15, 2.8, dt);
+    renderer.toneMappingExposure = damp(renderer.toneMappingExposure, 1.10, 2.2, dt);
   }else{
-    bloomPass.strength=damp(bloomPass.strength,1.26,2.8,dt);
-    bloomPass.radius  =damp(bloomPass.radius,  0.74,2.8,dt);
-    bloomPass.threshold=damp(bloomPass.threshold,0.14,2.8,dt);
-    renderer.toneMappingExposure=damp(renderer.toneMappingExposure,1.12,2.2,dt);
+    bloomPass.strength = damp(bloomPass.strength, 1.26, 2.8, dt);
+    bloomPass.radius   = damp(bloomPass.radius,   0.74, 2.8, dt);
+    bloomPass.threshold= damp(bloomPass.threshold,0.14, 2.8, dt);
+    renderer.toneMappingExposure = damp(renderer.toneMappingExposure, 1.12, 2.2, dt);
   }
 }
 
@@ -1017,30 +1780,38 @@ function animate(){
   lastTime=now;
   time += dt;
 
-  if(handEnabled && lastLandmarks && (now-lastLandmarksTs)<180){
-    const g=computeGesture(lastLandmarks);
-    handleGesture(g);
+  // 手势
+  if(handEnabled && lastLandmarks && (now-lastLandmarksTs) < 180){
+    const g = computeGesture(lastLandmarks);
+    handleGesture(g, dt);
   }
 
-  mix = damp(mix, targetMix, 2.8, dt);
+  // mix/ focus 平滑过渡（解决“立马切换不丝滑”）
+  mix = damp(mix, targetMix, 2.4, dt);
   targetFocus = (mode===Mode.FOCUS) ? 1 : 0;
   focus = damp(focus, targetFocus, 4.0, dt);
+
   bloomMixPass.material.uniforms.uBloomIntensity.value = lerp(1.0, 0.34, focus);
 
-  applyCamera(dt, time);
-  updateIdiom(dt, time);
+  applyCamera(dt);
+  updateParticles(dt);
   updateEnvelopes(time, dt);
+  fireworks.update(dt);
   updateMood(dt);
 
   camera.layers.set(BLOOM_LAYER);
   bloomComposer.render();
+
   camera.layers.set(0);
   finalComposer.render();
 
   requestAnimationFrame(animate);
 }
+requestAnimationFrame(animate);
 
-/* ========= Resize ========= */
+// ---------------------------
+// Resize
+// ---------------------------
 function onResize(){
   const w=window.innerWidth, h=window.innerHeight;
   camera.aspect=w/h; camera.updateProjectionMatrix();
@@ -1048,26 +1819,38 @@ function onResize(){
   renderer.setSize(w,h,false);
   bloomComposer.setSize(w,h);
   finalComposer.setSize(w,h);
+  bloomPass.setSize?.(w,h);
 }
 window.addEventListener("resize", onResize);
 
-/* ========= 初始化：先加载 PNG 帧点云，再开始渲染 ========= */
-horseVideo.muted=true; horseVideo.loop=true; horseVideo.playsInline=true;
+// ---------------------------
+// 初始化提示 & 资源加载
+// ---------------------------
+statusText.textContent = "已加载：握拳=凝聚成语；张开=散开奔马银河；三指捏合=抓红包（建议启用手势识别）";
 
+horseVideo.muted = true;
+horseVideo.loop = true;
+horseVideo.playsInline = true;
+
+// 预填红包 home
+for(let i=0;i<ENVELOPES;i++) envHomeLocal[i] = sampleEnvelopeHomeLocal();
+
+// 加载马帧（异步），加载完成后散开态即可显示“粒子奔马”
 (async ()=>{
   try{
-    await buildHorsePointCloudsFromPNGs();
-    statusText.textContent = `已加载：收拢态（${currentIdiom}）· 张手散开为 PNG 跑马`;
+    horseFrames = await loadHorseFrames(HORSE_FRAMES);
+    horseFrames = horseFrames.filter(f=>f && f.length>=30);
+    horseReady = horseFrames.length>0;
+    if(horseReady){
+      statusText.textContent = "马帧已加载：散开态将显示“粒子奔马 + 银河环”。";
+    }else{
+      statusText.textContent = "未能加载马帧（请检查 assets 路径/文件名）。目前散开态仅显示占位形态。";
+    }
   }catch(e){
-    statusText.textContent = "PNG 跑马加载失败：请检查 HORSE_FRAMES 路径/文件名（大小写也要一致）";
-    console.error(e);
+    statusText.textContent = "马帧加载失败（请检查 assets 路径/文件名）。";
   }
-
-  // 红包初始位置
-  for(let i=0;i<ENVELOPES;i++) envHomeLocal[i]=sampleEnvelopeHomeLocal(i);
-
-  requestAnimationFrame(animate);
 })();
+
 </script>
 </body>
 </html>
