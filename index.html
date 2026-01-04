@@ -302,7 +302,7 @@ const HORSE_VIDEOS = [
   "assets/videos/horse4.mp4"
 ];
 
-// 散开态马视频
+// 散开态马视频（webm）
 const HORSE_RUN_WEBM = "assets/video/horse.webm";
 
 const IS_MOBILE = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
@@ -410,6 +410,14 @@ let targetMix = 0;
 let focus = 0;      // 0:正常  1:聚焦红包卡片
 let targetFocus = 0;
 
+// ✅ 固定成语：每次“张开->握拳”只选一次，握拳期间不会闪烁切换
+let selectedIdiom = IDIOMS[Math.floor(Math.random()*IDIOMS.length)];
+let cycleLocked = true;            // 初始为凝聚态，锁定成语
+let closeHoldSec = 0;              // 握拳持续时间（去抖）
+let openHoldSec = 0;               // 张开持续时间（去抖）
+let mergeCooldownSec = 0;          // 防止短时间重复触发
+let mergeBoost = 0;                // 凝聚阶段加速成型
+
 function setMode(next){
   if(mode === next) return;
   mode = next;
@@ -494,7 +502,8 @@ const horsePlane = new THREE.Mesh(
     toneMapped: false
   })
 );
-horsePlane.renderOrder = -100000;
+// ✅ 视频应在“湍流之上”：renderOrder 在散开态设更高（见 animate 中动态设置）
+horsePlane.renderOrder = 30000;
 horsePlane.layers.enable(0);
 horseGroup.add(horsePlane);
 
@@ -517,7 +526,7 @@ async function warmupVideo(v){
 }
 
 // ---------------------------
-// 银河星环（散开态显示，在视频之上）
+// 银河星环（散开态显示，依然在整体上方）
 // ---------------------------
 class GalaxyRing {
   constructor(count = (IS_MOBILE ? 9000 : 16000)){
@@ -683,7 +692,6 @@ function sampleTextPointsStrokeFill(text, {
   ctx.lineWidth = strokeW;
   ctx.strokeStyle = "rgba(255,255,255,1)";
   ctx.strokeText(text, cssW/2, cssH/2);
-
   const strokeData = ctx.getImageData(0,0,c.width,c.height).data;
 
   ctx.clearRect(0,0,cssW,cssH);
@@ -692,7 +700,6 @@ function sampleTextPointsStrokeFill(text, {
   ctx.textBaseline = "middle";
   ctx.fillStyle = "rgba(255,255,255,1)";
   ctx.fillText(text, cssW/2, cssH/2);
-
   const fillData = ctx.getImageData(0,0,c.width,c.height).data;
 
   const pts = [];
@@ -765,10 +772,6 @@ for(let i=0;i<MAX_PARTICLES;i++){
   aSeed[i]=Math.random();
 }
 
-let currentIdiomStableUntil = 0;
-function pickIdiom(){ return IDIOMS[Math.floor(Math.random()*IDIOMS.length)]; }
-function pickVideo(){ return HORSE_VIDEOS[Math.floor(Math.random()*HORSE_VIDEOS.length)]; }
-
 function rebuildIdiomTargets(text){
   const pts = sampleTextPointsStrokeFill(text, {
     fontSize: 190,
@@ -807,8 +810,8 @@ function rebuildIdiomTargets(text){
   envHomeRingR = Math.max(2.8, Math.min(5.6, (idiomGeo.boundingSphere?.radius || 3.6) * 1.10));
 }
 
-// ✅ 让“初始加载 / 收拢”更快可读：将粒子位置瞬间向目标靠近一大步
-function nudgeParticlesTowardTargets(amount=0.68){
+// ✅ 初始/收拢更快“成型”
+function nudgeParticlesTowardTargets(amount=0.70){
   const a = clamp(amount, 0, 1);
   for(let i=0;i<activeCount;i++){
     const px=aPos[i*3+0], py=aPos[i*3+1], pz=aPos[i*3+2];
@@ -816,9 +819,9 @@ function nudgeParticlesTowardTargets(amount=0.68){
     aPos[i*3+0] = lerp(px, tx, a);
     aPos[i*3+1] = lerp(py, ty, a);
     aPos[i*3+2] = lerp(pz, tz, a);
-    aVel[i*3+0] *= 0.25;
-    aVel[i*3+1] *= 0.25;
-    aVel[i*3+2] *= 0.25;
+    aVel[i*3+0] *= 0.18;
+    aVel[i*3+1] *= 0.18;
+    aVel[i*3+2] *= 0.18;
   }
   idiomGeo.attributes.position.needsUpdate = true;
   idiomGeo.attributes.aVel.needsUpdate = true;
@@ -896,12 +899,11 @@ const idiomMat = new THREE.ShaderMaterial({
 
 const idiomPoints = new THREE.Points(idiomGeo, idiomMat);
 idiomPoints.frustumCulled = false;
-idiomPoints.renderOrder = 60000;
-idiomGroup.add(idiomPoints);
 idiomPoints.layers.enable(BLOOM_LAYER);
+idiomGroup.add(idiomPoints);
 
-// 初始成语：快速可读
-rebuildIdiomTargets(pickIdiom());
+// 初始成语：稳定、快速成型
+rebuildIdiomTargets(selectedIdiom);
 nudgeParticlesTowardTargets(0.78);
 
 // ---------------------------
@@ -947,7 +949,7 @@ function makeRedEnvelopeTexture(){
 }
 const ENV_TEX = makeRedEnvelopeTexture();
 
-// ✅ 保持你“缩小一半”的红包尺寸
+// 缩小一半 + 大小不一
 const envGeo = new THREE.PlaneGeometry(0.14, 0.18, 1, 1);
 const envMat = new THREE.MeshBasicMaterial({
   map: ENV_TEX,
@@ -960,9 +962,8 @@ const envMat = new THREE.MeshBasicMaterial({
 
 const envMesh = new THREE.InstancedMesh(envGeo, envMat, ENVELOPES);
 envMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
-envMesh.renderOrder = 65000;
-envGroup.add(envMesh);
 envMesh.layers.enable(BLOOM_LAYER);
+envGroup.add(envMesh);
 
 const envHomeLocal = new Array(ENVELOPES);
 const envScatterWorld = new Array(ENVELOPES);
@@ -970,7 +971,6 @@ const envVelWorld = new Array(ENVELOPES);
 const envScale = new Array(ENVELOPES);
 const envSeed = new Array(ENVELOPES);
 
-// ✅ 关键修复：home 位置改成“球壳分布”，真正环绕包裹成语（不再上下两层）
 function sampleEnvelopeHomeLocal(){
   const u = Math.random();
   const v = Math.random();
@@ -978,7 +978,6 @@ function sampleEnvelopeHomeLocal(){
   const phi = Math.acos(2*v - 1);
   const r = envHomeRingR * (0.92 + Math.random()*0.38);
 
-  // 适度压扁（更像围绕成语的“云环”），但仍为 3D 包裹
   const x = Math.sin(phi)*Math.cos(theta) * r;
   const y = Math.cos(phi) * r * 0.62;
   const z = Math.sin(phi)*Math.sin(theta) * r;
@@ -1004,7 +1003,6 @@ for(let i=0;i<ENVELOPES;i++){
   envScatterWorld[i] = sampleScatterWorld();
   envVelWorld[i] = new THREE.Vector3(0,0,0);
 
-  // ✅ 大小不一
   envScale[i] = lerp(0.42, 1.18, Math.pow(Math.random(), 0.65));
   envSeed[i] = Math.random()*1000;
 }
@@ -1017,7 +1015,6 @@ function updateEnvelopes(time, dt){
   for(let i=0;i<ENVELOPES;i++){
     const seed = envSeed[i];
 
-    // ✅ “慢速布朗运动”偏随机的三维漂移（幅度更小，且不把红包推成上下层）
     const bx = Math.sin(time*0.55 + seed) * 0.11 + Math.sin(time*0.17 + seed*1.7)*0.08;
     const by = Math.cos(time*0.48 + seed*1.3) * 0.10 + Math.sin(time*0.15 + seed*2.1)*0.06;
     const bz = Math.sin(time*0.52 + seed*0.8) * 0.11 + Math.cos(time*0.14 + seed*1.9)*0.08;
@@ -1042,11 +1039,9 @@ function updateEnvelopes(time, dt){
     const z = lerp(_tmp.z, sW.z, mix);
 
     _obj.position.set(x,y,z);
-
-    // billboard
     _obj.quaternion.copy(camera.quaternion);
 
-    // ✅ 降低红包自旋速度/幅度（不再“转太快”）
+    // 降低红包自旋
     const rot = (Math.sin(time*0.32 + seed)*0.06) + (Math.sin(time*0.18 + seed*0.9)*0.04);
     _obj.rotateZ(rot);
 
@@ -1215,10 +1210,12 @@ const fireworks = new Fireworks();
 // ---------------------------
 // 红包开封流程（只由三指捏合触发）
 // ---------------------------
+function pickVideo(){ return HORSE_VIDEOS[Math.floor(Math.random()*HORSE_VIDEOS.length)]; }
+
 async function triggerRedPacketFlow(){
   if(mode !== Mode.FOCUS) setMode(Mode.FOCUS);
 
-  const idiom = pickIdiom();
+  const idiom = IDIOMS[Math.floor(Math.random()*IDIOMS.length)];
   focusTitleEl.textContent = "红包到 · 好运到";
   focusTextEl.textContent = `恭喜你抓到一个红包！\n\n${idiom}`;
 
@@ -1276,41 +1273,63 @@ function computeGesture(lm){
   return { openHand, closeHand, pinch3 };
 }
 
-let prevOpen=false, prevClose=false, prevPinch=false;
+let prevPinch=false;
 let pinchCooldown=0;
 
-function handleGesture(g, dt, nowMs){
-  const openEdge = g.openHand && !prevOpen;
-  const closeEdge = g.closeHand && !prevClose;
-  const pinchEdge = g.pinch3 && !prevPinch;
+// ✅ 关键：凝聚只触发一次（需要握拳保持一小段时间），避免“闪现其他成语”
+function handleGestureStable(g, dt){
+  mergeCooldownSec = Math.max(0, mergeCooldownSec - dt);
 
-  prevOpen = g.openHand;
-  prevClose = g.closeHand;
-  prevPinch = g.pinch3;
+  if(g.openHand){
+    openHoldSec += dt;
+    closeHoldSec = 0;
 
-  if(openEdge){
-    setMode(Mode.SCATTER);
+    // 张开保持>0.10s才认为进入散开 cycle（防误触）
+    if(openHoldSec > 0.10){
+      cycleLocked = false;      // 允许下一次握拳选新成语
+      setMode(Mode.SCATTER);
+    }
+  }else{
+    openHoldSec = 0;
   }
 
-  if(closeEdge){
-    const newIdiom = pickIdiom();
-    rebuildIdiomTargets(newIdiom);
+  if(g.closeHand){
+    closeHoldSec += dt;
+  }else{
+    closeHoldSec = 0;
+  }
 
-    // ✅ 关键：收拢更快可读
-    nudgeParticlesTowardTargets(0.72);
+  // 三指捏合：抓红包（独立于散/聚）
+  pinchCooldown = Math.max(0, pinchCooldown - dt);
+  const pinchEdge = g.pinch3 && !prevPinch;
+  prevPinch = g.pinch3;
+  if(pinchEdge && pinchCooldown<=0){
+    triggerRedPacketFlow();
+    pinchCooldown = 0.60;
+  }
 
+  // 握拳凝聚：要求 “从散开进入” + “握拳保持” + “冷却结束”
+  const canMerge = (!cycleLocked) && (mode === Mode.SCATTER || mix > 0.55) && mergeCooldownSec <= 0;
+  if(canMerge && closeHoldSec > 0.14){
+    cycleLocked = true;
+    mergeCooldownSec = 0.55;
+
+    // ✅ 只选一次成语，并立刻构建目标；后续不再变动，直到再次张开
+    selectedIdiom = IDIOMS[Math.floor(Math.random()*IDIOMS.length)];
+    rebuildIdiomTargets(selectedIdiom);
+
+    // ✅ 立刻成型更清晰
+    nudgeParticlesTowardTargets(0.76);
+
+    // 凝聚阶段加速一段时间（避免“还不成型”）
+    mergeBoost = 1.0;
+
+    // 刷新红包 home（保持环绕）
     for(let i=0;i<ENVELOPES;i++){
       envHomeLocal[i] = sampleEnvelopeHomeLocal();
     }
 
-    currentIdiomStableUntil = nowMs + 1200;
     setMode(Mode.MERGE);
-  }
-
-  pinchCooldown = Math.max(0, pinchCooldown - dt);
-  if(pinchEdge && pinchCooldown<=0){
-    triggerRedPacketFlow();
-    pinchCooldown = 0.60;
   }
 }
 
@@ -1382,8 +1401,9 @@ btnStart.addEventListener("click", async ()=>{
 });
 
 btnReset.addEventListener("click", ()=>{
-  rebuildIdiomTargets(pickIdiom());
-  nudgeParticlesTowardTargets(0.76);
+  selectedIdiom = IDIOMS[Math.floor(Math.random()*IDIOMS.length)];
+  rebuildIdiomTargets(selectedIdiom);
+  nudgeParticlesTowardTargets(0.78);
 
   for(let i=0;i<ENVELOPES;i++){
     envHomeLocal[i]=sampleEnvelopeHomeLocal();
@@ -1391,12 +1411,18 @@ btnReset.addEventListener("click", ()=>{
     envVelWorld[i].set(0,0,0);
   }
   hideFocusOverlay();
+  cycleLocked = true;
+  openHoldSec = 0;
+  closeHoldSec = 0;
+  mergeCooldownSec = 0;
+  mergeBoost = 0;
+
   setMode(Mode.MERGE);
   statusText.textContent="已重置：凝聚态（稳定成语 + 红包环绕）";
 });
 
 // ---------------------------
-// 相机（保持）
+// 相机
 // ---------------------------
 let yaw=0.0, pitch=0.14, radius=10.4;
 let yawT=yaw, pitchT=pitch;
@@ -1417,9 +1443,10 @@ window.addEventListener("pointermove",(e)=>{
 });
 
 // ---------------------------
-// 散开态湍流场（视频中心留空腔）
+// 散开态湍流场：中心空腔 + “整体向左流动”
+// 说明：你要“湍流在视频下方（层级）+ 向左流动（-X）”，这里实现的是速度场偏置到左侧。
 // ---------------------------
-function turbulenceAccel(px, py, pz, seed, time){
+function turbulenceAccel(px, py, pz, seed, time, scatter01){
   const rx = px;
   const rz = pz;
   const r  = Math.sqrt(rx*rx + rz*rz) + 1e-4;
@@ -1427,44 +1454,61 @@ function turbulenceAccel(px, py, pz, seed, time){
   const holeR = 1.55;
   let ax = 0, ay = 0, az = 0;
 
+  // 中央空腔（给马视频让位）
   if(r < holeR){
     const rep = (holeR - r) * 10.0;
     ax += (rx / r) * rep;
     az += (rz / r) * rep;
   }
 
-  const ringR = 3.1;
-  const radial = (ringR - r) * 1.45;
+  // 环状拉回
+  const ringR = 3.15;
+  const radial = (ringR - r) * 1.35;
   ax += (rx / r) * radial;
   az += (rz / r) * radial;
 
+  // 旋涡（增强立体感）
   const dir = (seed < 0.5) ? 1.0 : -1.0;
-  const swirl = (2.6 + 1.2*Math.sin(time*0.7 + seed*7.0)) * dir;
+  const swirl = (2.1 + 1.0*Math.sin(time*0.7 + seed*7.0)) * dir;
   ax += (-rz / r) * swirl;
   az += ( rx / r) * swirl;
 
-  ay += Math.sin(time*2.0 + seed*13.0 + px*0.7) * 1.15;
-  ay += Math.cos(time*1.6 + seed*9.0  + pz*0.6) * 0.85;
+  // 垂向扰动
+  ay += Math.sin(time*2.0 + seed*13.0 + px*0.7) * 1.05;
+  ay += Math.cos(time*1.6 + seed*9.0  + pz*0.6) * 0.78;
+
+  // ✅ 整体向左（-X）流动：与 scatter 强度挂钩
+  // 这样马从左向右跑时，粒子“逆风”形成更强的动感和层次
+  ax += (-2.15) * scatter01;
+
+  // 加一点“尾流”拉伸感（越靠外越明显）
+  ax += (-0.75) * scatter01 * clamp(r/6.0, 0, 1);
 
   return { ax, ay, az };
 }
 
 // ---------------------------
-// 成语粒子更新（凝聚更快）
+// 成语粒子更新（凝聚更快且稳定，不再闪现换词）
 // ---------------------------
 function updateIdiom(dt, time){
-  // 凝聚态绕Y轴旋转（略快）
+  // 凝聚态绕Y轴旋转更快
   if(mode === Mode.MERGE && focus < 0.1){
-    idiomGroup.rotation.y += dt * 0.55;
+    idiomGroup.rotation.y += dt * 0.70;
   }else{
     idiomGroup.rotation.y += dt * 0.12;
   }
 
-  // ✅ 加快凝聚：提高 spring，并略增 drag 保持稳定
-  const spring = 11.8;
-  const drag   = 4.2;
-
+  // mix 过渡更快：散->聚明显更“丝滑”
+  //（mix 的实际更新在 animate 里）
   const pull = (1.0 - mix);
+
+  // ✅ 凝聚阶段短时 boost（避免“还不成型”）
+  const boost = mergeBoost;
+  const spring = 11.8 + boost*12.0;     // 凝聚更强
+  const drag   = 4.4  + boost*2.0;      // 稳定更快
+  mergeBoost = Math.max(0, mergeBoost - dt*2.2);
+
+  const scatter01 = clamp((mix - 0.10)/0.90, 0, 1);
 
   for(let i=0;i<activeCount;i++){
     const px=aPos[i*3+0], py=aPos[i*3+1], pz=aPos[i*3+2];
@@ -1476,16 +1520,17 @@ function updateIdiom(dt, time){
     let ay = (ty - py) * spring * pull;
     let az = (tz - pz) * spring * pull;
 
-    const scatter01 = clamp((mix - 0.12) / 0.88, 0, 1);
+    // 散开态：湍流（并整体向左流动）
     if(scatter01 > 0){
       const seed = aSeed[i];
-      const t = turbulenceAccel(px, py, pz, seed, time);
-      ax += t.ax * scatter01;
-      ay += t.ay * scatter01;
-      az += t.az * scatter01;
+      const t = turbulenceAccel(px, py, pz, seed, time, scatter01);
+      ax += t.ax;
+      ay += t.ay;
+      az += t.az;
 
-      ax += Math.sin(time*3.0 + seed*17.0) * 0.35 * scatter01;
-      az += Math.cos(time*2.6 + seed*19.0) * 0.35 * scatter01;
+      // 微噪声细化星屑感
+      ax += Math.sin(time*3.0 + seed*17.0) * 0.32 * scatter01;
+      az += Math.cos(time*2.6 + seed*19.0) * 0.32 * scatter01;
     }
 
     vx += ax*dt; vy += ay*dt; vz += az*dt;
@@ -1510,9 +1555,6 @@ function updateIdiom(dt, time){
   idiomMat.uniforms.uFocus.value = focus;
 }
 
-// ---------------------------
-// 相机
-// ---------------------------
 function applyCamera(dt, time){
   if(mode===Mode.MERGE){
     yawT += dt*0.12;
@@ -1552,17 +1594,14 @@ function animate(){
   lastTime=now;
   time += dt;
 
+  // 手势（稳定去抖 + 单次触发凝聚）
   if(handEnabled && lastLandmarks && (now-lastLandmarksTs) < 180){
     const g = computeGesture(lastLandmarks);
-    if(now < currentIdiomStableUntil){
-      handleGesture({ openHand:false, closeHand:false, pinch3:g.pinch3 }, dt, now);
-    }else{
-      handleGesture(g, dt, now);
-    }
+    handleGestureStable(g, dt);
   }
 
-  // ✅ 凝聚/散开过渡更快更“能看清”
-  mix = damp(mix, targetMix, 4.35, dt);
+  // ✅ 更快更丝滑的散->聚过渡（你要的“不要立马切换”）
+  mix = damp(mix, targetMix, 4.6, dt);
 
   targetFocus = (mode===Mode.FOCUS) ? 1 : 0;
   focus = damp(focus, targetFocus, 4.0, dt);
@@ -1570,12 +1609,25 @@ function animate(){
   const scatter01 = clamp((mix - 0.10)/0.90, 0, 1);
   galaxy.update(time, scatter01);
 
+  // 视频显示
   if(mode===Mode.SCATTER){
     if(horseReady || horseRunVideo.readyState>=2) horseGroup.visible = true;
   }else{
     horseGroup.visible = false;
   }
   updateHorseBillboard();
+
+  // ✅ 渲染层级：散开态“湍流在视频下方”
+  // 规则：散开态 -> 粒子 renderOrder < 视频 renderOrder；凝聚态 -> 粒子最高
+  if(scatter01 > 0.55){
+    idiomPoints.renderOrder = 18000;      // 湍流在下
+    envMesh.renderOrder = 19000;          // 红包也在下（散开时不抢镜）
+    horsePlane.renderOrder = 30000;       // 马视频在上
+  }else{
+    idiomPoints.renderOrder = 60000;      // 凝聚时成语在最上
+    envMesh.renderOrder = 65000;          // 红包包裹
+    horsePlane.renderOrder = 30000;
+  }
 
   const fwOpacity = lerp(1.0, 0.35, scatter01);
   fireworks.update(dt, fwOpacity);
