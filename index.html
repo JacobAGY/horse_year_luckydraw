@@ -169,6 +169,17 @@
       flex-wrap:wrap;
       position:relative;
     }
+    .focusAvatar{
+      width:72px;
+      height:72px;
+      border-radius:999px;
+      object-fit:cover;
+      border:1px solid rgba(212,175,55,.55);
+      box-shadow:0 0 18px rgba(0,0,0,.6);
+      overflow:hidden;
+      flex:0 0 auto;
+      display:none;
+    }
     .packet{
       width:150px;
       height:190px;
@@ -188,6 +199,16 @@
       border-radius:999px;
       background: radial-gradient(circle at 30% 30%, rgba(255,245,220,.95), rgba(212,175,55,.92) 60%, rgba(90,60,10,.85) 100%);
       box-shadow: 0 0 0 2px rgba(212,175,55,.20), 0 0 26px rgba(212,175,55,.45);
+    }
+    .packet .seal::after{
+      content:attr(data-glyph);
+      position:absolute;
+      left:50%; top:50%;
+      transform:translate(-50%,-52%);
+      font-size:32px;
+      font-weight:900;
+      color:rgba(140,10,30,.98);
+      text-shadow:0 2px 4px rgba(0,0,0,.35);
     }
     .packet .lid{
       position:absolute;
@@ -263,21 +284,23 @@
       <div class="focusTop">
         <div id="packet" class="packet">
           <div class="lid"></div>
-          <div class="seal"></div>
+          <div class="seal" data-glyph="奖"></div>
         </div>
+        <img id="focusAvatar" class="focusAvatar" alt="">
         <div class="focusTextWrap">
           <h3 id="focusTitle" class="focusTitle">红包到 · 好运到</h3>
           <div id="focusText" class="focusLine"></div>
         </div>
       </div>
 
-      <div class="videoWrap">
+      <div class="videoWrap" id="rewardVideoWrap">
         <video id="horseVideo" playsinline muted loop></video>
       </div>
     </div>
   </div>
 
   <video id="cam" playsinline></video>
+  <audio id="bgm" src="assets/music/gongxifacai.mp3" loop></audio>
 </div>
 
 <script type="module-shim">
@@ -322,12 +345,18 @@ const led = document.getElementById("led");
 const btnStart = document.getElementById("btnStart");
 const btnReset = document.getElementById("btnReset");
 const videoEl = document.getElementById("cam");
+const bgmEl = document.getElementById("bgm");
 
 const focusOverlay = document.getElementById("focusOverlay");
 const focusTitleEl = document.getElementById("focusTitle");
 const focusTextEl = document.getElementById("focusText");
 const packetEl = document.getElementById("packet");
+const packetLidEl = packetEl?.querySelector(".lid");
+const packetSealEl = packetEl?.querySelector(".seal");
 const horseVideo = document.getElementById("horseVideo");
+const focusAvatarEl = document.getElementById("focusAvatar");
+const rewardVideoWrap = document.getElementById("rewardVideoWrap");
+let bgmStarted = false;
 
 // ---------------------------
 // Three.js 基础
@@ -442,6 +471,72 @@ function setMode(next){
 }
 function showFocusOverlay(){ focusOverlay.classList.add("show"); }
 function hideFocusOverlay(){ focusOverlay.classList.remove("show"); packetEl.classList.remove("open"); }
+
+// ---------------------------
+// 背景音乐（刘德华《恭喜发财》）
+// ---------------------------
+function tryStartBgm(){
+  if(!bgmEl || bgmStarted) return;
+  bgmStarted = true;
+  try{
+    bgmEl.volume = 0.45;
+    bgmEl.loop = true;
+    const p = bgmEl.play();
+    if(p && typeof p.then === "function"){
+      p.catch(()=>{ bgmStarted = false; });
+    }
+  }catch(e){
+    bgmStarted = false;
+  }
+}
+
+// ---------------------------
+// 红包外观切换（奖/福/默认）
+// ---------------------------
+const PACKET_GRADIENT = "linear-gradient(180deg, rgba(177,18,38,.98), rgba(120,8,22,.98))";
+const LID_GRADIENT = "linear-gradient(180deg, rgba(215,30,55,.98), rgba(140,10,30,.98))";
+
+function setPacketDefault(glyph="奖"){
+  if(packetEl){
+    packetEl.style.background = PACKET_GRADIENT;
+    packetEl.style.backgroundSize = "";
+  }
+  if(packetLidEl){
+    packetLidEl.style.background = LID_GRADIENT;
+  }
+  if(packetSealEl){
+    packetSealEl.setAttribute("data-glyph", glyph);
+  }
+}
+
+function setPacketAvatarMode(avatarUrl, glyph="福"){
+  if(packetEl){
+    packetEl.style.backgroundImage = `url(${avatarUrl})`;
+    packetEl.style.backgroundSize = "cover";
+    packetEl.style.backgroundPosition = "center";
+  }
+  if(packetLidEl){
+    packetLidEl.style.background = "rgba(0,0,0,0.35)";
+  }
+  if(packetSealEl){
+    packetSealEl.setAttribute("data-glyph", glyph);
+  }
+}
+
+// ---------------------------
+// 员工祝福配置（从 assets/blesses.json 读取）
+// ---------------------------
+let blesses = [];
+(async function loadBlesses(){
+  try{
+    const res = await fetch("assets/blesses.json");
+    if(!res.ok) throw new Error("failed");
+    const data = await res.json();
+    if(Array.isArray(data)) blesses = data;
+  }catch(e){
+    blesses = [];
+  }
+})();
 
 // ---------------------------
 // 点纹理（用于银河/火花）
@@ -1215,9 +1310,47 @@ function pickVideo(){ return HORSE_VIDEOS[Math.floor(Math.random()*HORSE_VIDEOS.
 async function triggerRedPacketFlow(){
   if(mode !== Mode.FOCUS) setMode(Mode.FOCUS);
 
-  const idiom = IDIOMS[Math.floor(Math.random()*IDIOMS.length)];
-  focusTitleEl.textContent = "红包到 · 好运到";
-  focusTextEl.textContent = `恭喜你抓到一个红包！\n\n${idiom}`;
+  // 如果存在员工祝福配置，则从 blesses 中随机选择一位员工
+  let chosenBless = null;
+  if(Array.isArray(blesses) && blesses.length > 0){
+    chosenBless = blesses[Math.floor(Math.random()*blesses.length)];
+  }
+
+  if(chosenBless){
+    const name = chosenBless.name || "未知员工";
+    const blessing = chosenBless.blessing || "";
+    const avatar = chosenBless.avatar || "";
+
+    // 随机决定“奖”/“福”两种展现
+    const isPrize = Math.random() < 0.5;
+
+    if(isPrize){
+      // 奖：保持原先中奖样式，显示名单，隐藏视频
+      focusTitleEl.textContent = "中奖名单";
+      focusTextEl.textContent = name;
+      if(focusAvatarEl && avatar){
+        focusAvatarEl.src = avatar;
+        focusAvatarEl.alt = name;
+        focusAvatarEl.style.display = "block";
+      }
+      setPacketDefault("奖");
+      if(rewardVideoWrap) rewardVideoWrap.style.display = "none";
+    }else{
+      // 福：红包换成员工头像，中间字改为“福”，右侧展示员工姓名 + 祝语（不显示右侧头像）
+      focusTitleEl.textContent = name;
+      focusTextEl.textContent = blessing;
+      // 福模式下隐藏右侧头像小圆框
+      if(focusAvatarEl){
+        focusAvatarEl.style.display = "none";
+      }
+      if(avatar){
+        setPacketAvatarMode(avatar, "福");
+      }else{
+        setPacketDefault("福");
+      }
+      if(rewardVideoWrap) rewardVideoWrap.style.display = "none";
+    }
+  }
 
   packetEl.classList.remove("open");
   void packetEl.offsetWidth;
@@ -1392,6 +1525,7 @@ btnStart.addEventListener("click", async ()=>{
     btnStart.textContent="启用中…";
     await warmupVideo(horseRunVideo);
     await startHands();
+    tryStartBgm();
     btnStart.textContent="手势识别已开启";
   }catch(e){
     statusText.textContent="启用失败：请允许摄像头权限，并确保 HTTPS";

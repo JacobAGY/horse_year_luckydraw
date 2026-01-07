@@ -1,0 +1,63 @@
+[
+  {
+    "id": "holy-ao",
+    "name": "Holy Ao",
+    "avatar": "assets/images/employees/horse_run_a.png",
+    "blessing": "祝大家新的一年马到成功，前程似锦，阖家幸福，心想事成。"
+  },
+  {
+    "id": "lucky-ma",
+    "name": "Lucky Ma",
+    "avatar": "assets/images/employees/horse_run_b.png",
+    "blessing": "龙马精神，事事顺遂，心想事成，家和万事兴。"
+  },
+  {
+    "id": "fast-hoof",
+    "name": "Fast Hoof",
+    "avatar": "assets/images/employees/horse_run_a.png",
+    "blessing": "万马奔腾，财源滚滚，健康平安，笑口常开。"
+  },
+  {
+    "id": "swift-hoof",
+    "name": "Swift Hoof",
+    "avatar": "assets/images/employees/horse_run_b.png",
+    "blessing": "一马当先冲业绩，千里疾驰创佳绩。"
+  },
+  {
+    "id": "golden-mane",
+    "name": "Golden Mane",
+    "avatar": "assets/images/employees/horse_run_a.png",
+    "blessing": "金鬃披光，步步生辉，项目顺利，红火兴旺。"
+  },
+  {
+    "id": "silver-hoof",
+    "name": "Silver Hoof",
+    "avatar": "assets/images/employees/horse_run_b.png",
+    "blessing": "银蹄踏浪，攻坚克难，团队合力，捷报频传。"
+  },
+  {
+    "id": "crimson-steed",
+    "name": "Crimson Steed",
+    "avatar": "assets/images/employees/horse_run_a.png",
+    "blessing": "赤兔精神，勇往直前，健康快乐，诸事顺遂。"
+  },
+  {
+    "id": "emerald-run",
+    "name": "Emerald Run",
+    "avatar": "assets/images/employees/horse_run_b.png",
+    "blessing": "青云直上，跑赢每一个里程碑。"
+  },
+  {
+    "id": "starlit-gallop",
+    "name": "Starlit Gallop",
+    "avatar": "assets/images/employees/horse_run_a.png",
+    "blessing": "星光作伴，前路敞亮，灵感涌现，创意不断。"
+  },
+  {
+    "id": "dawn-rider",
+    "name": "Dawn Rider",
+    "avatar": "assets/images/employees/horse_run_b.png",
+    "blessing": "踏晓而行，日日更新，持续精进，收获满满。"
+  }
+]
+
