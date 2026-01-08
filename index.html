@@ -1042,42 +1042,58 @@ function createExplanationTexture(text){
   const canvas = document.createElement("canvas");
   const ctx = canvas.getContext("2d");
   
-  // 设置字体和大小
-  const fontSize = IS_MOBILE ? 18 : 24;
-  ctx.font = `${fontSize}px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto`;
+  // 设置字体和大小 - 使用更优雅的字体
+  const fontSize = IS_MOBILE ? 20 : 28;
+  const fontFamily = "'Georgia', 'Times New Roman', 'serif', 'ui-serif', 'Palatino'";
+  const fontWeight = "400"; // 正常粗细，更优雅
+  const letterSpacing = "0.05em"; // 增加字母间距
+  
+  // 先测量文字尺寸（临时字体设置）
+  ctx.font = `${fontWeight} ${fontSize}px ${fontFamily}`;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   
-  // 测量文字尺寸
   const metrics = ctx.measureText(text);
   const textWidth = metrics.width;
-  const textHeight = fontSize;
+  const textHeight = fontSize * 1.2; // 增加行高
   
-  // 设置画布尺寸（添加一些padding）
-  const padding = 20;
+  // 设置画布尺寸（添加padding）
+  const padding = 30;
   canvas.width = textWidth + padding * 2;
   canvas.height = textHeight + padding * 2;
   
   // 重新设置字体（因为canvas尺寸改变了）
-  ctx.font = `${fontSize}px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto`;
+  ctx.font = `${fontWeight} ${fontSize}px ${fontFamily}`;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   
-  // 绘制文字（透明效果）
   const centerX = canvas.width / 2;
   const centerY = canvas.height / 2;
   
-  // 绘制阴影（增加可见性）
-  ctx.shadowColor = "rgba(0,0,0,0.8)";
-  ctx.shadowBlur = 8;
-  ctx.shadowOffsetX = 2;
+  // 绘制多层效果：使用金色系配色，与粒子成语协调
+  // 1. 绘制外阴影（深金色阴影，与主题匹配）
+  ctx.shadowColor = "rgba(139, 117, 56, 0.7)"; // 深金色阴影
+  ctx.shadowBlur = 10;
+  ctx.shadowOffsetX = 0;
   ctx.shadowOffsetY = 2;
   
-  // 绘制文字（半透明白色）
-  ctx.fillStyle = "rgba(255,255,255,0.85)";
+  // 2. 绘制文字描边（金色描边）
+  ctx.strokeStyle = "rgba(255, 215, 100, 0.85)"; // 亮金色描边
+  ctx.lineWidth = 2.5;
+  ctx.strokeText(text, centerX, centerY);
+  
+  // 3. 创建金色渐变填充（与粒子成语的金色匹配）
+  // 粒子金色：rgb(212, 176, 56) = vec3(0.83, 0.69, 0.22)
+  const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+  gradient.addColorStop(0, "rgba(255, 220, 120, 0.95)"); // 顶部：亮金色（与粒子匹配）
+  gradient.addColorStop(0.4, "rgba(240, 200, 100, 0.90)"); // 中上：标准金色
+  gradient.addColorStop(0.7, "rgba(220, 180, 80, 0.88)"); // 中下：深金色
+  gradient.addColorStop(1, "rgba(255, 235, 160, 0.92)"); // 底部：浅金色
+  
+  ctx.fillStyle = gradient;
   ctx.fillText(text, centerX, centerY);
   
-  // 重置阴影
+  // 重置阴影和样式
   ctx.shadowColor = "transparent";
   ctx.shadowBlur = 0;
   ctx.shadowOffsetX = 0;
@@ -1095,7 +1111,7 @@ function updateExplanationText(idiomText){
   if(explanation && explanation.trim()){
     // 移除旧的sprite
     if(explanationSprite){
-      idiomGroup.remove(explanationSprite);
+      scene.remove(explanationSprite);
       explanationSprite.material.dispose();
       explanationSprite.geometry.dispose();
     }
@@ -1105,14 +1121,14 @@ function updateExplanationText(idiomText){
     const spriteMaterial = new THREE.SpriteMaterial({
       map: texture,
       transparent: true,
-      opacity: 0.9,
+      opacity: 0.7, // 半透明效果
       depthTest: false,
       depthWrite: false
     });
     
     explanationSprite = new THREE.Sprite(spriteMaterial);
     
-    // 计算尺寸（基于文字长度，放在成语右侧）
+    // 计算尺寸（基于文字长度）
     const scale = IS_MOBILE ? 2.5 : 3.0;
     explanationSprite.scale.set(
       texture.image.width * scale / 100,
@@ -1120,16 +1136,25 @@ function updateExplanationText(idiomText){
       1
     );
     
-    // 位置：在成语右侧，稍微偏下
-    const offsetX = IS_MOBILE ? 4.5 : 5.0; // 成语宽度大约7-8，右侧偏移
-    const offsetY = IS_MOBILE ? -0.5 : -0.8;
-    explanationSprite.position.set(offsetX, offsetY, 0);
+    // 位置：在世界坐标系中，成语组的中心在 (0, 2.25, 0)
+    // 将解释文字放在成语下方，静态显示，不随成语组旋转
+    const idiomCenterX = 0; // idiomGroup的世界X位置
+    const idiomCenterY = 2.25; // idiomGroup的世界Y位置
+    const offsetX = 0; // 水平居中
+    const offsetY = IS_MOBILE ? -1.5 : -2.0; // 放在成语下方，留出足够间距
     
-    idiomGroup.add(explanationSprite);
+    explanationSprite.position.set(
+      idiomCenterX + offsetX,
+      idiomCenterY + offsetY,
+      0
+    );
+    
+    // 添加到场景而不是idiomGroup，使其不随成语组旋转
+    scene.add(explanationSprite);
   } else {
     // 如果没有解释，移除sprite
     if(explanationSprite){
-      idiomGroup.remove(explanationSprite);
+      scene.remove(explanationSprite);
       explanationSprite.material.dispose();
       explanationSprite.geometry.dispose();
       explanationSprite = null;
