@@ -311,12 +311,38 @@ import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js"
 import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
 import { ShaderPass } from "three/addons/postprocessing/ShaderPass.js";
 
-const IDIOMS = [
-  "马到成功","龙马精神","一马当先","万马奔腾","马上发财","马上如意",
-  "策马扬鞭","快马加鞭","一马平川","天马行空","马到功成","马跃钱程",
-  "人强马壮","金戈铁马","骏马奔腾","马蹄生风",
-  "马年大吉","金马迎春","马到财来","马到福来","马到运来","马力全开"
-];
+// 成语配置（从 assets/idioms.json 加载）
+let IDIOMS = [];
+let idiomMap = new Map(); // 成语文本 -> 解释的映射
+
+// 加载成语配置
+(async function loadIdioms(){
+  try{
+    const res = await fetch("assets/idioms.json");
+    if(!res.ok) throw new Error("failed");
+    const data = await res.json();
+    if(Array.isArray(data)){
+      IDIOMS = data.map(item => item.text);
+      data.forEach(item => {
+        idiomMap.set(item.text, item.explanation || "");
+      });
+    }
+  }catch(e){
+    // 如果加载失败，使用默认成语（不带解释）
+    IDIOMS = [
+      "马到成功","龙马精神","一马当先","万马奔腾","马上发财","马上如意",
+      "策马扬鞭","快马加鞭","一马平川","天马行空","马到功成","马跃钱程",
+      "人强马壮","金戈铁马","骏马奔腾","马蹄生风",
+      "马年大吉","金马迎春","马到财来","马到福来","马到运来","马力全开"
+    ];
+    // 为默认成语添加空解释
+    IDIOMS.forEach(text => {
+      if(!idiomMap.has(text)){
+        idiomMap.set(text, "");
+      }
+    });
+  }
+})();
 
 const HORSE_VIDEOS = [
   "assets/videos/horse1.mp4",
@@ -912,6 +938,9 @@ function rebuildIdiomTargets(text){
   idiomGeo.attributes.aTar.needsUpdate = true;
   idiomGeo.computeBoundingSphere();
   envHomeRingR = Math.max(2.8, Math.min(5.6, (idiomGeo.boundingSphere?.radius || 3.6) * 1.10));
+  
+  // 更新解释文字
+  updateExplanationText(text);
 }
 
 // ✅ 初始/收拢更快“成型”
@@ -1005,6 +1034,108 @@ const idiomPoints = new THREE.Points(idiomGeo, idiomMat);
 idiomPoints.frustumCulled = false;
 idiomPoints.layers.enable(BLOOM_LAYER);
 idiomGroup.add(idiomPoints);
+
+// ---------------------------
+// 解释文字系统：在成语旁边显示静态透明解释
+// ---------------------------
+function createExplanationTexture(text){
+  const canvas = document.createElement("canvas");
+  const ctx = canvas.getContext("2d");
+  
+  // 设置字体和大小
+  const fontSize = IS_MOBILE ? 18 : 24;
+  ctx.font = `${fontSize}px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto`;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  
+  // 测量文字尺寸
+  const metrics = ctx.measureText(text);
+  const textWidth = metrics.width;
+  const textHeight = fontSize;
+  
+  // 设置画布尺寸（添加一些padding）
+  const padding = 20;
+  canvas.width = textWidth + padding * 2;
+  canvas.height = textHeight + padding * 2;
+  
+  // 重新设置字体（因为canvas尺寸改变了）
+  ctx.font = `${fontSize}px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto`;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  
+  // 绘制文字（透明效果）
+  const centerX = canvas.width / 2;
+  const centerY = canvas.height / 2;
+  
+  // 绘制阴影（增加可见性）
+  ctx.shadowColor = "rgba(0,0,0,0.8)";
+  ctx.shadowBlur = 8;
+  ctx.shadowOffsetX = 2;
+  ctx.shadowOffsetY = 2;
+  
+  // 绘制文字（半透明白色）
+  ctx.fillStyle = "rgba(255,255,255,0.85)";
+  ctx.fillText(text, centerX, centerY);
+  
+  // 重置阴影
+  ctx.shadowColor = "transparent";
+  ctx.shadowBlur = 0;
+  ctx.shadowOffsetX = 0;
+  ctx.shadowOffsetY = 0;
+  
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.needsUpdate = true;
+  return texture;
+}
+
+let explanationSprite = null;
+function updateExplanationText(idiomText){
+  const explanation = idiomMap.get(idiomText) || "";
+  
+  if(explanation && explanation.trim()){
+    // 移除旧的sprite
+    if(explanationSprite){
+      idiomGroup.remove(explanationSprite);
+      explanationSprite.material.dispose();
+      explanationSprite.geometry.dispose();
+    }
+    
+    // 创建新的sprite
+    const texture = createExplanationTexture(explanation);
+    const spriteMaterial = new THREE.SpriteMaterial({
+      map: texture,
+      transparent: true,
+      opacity: 0.9,
+      depthTest: false,
+      depthWrite: false
+    });
+    
+    explanationSprite = new THREE.Sprite(spriteMaterial);
+    
+    // 计算尺寸（基于文字长度，放在成语右侧）
+    const scale = IS_MOBILE ? 2.5 : 3.0;
+    explanationSprite.scale.set(
+      texture.image.width * scale / 100,
+      texture.image.height * scale / 100,
+      1
+    );
+    
+    // 位置：在成语右侧，稍微偏下
+    const offsetX = IS_MOBILE ? 4.5 : 5.0; // 成语宽度大约7-8，右侧偏移
+    const offsetY = IS_MOBILE ? -0.5 : -0.8;
+    explanationSprite.position.set(offsetX, offsetY, 0);
+    
+    idiomGroup.add(explanationSprite);
+  } else {
+    // 如果没有解释，移除sprite
+    if(explanationSprite){
+      idiomGroup.remove(explanationSprite);
+      explanationSprite.material.dispose();
+      explanationSprite.geometry.dispose();
+      explanationSprite = null;
+    }
+  }
+}
 
 // 初始成语：稳定、快速成型
 rebuildIdiomTargets(selectedIdiom);
@@ -1569,7 +1700,9 @@ function handleGestureStable(g, dt){
   // 第一次检测到手势动作时，从 "HAPPY NEW YEAR" 切换到成语
   if(!hasSwitchedToIdioms && (g.openHand || g.closeHand || g.pinch3)){
     hasSwitchedToIdioms = true;
-    selectedIdiom = IDIOMS[Math.floor(Math.random()*IDIOMS.length)];
+    if(IDIOMS.length > 0){
+      selectedIdiom = IDIOMS[Math.floor(Math.random()*IDIOMS.length)];
+    }
     rebuildIdiomTargets(selectedIdiom);
     nudgeParticlesTowardTargets(0.78);
   }
@@ -1609,7 +1742,9 @@ function handleGestureStable(g, dt){
     mergeCooldownSec = 0.55;
 
     // ✅ 只选一次成语，并立刻构建目标；后续不再变动，直到再次张开
-    selectedIdiom = IDIOMS[Math.floor(Math.random()*IDIOMS.length)];
+    if(IDIOMS.length > 0){
+      selectedIdiom = IDIOMS[Math.floor(Math.random()*IDIOMS.length)];
+    }
     rebuildIdiomTargets(selectedIdiom);
 
     // ✅ 立刻成型更清晰
@@ -1698,7 +1833,9 @@ btnStart.addEventListener("click", async ()=>{
 btnReset.addEventListener("click", ()=>{
   // 重置时：如果已经切换到成语，则继续使用成语；否则使用初始的 "HAPPY NEW YEAR"
   if(hasSwitchedToIdioms){
-    selectedIdiom = IDIOMS[Math.floor(Math.random()*IDIOMS.length)];
+    if(IDIOMS.length > 0){
+      selectedIdiom = IDIOMS[Math.floor(Math.random()*IDIOMS.length)];
+    }
   }else{
     selectedIdiom = "HAPPY NEW YEAR";
   }
