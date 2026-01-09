@@ -246,6 +246,98 @@
       opacity:0;
       pointer-events:none;
     }
+
+    .winnerList{
+      position:absolute;
+      left:50%;
+      top:50%;
+      transform:translate(-50%, -50%);
+      width:min(420px, calc(100vw - 24px));
+      max-height:60vh;
+      padding:18px 16px;
+      border:1px solid rgba(212,175,55,.45);
+      border-radius:16px;
+      background: linear-gradient(180deg, rgba(0,0,0,.75), rgba(8,10,12,.82));
+      box-shadow: 0 20px 60px rgba(0,0,0,.65);
+      backdrop-filter: blur(14px);
+      pointer-events:none;
+      opacity:0;
+      transition: opacity .3s ease;
+      overflow:hidden;
+      z-index:1000;
+    }
+    .winnerList.show{
+      opacity:1;
+    }
+    .winnerListTitle{
+      font-size:16px;
+      font-weight:900;
+      letter-spacing:.4px;
+      color:var(--gold);
+      margin:0 0 12px 0;
+      text-align:center;
+      text-shadow: 0 0 12px rgba(212,175,55,.45);
+      border-bottom:1px solid rgba(212,175,55,.25);
+      padding-bottom:10px;
+    }
+    .winnerListContent{
+      max-height:calc(60vh - 80px);
+      overflow-y:auto;
+      overflow-x:hidden;
+    }
+    .winnerListContent::-webkit-scrollbar{
+      width:6px;
+    }
+    .winnerListContent::-webkit-scrollbar-track{
+      background:rgba(0,0,0,.2);
+      border-radius:3px;
+    }
+    .winnerListContent::-webkit-scrollbar-thumb{
+      background:rgba(212,175,55,.4);
+      border-radius:3px;
+    }
+    .winnerItem{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding:8px 10px;
+      margin:4px 0;
+      border-radius:8px;
+      background:rgba(212,175,55,.08);
+      border:1px solid rgba(212,175,55,.15);
+      font-size:14px;
+      color:rgba(255,255,255,.92);
+      animation: winnerSlideIn .3s ease;
+    }
+    @keyframes winnerSlideIn{
+      from{
+        opacity:0;
+        transform:translateX(-10px);
+      }
+      to{
+        opacity:1;
+        transform:translateX(0);
+      }
+    }
+    .winnerAvatar{
+      width:36px;
+      height:36px;
+      border-radius:999px;
+      object-fit:cover;
+      border:2px solid rgba(212,175,55,.55);
+      box-shadow:0 0 8px rgba(212,175,55,.35);
+      flex-shrink:0;
+    }
+    .winnerNumber{
+      color:var(--gold);
+      font-weight:800;
+      min-width:24px;
+      text-align:right;
+    }
+    .winnerName{
+      flex:1;
+      font-weight:600;
+    }
   </style>
 </head>
 
@@ -262,7 +354,7 @@
           <span class="badge"></span>
           <div>
             <div class="title">马年祝福 · 手势粒子成语 · 红包开封 · 烟花背景</div>
-            <div class="subtitle">握拳：凝聚成语；张开：散开湍流 + 马视频；三指捏合：抓红包</div>
+            <div class="subtitle">三指捏合：抓红包</div>
           </div>
         </div>
 
@@ -284,7 +376,7 @@
       <div class="focusTop">
         <div id="packet" class="packet">
           <div class="lid"></div>
-          <div class="seal" data-glyph="福"></div>
+          <div class="seal" data-glyph="奖"></div>
         </div>
         <img id="focusAvatar" class="focusAvatar" alt="">
         <div class="focusTextWrap">
@@ -297,6 +389,11 @@
         <video id="horseVideo" playsinline muted loop></video>
       </div>
     </div>
+  </div>
+
+  <div id="winnerList" class="winnerList">
+    <h3 class="winnerListTitle">中奖名单</h3>
+    <div id="winnerListContent" class="winnerListContent"></div>
   </div>
 
   <video id="cam" playsinline></video>
@@ -382,6 +479,8 @@ const packetSealEl = packetEl?.querySelector(".seal");
 const horseVideo = document.getElementById("horseVideo");
 const focusAvatarEl = document.getElementById("focusAvatar");
 const rewardVideoWrap = document.getElementById("rewardVideoWrap");
+const winnerListEl = document.getElementById("winnerList");
+const winnerListContentEl = document.getElementById("winnerListContent");
 let bgmStarted = false;
 
 // ---------------------------
@@ -465,14 +564,8 @@ let targetMix = 0;
 let focus = 0;      // 0:正常  1:聚焦红包卡片
 let targetFocus = 0;
 
-// ✅ 固定成语：每次"张开->握拳"只选一次，握拳期间不会闪烁切换
-// 初始显示 "HAPPY NEW YEAR"，手势识别成功后切换为 IDIOMS 中的成语
+// 始终显示 "HAPPY NEW YEAR"
 let selectedIdiom = "HAPPY NEW YEAR";
-let hasSwitchedToIdioms = false;  // 是否已切换到成语
-let cycleLocked = true;            // 初始为凝聚态，锁定成语
-let closeHoldSec = 0;              // 握拳持续时间（去抖）
-let openHoldSec = 0;               // 张开持续时间（去抖）
-let mergeCooldownSec = 0;          // 防止短时间重复触发
 let mergeBoost = 0;                // 凝聚阶段加速成型
 
 function setMode(next){
@@ -519,12 +612,12 @@ function tryStartBgm(){
 }
 
 // ---------------------------
-// 红包外观切换（福/默认）
+// 红包外观切换（奖/默认）
 // ---------------------------
 const PACKET_GRADIENT = "linear-gradient(180deg, rgba(177,18,38,.98), rgba(120,8,22,.98))";
 const LID_GRADIENT = "linear-gradient(180deg, rgba(215,30,55,.98), rgba(140,10,30,.98))";
 
-function setPacketDefault(glyph="福"){
+function setPacketDefault(glyph="奖"){
   if(packetEl){
     packetEl.style.background = PACKET_GRADIENT;
     packetEl.style.backgroundSize = "";
@@ -537,7 +630,7 @@ function setPacketDefault(glyph="福"){
   }
 }
 
-function setPacketAvatarMode(avatarUrl, glyph="福"){
+function setPacketAvatarMode(avatarUrl, glyph="奖"){
   if(packetEl){
     // 清除之前的背景渐变，使用头像作为背景
     packetEl.style.background = "none";
@@ -561,6 +654,44 @@ function setPacketAvatarMode(avatarUrl, glyph="福"){
 let blesses = [];
 // 记录已经被抽中的员工ID
 let drawnEmployeeIds = new Set();
+
+// ---------------------------
+// 中奖名单记录
+// ---------------------------
+let winnerList = []; // 中奖人员名单数组
+
+// 更新中奖名单显示
+function updateWinnerListDisplay(){
+  if(!winnerListContentEl) return;
+  
+  // 如果没有中奖人员，隐藏列表
+  if(winnerList.length === 0){
+    if(winnerListEl){
+      winnerListEl.classList.remove("show");
+    }
+    return;
+  }
+  
+  // 显示中奖名单（最新在上）
+  // 反转数组，使最新的显示在最上面
+  const reversedList = [...winnerList].reverse();
+  winnerListContentEl.innerHTML = reversedList.map((winner, index) => {
+    const number = winnerList.length - index; // 编号从总人数开始递减
+    const avatarUrl = winner.avatar || `assets/images/employees/${Math.floor(Math.random() * 4) + 1}.png`;
+    return `
+      <div class="winnerItem">
+        <img src="${avatarUrl}" alt="${winner.name}" class="winnerAvatar" onerror="this.src='assets/images/employees/1.png'">
+        <span class="winnerNumber">${number}</span>
+        <span class="winnerName">${winner.name}</span>
+      </div>
+    `;
+  }).join('');
+  
+  // 显示中奖名单（如果之前隐藏）
+  if(winnerListEl){
+    winnerListEl.classList.add("show");
+  }
+}
 
 (async function loadBlesses(){
   try{
@@ -1197,7 +1328,7 @@ function makeRedEnvelopeTexture(){
   ctx.fillStyle = "rgba(90,60,10,.80)";
   ctx.font = "900 54px ui-sans-serif, system-ui, -apple-system";
   ctx.textAlign="center"; ctx.textBaseline="middle";
-  ctx.fillText("福", 0, 2);
+  ctx.fillText("奖", 0, 2);
   ctx.restore();
 
   const tex = new THREE.CanvasTexture(c);
@@ -1623,19 +1754,24 @@ async function triggerRedPacketFlow(){
     }
   }
 
+  let winnerName = "未知员工";
+  let winnerAvatar = "";
+  
   if(chosenBless){
     const name = chosenBless.name || "未知员工";
     const blessing = chosenBless.blessing || "";
     const avatar = chosenBless.avatar || "";
+    
+    winnerName = name; // 记录中奖人员名字
 
-    // 福：红包换成员工头像，中间字改为"福"，右侧展示员工姓名 + 祝语（不显示右侧头像）
+    // 奖：红包换成员工头像，中间字改为"奖"，右侧展示员工姓名 + 祝语（不显示右侧头像）
     focusTitleEl.textContent = name;
     focusTextEl.textContent = blessing;
-    // 福模式下隐藏右侧头像小圆框
+    // 奖模式下隐藏右侧头像小圆框
     if(focusAvatarEl){
       focusAvatarEl.style.display = "none";
     }
-    // 确保使用员工头像作为"福"的背景
+    // 确保使用员工头像作为"奖"的背景
     // 优先使用配置中的头像路径
     let avatarToUse = avatar;
     
@@ -1651,15 +1787,33 @@ async function triggerRedPacketFlow(){
       avatarToUse = `assets/images/employees/${avatarToUse}`;
     }
     
+    // 保存头像路径用于中奖名单显示
+    winnerAvatar = avatarToUse;
+    
     // 设置红包背景为员工头像
     if(avatarToUse){
-      setPacketAvatarMode(avatarToUse, "福");
+      setPacketAvatarMode(avatarToUse, "奖");
     }else{
       // 最后的后备方案
-      setPacketDefault("福");
+      setPacketDefault("奖");
     }
     if(rewardVideoWrap) rewardVideoWrap.style.display = "none";
+  } else {
+    // 如果没有员工配置，使用默认头像
+    const employeeImages = ["1.png", "2.png", "3.png", "4.png"];
+    const randomImg = employeeImages[Math.floor(Math.random() * employeeImages.length)];
+    winnerAvatar = `assets/images/employees/${randomImg}`;
   }
+  
+  // 记录中奖人员名字和头像到名单
+  winnerList.push({
+    name: winnerName,
+    avatar: winnerAvatar,
+    timestamp: Date.now()
+  });
+  
+  // 更新中奖名单显示
+  updateWinnerListDisplay();
 
   packetEl.classList.remove("open");
   void packetEl.offsetWidth;
@@ -1675,7 +1829,7 @@ async function triggerRedPacketFlow(){
 }
 
 // ---------------------------
-// 手势识别（握拳=凝聚；张开=散开；三指捏合=抓红包）
+// 手势识别（三指捏合=抓红包）
 // ---------------------------
 let hands = null;
 let handEnabled = false;
@@ -1690,100 +1844,26 @@ function computeGesture(lm){
   const wrist=lm[0];
   const handSize=Math.max(1e-6, dist2(wrist, lm[9]));
 
-  function extended(tip,pip){
-    const dt=dist2(lm[tip], wrist);
-    const dp=dist2(lm[pip], wrist);
-    return dt > dp*1.12;
-  }
-
-  const thumbExt = extended(4,2);
-  const indexExt = extended(8,6);
-  const middleExt= extended(12,10);
-  const ringExt  = extended(16,14);
-  const pinkyExt = extended(20,18);
-
-  const extCount = [thumbExt,indexExt,middleExt,ringExt,pinkyExt].filter(Boolean).length;
-
-  const openHand = (extCount >= 4);
-  const closeHand = (extCount <= 1);
-
   const dTI = dist2(lm[4], lm[8]) / handSize;
   const dTM = dist2(lm[4], lm[12]) / handSize;
   const dIM = dist2(lm[8], lm[12]) / handSize;
   const pinch3 = (dTI < 0.33 && dTM < 0.35 && dIM < 0.34);
 
-  return { openHand, closeHand, pinch3 };
+  return { pinch3 };
 }
 
 let prevPinch=false;
 let pinchCooldown=0;
 
-// ✅ 关键：凝聚只触发一次（需要握拳保持一小段时间），避免“闪现其他成语”
+// 三指捏合：抓红包
 function handleGestureStable(g, dt){
-  mergeCooldownSec = Math.max(0, mergeCooldownSec - dt);
-  
-  // 第一次检测到手势动作时，从 "HAPPY NEW YEAR" 切换到成语
-  if(!hasSwitchedToIdioms && (g.openHand || g.closeHand || g.pinch3)){
-    hasSwitchedToIdioms = true;
-    if(IDIOMS.length > 0){
-      selectedIdiom = IDIOMS[Math.floor(Math.random()*IDIOMS.length)];
-    }
-    rebuildIdiomTargets(selectedIdiom);
-    nudgeParticlesTowardTargets(0.78);
-  }
-
-  if(g.openHand){
-    openHoldSec += dt;
-    closeHoldSec = 0;
-
-    // 张开保持>0.10s才认为进入散开 cycle（防误触）
-    if(openHoldSec > 0.10){
-      cycleLocked = false;      // 允许下一次握拳选新成语
-      setMode(Mode.SCATTER);
-    }
-  }else{
-    openHoldSec = 0;
-  }
-
-  if(g.closeHand){
-    closeHoldSec += dt;
-  }else{
-    closeHoldSec = 0;
-  }
-
-  // 三指捏合：抓红包（独立于散/聚）
+  // 三指捏合：抓红包
   pinchCooldown = Math.max(0, pinchCooldown - dt);
   const pinchEdge = g.pinch3 && !prevPinch;
   prevPinch = g.pinch3;
   if(pinchEdge && pinchCooldown<=0){
     triggerRedPacketFlow();
     pinchCooldown = 0.60;
-  }
-
-  // 握拳凝聚：要求 “从散开进入” + “握拳保持” + “冷却结束”
-  const canMerge = (!cycleLocked) && (mode === Mode.SCATTER || mix > 0.55) && mergeCooldownSec <= 0;
-  if(canMerge && closeHoldSec > 0.14){
-    cycleLocked = true;
-    mergeCooldownSec = 0.55;
-
-    // ✅ 只选一次成语，并立刻构建目标；后续不再变动，直到再次张开
-    if(IDIOMS.length > 0){
-      selectedIdiom = IDIOMS[Math.floor(Math.random()*IDIOMS.length)];
-    }
-    rebuildIdiomTargets(selectedIdiom);
-
-    // ✅ 立刻成型更清晰
-    nudgeParticlesTowardTargets(0.76);
-
-    // 凝聚阶段加速一段时间（避免“还不成型”）
-    mergeBoost = 1.0;
-
-    // 刷新红包 home（保持环绕）
-    for(let i=0;i<ENVELOPES;i++){
-      envHomeLocal[i] = sampleEnvelopeHomeLocal();
-    }
-
-    setMode(Mode.MERGE);
   }
 }
 
@@ -1824,7 +1904,7 @@ async function startHands(){
 
   handEnabled=true;
   led.classList.add("on");
-  statusText.textContent="手势已启用：握拳凝聚 / 张开散开 / 三指捏合抓红包";
+  statusText.textContent="手势已启用：三指捏合抓红包";
 
   let busy=false, lastSent=0;
   async function pump(){
@@ -1856,19 +1936,17 @@ btnStart.addEventListener("click", async ()=>{
 });
 
 btnReset.addEventListener("click", ()=>{
-  // 重置时：如果已经切换到成语，则继续使用成语；否则使用初始的 "HAPPY NEW YEAR"
-  if(hasSwitchedToIdioms){
-    if(IDIOMS.length > 0){
-      selectedIdiom = IDIOMS[Math.floor(Math.random()*IDIOMS.length)];
-    }
-  }else{
-    selectedIdiom = "HAPPY NEW YEAR";
-  }
+  // 重置时始终使用 "HAPPY NEW YEAR"
+  selectedIdiom = "HAPPY NEW YEAR";
   rebuildIdiomTargets(selectedIdiom);
   nudgeParticlesTowardTargets(0.78);
   
   // 重置已抽中记录，允许重新抽奖
   drawnEmployeeIds.clear();
+  
+  // 清空中奖名单
+  winnerList = [];
+  updateWinnerListDisplay();
 
   // 重新分配头像和位置
   if(envMeshes.length === ENVELOPES){
@@ -1887,10 +1965,6 @@ btnReset.addEventListener("click", ()=>{
     initEnvelopeMeshes();
   }
   hideFocusOverlay();
-  cycleLocked = true;
-  openHoldSec = 0;
-  closeHoldSec = 0;
-  mergeCooldownSec = 0;
   mergeBoost = 0;
 
   setMode(Mode.MERGE);
@@ -2070,7 +2144,7 @@ function animate(){
   lastTime=now;
   time += dt;
 
-  // 手势（稳定去抖 + 单次触发凝聚）
+  // 手势识别处理
   if(handEnabled && lastLandmarks && (now-lastLandmarksTs) < 180){
     const g = computeGesture(lastLandmarks);
     handleGestureStable(g, dt);
