@@ -1725,6 +1725,12 @@ const fireworks = new Fireworks();
 function pickVideo(){ return HORSE_VIDEOS[Math.floor(Math.random()*HORSE_VIDEOS.length)]; }
 
 async function triggerRedPacketFlow(){
+  // 检查是否已经抽取了5个
+  if(winnerList.length >= 5){
+    statusText.textContent = "已抽取5个，请点击重置按钮重新开始";
+    return;
+  }
+
   if(mode !== Mode.FOCUS) setMode(Mode.FOCUS);
 
   // 如果存在员工祝福配置，则从 blesses 中随机选择一位未抽中的员工
@@ -2041,11 +2047,14 @@ function turbulenceAccel(px, py, pz, seed, time, scatter01){
 // 成语粒子更新（凝聚更快且稳定，不再闪现换词）
 // ---------------------------
 function updateIdiom(dt, time){
-  // 凝聚态绕Y轴旋转更快
-  if(mode === Mode.MERGE && focus < 0.1){
-    idiomGroup.rotation.y += dt * 0.70;
-  }else{
-    idiomGroup.rotation.y += dt * 0.12;
+  // HAPPY NEW YEAR 不旋转，其他成语正常旋转
+  if(selectedIdiom !== "HAPPY NEW YEAR"){
+    // 凝聚态绕Y轴旋转更快
+    if(mode === Mode.MERGE && focus < 0.1){
+      idiomGroup.rotation.y += dt * 0.70;
+    }else{
+      idiomGroup.rotation.y += dt * 0.12;
+    }
   }
 
   // mix 过渡更快：散->聚明显更“丝滑”
