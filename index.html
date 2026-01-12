@@ -1562,6 +1562,14 @@ const fireworks = new Fireworks();
 function pickVideo(){ return HORSE_VIDEOS[Math.floor(Math.random()*HORSE_VIDEOS.length)]; }
 
 async function triggerRedPacketFlow(){
+  // 限制最多只能抽取5个人员
+  if(winnerList.length >= 5){
+    if(statusText){
+      statusText.textContent = "已达到抽奖上限（5人），请重置后继续";
+    }
+    return; // 达到限制，直接返回
+  }
+  
   if(mode !== Mode.FOCUS) setMode(Mode.FOCUS);
 
   // 如果存在员工祝福配置，则从 blesses 中随机选择一位未抽中的员工
