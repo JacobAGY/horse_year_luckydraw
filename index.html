@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
-  <title>马年祝福 · 手势粒子成语 · 红包开封 · 烟花背景</title>
+  <title>马年祝福 · 手势粒子文字 · 红包开封 · 烟花背景</title>
 
   <script async src="https://unpkg.com/es-module-shims@1.10.0/dist/es-module-shims.js"></script>
   <link rel="preconnect" href="https://unpkg.com" crossorigin>
@@ -353,7 +353,7 @@
         <div class="brand">
           <span class="badge"></span>
           <div>
-            <div class="title">马年祝福 · 手势粒子成语 · 红包开封 · 烟花背景</div>
+            <div class="title">马年祝福 · 手势粒子文字 · 红包开封 · 烟花背景</div>
             <div class="subtitle">三指捏合：抓红包</div>
           </div>
         </div>
@@ -365,7 +365,7 @@
 
         <div class="status">
           <span id="led" class="led"></span>
-          <span id="statusText">已加载：凝聚态（稳定成语 + 红包环绕）</span>
+          <span id="statusText">已加载：凝聚态（HAPPY NEW YEAR + 红包环绕）</span>
         </div>
       </div>
     </div>
@@ -407,39 +407,6 @@ import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
 import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
 import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
 import { ShaderPass } from "three/addons/postprocessing/ShaderPass.js";
-
-// 成语配置（从 assets/idioms.json 加载）
-let IDIOMS = [];
-let idiomMap = new Map(); // 成语文本 -> 解释的映射
-
-// 加载成语配置
-(async function loadIdioms(){
-  try{
-    const res = await fetch("assets/idioms.json");
-    if(!res.ok) throw new Error("failed");
-    const data = await res.json();
-    if(Array.isArray(data)){
-      IDIOMS = data.map(item => item.text);
-      data.forEach(item => {
-        idiomMap.set(item.text, item.explanation || "");
-      });
-    }
-  }catch(e){
-    // 如果加载失败，使用默认成语（不带解释）
-    IDIOMS = [
-      "马到成功","龙马精神","一马当先","万马奔腾","马上发财","马上如意",
-      "策马扬鞭","快马加鞭","一马平川","天马行空","马到功成","马跃钱程",
-      "人强马壮","金戈铁马","骏马奔腾","马蹄生风",
-      "马年大吉","金马迎春","马到财来","马到福来","马到运来","马力全开"
-    ];
-    // 为默认成语添加空解释
-    IDIOMS.forEach(text => {
-      if(!idiomMap.has(text)){
-        idiomMap.set(text, "");
-      }
-    });
-  }
-})();
 
 const HORSE_VIDEOS = [
   "assets/videos/horse1.mp4",
@@ -565,7 +532,7 @@ let focus = 0;      // 0:正常  1:聚焦红包卡片
 let targetFocus = 0;
 
 // 始终显示 "HAPPY NEW YEAR"
-let selectedIdiom = "HAPPY NEW YEAR";
+const selectedIdiom = "HAPPY NEW YEAR"; // 固定为 "HAPPY NEW YEAR"
 let mergeBoost = 0;                // 凝聚阶段加速成型
 
 function setMode(next){
@@ -915,7 +882,7 @@ function makeMaGlyphTexture(){
 const MA_TEX = makeMaGlyphTexture();
 
 // ---------------------------
-// 成语采样：描边为主、填充为辅（轮廓清晰）
+// 文字采样：描边为主、填充为辅（轮廓清晰）
 // ---------------------------
 function sampleTextPointsStrokeFill(text, {
   fontSize = 190,
@@ -997,10 +964,11 @@ function sampleTextPointsStrokeFill(text, {
 }
 
 // ---------------------------
-// 成语粒子系统
+// "HAPPY NEW YEAR" 粒子系统
 // ---------------------------
 const idiomGroup = new THREE.Group();
 idiomGroup.position.set(0, 2.25, 0);
+  idiomGroup.rotation.set(0, 0, 0);
 scene.add(idiomGroup);
 
 let envHomeRingR = 3.2;
@@ -1069,9 +1037,6 @@ function rebuildIdiomTargets(text){
   idiomGeo.attributes.aTar.needsUpdate = true;
   idiomGeo.computeBoundingSphere();
   envHomeRingR = Math.max(2.8, Math.min(5.6, (idiomGeo.boundingSphere?.radius || 3.6) * 1.10));
-  
-  // 更新解释文字
-  updateExplanationText(text);
 }
 
 // ✅ 初始/收拢更快“成型”
@@ -1166,139 +1131,12 @@ idiomPoints.frustumCulled = false;
 idiomPoints.layers.enable(BLOOM_LAYER);
 idiomGroup.add(idiomPoints);
 
-// ---------------------------
-// 解释文字系统：在成语旁边显示静态透明解释
-// ---------------------------
-function createExplanationTexture(text){
-  const canvas = document.createElement("canvas");
-  const ctx = canvas.getContext("2d");
-  
-  // 设置字体和大小 - 使用更优雅的字体
-  const fontSize = IS_MOBILE ? 20 : 28;
-  const fontFamily = "'Georgia', 'Times New Roman', 'serif', 'ui-serif', 'Palatino'";
-  const fontWeight = "400"; // 正常粗细，更优雅
-  const letterSpacing = "0.05em"; // 增加字母间距
-  
-  // 先测量文字尺寸（临时字体设置）
-  ctx.font = `${fontWeight} ${fontSize}px ${fontFamily}`;
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  
-  const metrics = ctx.measureText(text);
-  const textWidth = metrics.width;
-  const textHeight = fontSize * 1.2; // 增加行高
-  
-  // 设置画布尺寸（添加padding）
-  const padding = 30;
-  canvas.width = textWidth + padding * 2;
-  canvas.height = textHeight + padding * 2;
-  
-  // 重新设置字体（因为canvas尺寸改变了）
-  ctx.font = `${fontWeight} ${fontSize}px ${fontFamily}`;
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  
-  const centerX = canvas.width / 2;
-  const centerY = canvas.height / 2;
-  
-  // 绘制多层效果：使用金色系配色，与粒子成语协调
-  // 1. 绘制外阴影（深金色阴影，与主题匹配）
-  ctx.shadowColor = "rgba(139, 117, 56, 0.7)"; // 深金色阴影
-  ctx.shadowBlur = 10;
-  ctx.shadowOffsetX = 0;
-  ctx.shadowOffsetY = 2;
-  
-  // 2. 绘制文字描边（金色描边）
-  ctx.strokeStyle = "rgba(255, 215, 100, 0.85)"; // 亮金色描边
-  ctx.lineWidth = 2.5;
-  ctx.strokeText(text, centerX, centerY);
-  
-  // 3. 创建金色渐变填充（与粒子成语的金色匹配）
-  // 粒子金色：rgb(212, 176, 56) = vec3(0.83, 0.69, 0.22)
-  const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-  gradient.addColorStop(0, "rgba(255, 220, 120, 0.95)"); // 顶部：亮金色（与粒子匹配）
-  gradient.addColorStop(0.4, "rgba(240, 200, 100, 0.90)"); // 中上：标准金色
-  gradient.addColorStop(0.7, "rgba(220, 180, 80, 0.88)"); // 中下：深金色
-  gradient.addColorStop(1, "rgba(255, 235, 160, 0.92)"); // 底部：浅金色
-  
-  ctx.fillStyle = gradient;
-  ctx.fillText(text, centerX, centerY);
-  
-  // 重置阴影和样式
-  ctx.shadowColor = "transparent";
-  ctx.shadowBlur = 0;
-  ctx.shadowOffsetX = 0;
-  ctx.shadowOffsetY = 0;
-  
-  const texture = new THREE.CanvasTexture(canvas);
-  texture.needsUpdate = true;
-  return texture;
-}
-
-let explanationSprite = null;
-function updateExplanationText(idiomText){
-  const explanation = idiomMap.get(idiomText) || "";
-  
-  if(explanation && explanation.trim()){
-    // 移除旧的sprite
-    if(explanationSprite){
-      scene.remove(explanationSprite);
-      explanationSprite.material.dispose();
-      explanationSprite.geometry.dispose();
-    }
-    
-    // 创建新的sprite
-    const texture = createExplanationTexture(explanation);
-    const spriteMaterial = new THREE.SpriteMaterial({
-      map: texture,
-      transparent: true,
-      opacity: 0.7, // 半透明效果
-      depthTest: false,
-      depthWrite: false
-    });
-    
-    explanationSprite = new THREE.Sprite(spriteMaterial);
-    
-    // 计算尺寸（基于文字长度）
-    const scale = IS_MOBILE ? 2.5 : 3.0;
-    explanationSprite.scale.set(
-      texture.image.width * scale / 100,
-      texture.image.height * scale / 100,
-      1
-    );
-    
-    // 位置：在世界坐标系中，成语组的中心在 (0, 2.25, 0)
-    // 将解释文字放在成语下方，静态显示，不随成语组旋转
-    const idiomCenterX = 0; // idiomGroup的世界X位置
-    const idiomCenterY = 2.25; // idiomGroup的世界Y位置
-    const offsetX = 0; // 水平居中
-    const offsetY = IS_MOBILE ? -1.5 : -2.0; // 放在成语下方，留出足够间距
-    
-    explanationSprite.position.set(
-      idiomCenterX + offsetX,
-      idiomCenterY + offsetY,
-      0
-    );
-    
-    // 添加到场景而不是idiomGroup，使其不随成语组旋转
-    scene.add(explanationSprite);
-  } else {
-    // 如果没有解释，移除sprite
-    if(explanationSprite){
-      scene.remove(explanationSprite);
-      explanationSprite.material.dispose();
-      explanationSprite.geometry.dispose();
-      explanationSprite = null;
-    }
-  }
-}
-
-// 初始成语：稳定、快速成型
+// 初始化 "HAPPY NEW YEAR"：直接显示，无聚合过程
 rebuildIdiomTargets(selectedIdiom);
-nudgeParticlesTowardTargets(0.78);
+nudgeParticlesTowardTargets(1.0); // 直接移动到目标位置，无聚合动画
 
 // ---------------------------
-// 红包系统：围绕成语 3D 包裹 + 慢速布朗运动；降低旋转速度
+// 红包系统：围绕文字 3D 包裹 + 慢速布朗运动；无旋转
 // ---------------------------
 const ENVELOPES = IS_MOBILE ? 160 : 240;
 const envGroup = new THREE.Group();
@@ -1557,9 +1395,8 @@ function updateEnvelopes(time, dt){
     mesh.position.set(x,y,z);
     mesh.quaternion.copy(camera.quaternion);
 
-    // 降低自旋
-    const rot = (Math.sin(time*0.32 + seed)*0.06) + (Math.sin(time*0.18 + seed*0.9)*0.04);
-    mesh.rotation.z = rot;
+    // 红包不自旋
+    mesh.rotation.set(0, 0, 0);
 
     const s = envScale[i] * (1.0 - focus*0.08);
     mesh.scale.setScalar(s);
@@ -1725,12 +1562,6 @@ const fireworks = new Fireworks();
 function pickVideo(){ return HORSE_VIDEOS[Math.floor(Math.random()*HORSE_VIDEOS.length)]; }
 
 async function triggerRedPacketFlow(){
-  // 检查是否已经抽取了5个
-  if(winnerList.length >= 5){
-    statusText.textContent = "已抽取5个，请点击重置按钮重新开始";
-    return;
-  }
-
   if(mode !== Mode.FOCUS) setMode(Mode.FOCUS);
 
   // 如果存在员工祝福配置，则从 blesses 中随机选择一位未抽中的员工
@@ -1943,9 +1774,8 @@ btnStart.addEventListener("click", async ()=>{
 
 btnReset.addEventListener("click", ()=>{
   // 重置时始终使用 "HAPPY NEW YEAR"
-  selectedIdiom = "HAPPY NEW YEAR";
   rebuildIdiomTargets(selectedIdiom);
-  nudgeParticlesTowardTargets(0.78);
+  nudgeParticlesTowardTargets(1.0); // 直接移动到目标位置，无聚合动画
   
   // 重置已抽中记录，允许重新抽奖
   drawnEmployeeIds.clear();
@@ -1974,29 +1804,13 @@ btnReset.addEventListener("click", ()=>{
   mergeBoost = 0;
 
   setMode(Mode.MERGE);
-  statusText.textContent="已重置：凝聚态（稳定成语 + 红包环绕）";
+  statusText.textContent="已重置：凝聚态（HAPPY NEW YEAR + 红包环绕）";
 });
 
 // ---------------------------
 // 相机
 // ---------------------------
-let yaw=0.0, pitch=0.14, radius=10.4;
-let yawT=yaw, pitchT=pitch;
-
-let dragging=false, lastX=0, lastY=0;
-canvas.addEventListener("pointerdown",(e)=>{
-  dragging=true; lastX=e.clientX; lastY=e.clientY;
-});
-window.addEventListener("pointerup",()=>dragging=false);
-window.addEventListener("pointermove",(e)=>{
-  if(!dragging) return;
-  if(mode !== Mode.SCATTER) return;
-  const dx=e.clientX-lastX;
-  const dy=e.clientY-lastY;
-  lastX=e.clientX; lastY=e.clientY;
-  yawT += dx*0.0042;
-  pitchT += dy*0.0032;
-});
+const radius=10.4;
 
 // ---------------------------
 // 散开态湍流场：中心空腔 + “整体向左流动”
@@ -2044,22 +1858,11 @@ function turbulenceAccel(px, py, pz, seed, time, scatter01){
 }
 
 // ---------------------------
-// 成语粒子更新（凝聚更快且稳定，不再闪现换词）
+// "HAPPY NEW YEAR" 粒子更新（凝聚更快且稳定）
 // ---------------------------
 function updateIdiom(dt, time){
-  // HAPPY NEW YEAR 不旋转，其他成语正常旋转
-  if(selectedIdiom !== "HAPPY NEW YEAR"){
-    // 凝聚态绕Y轴旋转更快
-    if(mode === Mode.MERGE && focus < 0.1){
-      idiomGroup.rotation.y += dt * 0.70;
-    }else{
-      idiomGroup.rotation.y += dt * 0.12;
-    }
-  }
-
-  // mix 过渡更快：散->聚明显更“丝滑”
-  //（mix 的实际更新在 animate 里）
-  const pull = (1.0 - mix);
+  // 无聚合过程：粒子直接显示在目标位置
+  const pull = 0.0; // 设置为 0，禁用聚合动画
 
   // ✅ 凝聚阶段短时 boost（避免“还不成型”）
   const boost = mergeBoost;
@@ -2074,6 +1877,17 @@ function updateIdiom(dt, time){
     let vx=aVel[i*3+0], vy=aVel[i*3+1], vz=aVel[i*3+2];
 
     const tx=aTar[i*3+0], ty=aTar[i*3+1], tz=aTar[i*3+2];
+
+    // 无聚合过程：当 mix=0 时，粒子直接显示在目标位置
+    if(mix < 0.01){
+      aPos[i*3+0] = tx;
+      aPos[i*3+1] = ty;
+      aPos[i*3+2] = tz;
+      aVel[i*3+0] = 0;
+      aVel[i*3+1] = 0;
+      aVel[i*3+2] = 0;
+      continue;
+    }
 
     let ax = (tx - px) * spring * pull;
     let ay = (ty - py) * spring * pull;
@@ -2115,29 +1929,14 @@ function updateIdiom(dt, time){
 }
 
 function applyCamera(dt, time){
-  if(mode===Mode.MERGE){
-    yawT += dt*0.12;
-    pitchT = damp(pitchT, 0.14, 2.8, dt);
-  }else if(mode===Mode.FOCUS){
-    pitchT = damp(pitchT, 0.12, 3.0, dt);
-  }else{
-    pitchT = clamp(pitchT, -0.22, 0.62);
-  }
-
-  yaw = damp(yaw, yawT, 6.0, dt);
-  pitch = damp(pitch, pitchT, 6.0, dt);
-
-  const r=radius;
-  const cx = Math.sin(yaw)*Math.cos(pitch)*r;
-  const cy = 2.25 + Math.sin(pitch)*r*0.33;
-  const cz = Math.cos(yaw)*Math.cos(pitch)*r;
-  camera.position.set(cx,cy,cz);
-  camera.lookAt(0,2.25,0);
+  // 相机固定位置，不旋转
+  camera.position.set(0, 2.3, radius);
+  camera.lookAt(0, 2.25, 0);
 
   goldPoint.position.set(
-    Math.sin(yaw*0.7)*2.0,
+    0,
     5.0 + Math.sin(time*0.7)*0.12,
-    3.0 + Math.cos(yaw*0.7)*1.2
+    3.0
   );
 }
 
@@ -2183,7 +1982,7 @@ function animate(){
     envMeshes.forEach(m => m.renderOrder = 19000);          // 头像也在下（散开时不抢镜）
     horsePlane.renderOrder = 30000;       // 马视频在上
   }else{
-    idiomPoints.renderOrder = 60000;      // 凝聚时成语在最上
+    idiomPoints.renderOrder = 60000;      // 凝聚时文字在最上
     envMeshes.forEach(m => m.renderOrder = 65000);          // 头像包裹
     horsePlane.renderOrder = 30000;
   }
@@ -2232,7 +2031,7 @@ onResize();
 // ---------------------------
 // 初始化
 // ---------------------------
-statusText.textContent = "已加载：凝聚态（稳定成语 + 红包环绕）";
+statusText.textContent = "已加载：凝聚态（HAPPY NEW YEAR + 红包环绕）";
   // 重新初始化头像网格
   initEnvelopeMeshes();
 
