@@ -397,7 +397,8 @@
   </div>
 
   <video id="cam" playsinline></video>
-  <audio id="bgm" src="assets/music/gongxifacai.mp3" loop></audio>
+  <audio id="bgm" src="assets/music/zoo.mp3" loop></audio>
+  <audio id="congratulationsSound" src="assets/music/congratulations.wav"></audio>
 </div>
 
 <script type="module-shim">
@@ -436,6 +437,7 @@ const btnStart = document.getElementById("btnStart");
 const btnReset = document.getElementById("btnReset");
 const videoEl = document.getElementById("cam");
 const bgmEl = document.getElementById("bgm");
+const congratulationsSound = document.getElementById("congratulationsSound");
 
 const focusOverlay = document.getElementById("focusOverlay");
 const focusTitleEl = document.getElementById("focusTitle");
@@ -1659,6 +1661,12 @@ async function triggerRedPacketFlow(){
   
   // 更新中奖名单显示
   updateWinnerListDisplay();
+
+  // 播放恭喜音效
+  if(congratulationsSound){
+    congratulationsSound.currentTime = 0;
+    congratulationsSound.play().catch(()=>{});
+  }
 
   packetEl.classList.remove("open");
   void packetEl.offsetWidth;
