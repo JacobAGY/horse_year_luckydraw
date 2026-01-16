@@ -338,6 +338,44 @@
       flex:1;
       font-weight:600;
     }
+
+    .cooldownTimer{
+      position:absolute;
+      left:50%;
+      top:50%;
+      transform:translate(-50%, -50%);
+      width:200px;
+      height:200px;
+      border-radius:50%;
+      border:4px solid rgba(212,175,55,.6);
+      background:linear-gradient(180deg, rgba(0,0,0,.85), rgba(8,10,12,.92));
+      box-shadow: 0 0 40px rgba(212,175,55,.5), inset 0 0 30px rgba(212,175,55,.2);
+      backdrop-filter: blur(12px);
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      pointer-events:none;
+      opacity:0;
+      transition: opacity .3s ease;
+      z-index:2000;
+    }
+    .cooldownTimer.show{
+      opacity:1;
+    }
+    .cooldownTimerNumber{
+      font-size:64px;
+      font-weight:900;
+      color:var(--gold);
+      text-shadow: 0 0 20px rgba(212,175,55,.8);
+      line-height:1;
+      margin-bottom:8px;
+    }
+    .cooldownTimerLabel{
+      font-size:14px;
+      color:rgba(255,255,255,.75);
+      letter-spacing:.5px;
+    }
   </style>
 </head>
 
@@ -396,6 +434,11 @@
     <div id="winnerListContent" class="winnerListContent"></div>
   </div>
 
+  <div id="cooldownTimer" class="cooldownTimer">
+    <div id="cooldownTimerNumber" class="cooldownTimerNumber">10</div>
+    <div class="cooldownTimerLabel">秒后可再次抽奖</div>
+  </div>
+
   <video id="cam" playsinline></video>
   <audio id="bgm" src="assets/music/zoo.mp3" loop></audio>
   <audio id="congratulationsSound" src="assets/music/congratulations.wav"></audio>
@@ -450,7 +493,10 @@ const focusAvatarEl = document.getElementById("focusAvatar");
 const rewardVideoWrap = document.getElementById("rewardVideoWrap");
 const winnerListEl = document.getElementById("winnerList");
 const winnerListContentEl = document.getElementById("winnerListContent");
+const cooldownTimerEl = document.getElementById("cooldownTimer");
+const cooldownTimerNumberEl = document.getElementById("cooldownTimerNumber");
 let bgmStarted = false;
+let cooldownTime = 0; // 冷却时间（秒）
 
 // ---------------------------
 // Three.js 基础
@@ -1564,6 +1610,11 @@ const fireworks = new Fireworks();
 function pickVideo(){ return HORSE_VIDEOS[Math.floor(Math.random()*HORSE_VIDEOS.length)]; }
 
 async function triggerRedPacketFlow(){
+  // 检查冷却时间
+  if(cooldownTime > 0){
+    return; // 冷却中，不允许抽奖
+  }
+  
   // 限制最多只能抽取5个人员
   if(winnerList.length >= 5){
     if(statusText){
@@ -1662,7 +1713,7 @@ async function triggerRedPacketFlow(){
   // 更新中奖名单显示
   updateWinnerListDisplay();
 
-  // 播放恭喜音效
+  // 播放恭喜音效（背景音乐继续播放，不暂停）
   if(congratulationsSound){
     congratulationsSound.currentTime = 0;
     congratulationsSound.play().catch(()=>{});
@@ -1679,6 +1730,12 @@ async function triggerRedPacketFlow(){
     horseVideo.load();
     await horseVideo.play().catch(()=>{});
   }catch(e){}
+  
+  // 启动10秒冷却时间
+  cooldownTime = 10;
+  if(cooldownTimerEl){
+    cooldownTimerEl.classList.add("show");
+  }
 }
 
 // ---------------------------
@@ -1714,7 +1771,7 @@ function handleGestureStable(g, dt){
   pinchCooldown = Math.max(0, pinchCooldown - dt);
   const pinchEdge = g.pinch3 && !prevPinch;
   prevPinch = g.pinch3;
-  if(pinchEdge && pinchCooldown<=0){
+  if(pinchEdge && pinchCooldown<=0 && cooldownTime <= 0){
     triggerRedPacketFlow();
     pinchCooldown = 0.60;
   }
@@ -1799,6 +1856,12 @@ btnReset.addEventListener("click", ()=>{
   // 清空中奖名单
   winnerList = [];
   updateWinnerListDisplay();
+  
+  // 重置冷却时间
+  cooldownTime = 0;
+  if(cooldownTimerEl){
+    cooldownTimerEl.classList.remove("show");
+  }
 
   // 重新分配头像和位置
   if(envMeshes.length === ENVELOPES){
@@ -1967,6 +2030,20 @@ function animate(){
   const dt=clamp((now-lastTime)/1000, 0, 0.035);
   lastTime=now;
   time += dt;
+
+  // 更新冷却时间
+  if(cooldownTime > 0){
+    cooldownTime = Math.max(0, cooldownTime - dt);
+    if(cooldownTimerNumberEl){
+      const displayTime = Math.ceil(cooldownTime);
+      cooldownTimerNumberEl.textContent = displayTime;
+    }
+    if(cooldownTime <= 0){
+      if(cooldownTimerEl){
+        cooldownTimerEl.classList.remove("show");
+      }
+    }
+  }
 
   // 手势识别处理
   if(handEnabled && lastLandmarks && (now-lastLandmarksTs) < 180){
