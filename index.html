@@ -582,6 +582,9 @@ let targetFocus = 0;
 // 始终显示 "HAPPY NEW YEAR"
 const selectedIdiom = "HAPPY NEW YEAR"; // 固定为 "HAPPY NEW YEAR"
 let mergeBoost = 0;                // 凝聚阶段加速成型
+let currentFontSize = 190;         // 当前字体大小
+let currentTitleFontSize = 13;     // 名字字体大小
+let currentTextFontSize = 9;     // 祝福语字体大小
 
 function setMode(next){
   if(mode === next) return;
@@ -1049,9 +1052,9 @@ for(let i=0;i<MAX_PARTICLES;i++){
   aSeed[i]=Math.random();
 }
 
-function rebuildIdiomTargets(text){
+function rebuildIdiomTargets(text, fontSize = currentFontSize){
   const pts = sampleTextPointsStrokeFill(text, {
-    fontSize: 190,
+    fontSize: fontSize,
     worldWidth: IS_MOBILE ? 7.0 : 7.9,
     strokeStep: IS_MOBILE ? 4 : 3,
     fillStep:   IS_MOBILE ? 10 : 8,
@@ -1665,6 +1668,9 @@ async function triggerRedPacketFlow(){
     // 奖：红包换成员工头像，中间字改为"奖"，右侧展示员工姓名 + 祝语（不显示右侧头像）
     focusTitleEl.textContent = name;
     focusTextEl.textContent = blessing;
+    // 应用当前字体大小
+    if(focusTitleEl) focusTitleEl.style.fontSize = currentTitleFontSize + 'px';
+    if(focusTextEl) focusTextEl.style.fontSize = currentTextFontSize + 'px';
     // 奖模式下隐藏右侧头像小圆框
     if(focusAvatarEl){
       focusAvatarEl.style.display = "none";
@@ -1772,6 +1778,17 @@ function handleGestureStable(g, dt){
   const pinchEdge = g.pinch3 && !prevPinch;
   prevPinch = g.pinch3;
   if(pinchEdge && pinchCooldown<=0 && cooldownTime <= 0){
+    // 三指捏合时，将字体大小调大两号
+    currentFontSize += 20; // 增加两号（每号约10px）
+    rebuildIdiomTargets(selectedIdiom, currentFontSize);
+    nudgeParticlesTowardTargets(0.3); // 平滑过渡到新字体大小
+    
+    // 名字和祝福语也调大两号
+    currentTitleFontSize += 20;
+    currentTextFontSize += 20;
+    if(focusTitleEl) focusTitleEl.style.fontSize = currentTitleFontSize + 'px';
+    if(focusTextEl) focusTextEl.style.fontSize = currentTextFontSize + 'px';
+    
     triggerRedPacketFlow();
     pinchCooldown = 0.60;
   }
@@ -1846,8 +1863,17 @@ btnStart.addEventListener("click", async ()=>{
 });
 
 btnReset.addEventListener("click", ()=>{
+  // 重置字体大小
+  currentFontSize = 190;
+  currentTitleFontSize = 13;
+  currentTextFontSize = 9;
+  
+  // 重置名字和祝福语的字体大小
+  if(focusTitleEl) focusTitleEl.style.fontSize = currentTitleFontSize + 'px';
+  if(focusTextEl) focusTextEl.style.fontSize = currentTextFontSize + 'px';
+  
   // 重置时始终使用 "HAPPY NEW YEAR"
-  rebuildIdiomTargets(selectedIdiom);
+  rebuildIdiomTargets(selectedIdiom, currentFontSize);
   nudgeParticlesTowardTargets(1.0); // 直接移动到目标位置，无聚合动画
   
   // 重置已抽中记录，允许重新抽奖
