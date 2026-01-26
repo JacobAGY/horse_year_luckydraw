@@ -1,62 +1,290 @@
 [
   {
+    "id": "alvin",
+    "name": "Alvin",
+    "avatar": "assets/images/employees/alvin.jpeg",
+    "blessing": "Hello，New Year"
+  },
+  {
+    "id": "amy-zhang",
+    "name": "Amy Zhang",
+    "avatar": "assets/images/employees/amy_zhang.jpeg",
+    "blessing": "Gong Xi Fa Cai (恭喜发财）"
+  },
+  {
+    "id": "andy-wu",
+    "name": "Andy Wu",
+    "avatar": "assets/images/employees/andy_wu.jpeg",
+    "blessing": "Wish all have a lucky new year"
+  },
+  {
+    "id": "ares-zhang",
+    "name": "Ares Zhang",
+    "avatar": "assets/images/employees/ares_zhang.jpeg",
+    "blessing": "Wishing you a galloping great Year of the Horse! May it be filled with success， energy， and triumph. 🐎✨"
+  },
+  {
+    "id": "bruce-luo",
+    "name": "Bruce Luo",
+    "avatar": "assets/images/employees/bruce_luo.jpeg",
+    "blessing": "In the Year of the Horse， let’s ride together toward shared goals"
+  },
+  {
+    "id": "cara-huang",
+    "name": "Cara Huang",
+    "avatar": "assets/images/employees/cara_huang.jpeg",
+    "blessing": "Wish everyone a happy and prosperous Year of the Horse!"
+  },
+  {
+    "id": "echo-li",
+    "name": "Echo Li",
+    "avatar": "assets/images/employees/echo_li.jpeg",
+    "blessing": "马上有钱，你我都是黑马，Wishing you a prosperous Year of the Horse filled with breakthroughs!"
+  },
+  {
+    "id": "faye-liao",
+    "name": "Faye Liao",
+    "avatar": "assets/images/employees/faye_liao.jpeg",
+    "blessing": "Wishing you all the best blessings for a wonderful Chinese New Year."
+  },
+  {
+    "id": "frank-liu",
+    "name": "Frank Liu",
+    "avatar": "assets/images/employees/frank_liu.png",
+    "blessing": "Happy New Year，Cheers for good things in coming days"
+  },
+  {
+    "id": "gary-jiang",
+    "name": "Gary Jiang",
+    "avatar": "assets/images/employees/gary_jiang.jpeg",
+    "blessing": "May the spirit of Spring Festival—unity and renewal—inspire great achievements for us all. Best wishes for a thriving year!"
+  },
+  {
+    "id": "gary-xiong",
+    "name": "Gary Xiong",
+    "avatar": "assets/images/employees/gary_xiong.jpeg",
+    "blessing": "All Money Back My Home"
+  },
+  {
+    "id": "gary-zhang",
+    "name": "Gary Zhang",
+    "avatar": "assets/images/employees/gary_zhang.jpeg",
+    "blessing": "越来越好"
+  },
+  {
+    "id": "gracy-ai",
+    "name": "Gracy Ai",
+    "avatar": "assets/images/employees/gracy_ai.jpeg",
+    "blessing": "New house in horse year"
+  },
+  {
+    "id": "hilson-huang",
+    "name": "Hilson Huang",
+    "avatar": "assets/images/employees/hilson_huang.jpeg",
+    "blessing": "Happy Year of the Horse — may success gallop  your way!"
+  },
+  {
     "id": "holy-ao",
     "name": "Holy Ao",
-    "avatar": "assets/images/employees/1.png",
-    "blessing": "祝大家新的一年马到成功，前程似锦，阖家幸福，心想事成。"
+    "avatar": "assets/images/employees/holy_ao.jpeg",
+    "blessing": "Wishing you a galloping good Year of the Horse filled with joy and success！"
   },
   {
-    "id": "lucky-ma",
-    "name": "Lucky Ma",
-    "avatar": "assets/images/employees/2.png",
-    "blessing": "龙马精神，事事顺遂，心想事成，家和万事兴。"
+    "id": "jackson-hao",
+    "name": "Jackson Hao",
+    "avatar": "assets/images/employees/jackson_hao.jpeg",
+    "blessing": "Wishes you a very very happy Chinese new Year"
   },
   {
-    "id": "fast-hoof",
-    "name": "Fast Hoof",
-    "avatar": "assets/images/employees/3.png",
-    "blessing": "万马奔腾，财源滚滚，健康平安，笑口常开。"
+    "id": "jane-xiao",
+    "name": "Jane Xiao",
+    "avatar": "assets/images/employees/jane_xiao.jpeg",
+    "blessing": "Happy New Year"
   },
   {
-    "id": "swift-hoof",
-    "name": "Swift Hoof",
-    "avatar": "assets/images/employees/4.png",
-    "blessing": "一马当先冲业绩，千里疾驰创佳绩。"
+    "id": "jason-hui",
+    "name": "Jason Hui",
+    "avatar": "assets/images/employees/jason_hui.jpeg",
+    "blessing": "May the Lunar New Year bring you endless joy， good fortune and warm moments with your loved ones."
   },
   {
-    "id": "golden-mane",
-    "name": "Golden Mane",
-    "avatar": "assets/images/employees/1.png",
-    "blessing": "金鬃披光，步步生辉，项目顺利，红火兴旺。"
+    "id": "jeanette-jian",
+    "name": "Jeanette Jian",
+    "avatar": "assets/images/employees/jeanette_jian.jpeg",
+    "blessing": "May all your hopes and wishes come true in the year ahead"
   },
   {
-    "id": "silver-hoof",
-    "name": "Silver Hoof",
-    "avatar": "assets/images/employees/2.png",
-    "blessing": "银蹄踏浪，攻坚克难，团队合力，捷报频传。"
+    "id": "jeremy-lin",
+    "name": "Jeremy Lin",
+    "avatar": "assets/images/employees/jeremy_lin.jpeg",
+    "blessing": "May our data fuel endless innovation and our insights light the way to an exceptional new year."
   },
   {
-    "id": "crimson-steed",
-    "name": "Crimson Steed",
-    "avatar": "assets/images/employees/3.png",
-    "blessing": "赤兔精神，勇往直前，健康快乐，诸事顺遂。"
+    "id": "jerry-liu",
+    "name": "Jerry Liu",
+    "avatar": "assets/images/employees/jerry_liu.jpeg",
+    "blessing": "Happy Chinese horse new year！Sincerely best wishes to everyone."
   },
   {
-    "id": "emerald-run",
-    "name": "Emerald Run",
-    "avatar": "assets/images/employees/4.png",
-    "blessing": "青云直上，跑赢每一个里程碑。"
+    "id": "jessie-zhang",
+    "name": "Jessie Zhang",
+    "avatar": "assets/images/employees/jessie_zhang.jpeg",
+    "blessing": "May all your dreams come ture in the year ahead"
   },
   {
-    "id": "starlit-gallop",
-    "name": "Starlit Gallop",
-    "avatar": "assets/images/employees/1.png",
-    "blessing": "星光作伴，前路敞亮，灵感涌现，创意不断。"
+    "id": "joyce-wu",
+    "name": "Joyce Wu",
+    "avatar": "assets/images/employees/joyce_wu.jpeg",
+    "blessing": "Wish you a year filled with health，happiness，and prosperity"
   },
   {
-    "id": "dawn-rider",
-    "name": "Dawn Rider",
-    "avatar": "assets/images/employees/2.png",
-    "blessing": "踏晓而行，日日更新，持续精进，收获满满。"
+    "id": "kavin-zhu",
+    "name": "Kavin Zhu",
+    "avatar": "assets/images/employees/kavin_zhu.png",
+    "blessing": "Wish everything is being good"
+  },
+  {
+    "id": "kenji-zhang",
+    "name": "Kenji Zhang",
+    "avatar": "assets/images/employees/kenji_zhang.jpeg",
+    "blessing": "May the Year of the Horse bring you success， joy， and good fortune！"
+  },
+  {
+    "id": "leon-lan",
+    "name": "Leon Lan",
+    "avatar": "assets/images/employees/leon_lan.jpeg",
+    "blessing": "Happy CNY! All the best!"
+  },
+  {
+    "id": "lucia-lu",
+    "name": "Lucia Lu",
+    "avatar": "assets/images/employees/lucia_lu.jpeg",
+    "blessing": "happy new year"
+  },
+  {
+    "id": "lucia-zhang",
+    "name": "Lucia Zhang",
+    "avatar": "assets/images/employees/lucia_zhang.jpeg",
+    "blessing": "Happy Year of the Horse! May you ride forward to great achievements and good fortune."
+  },
+  {
+    "id": "lyn",
+    "name": "Lyn",
+    "avatar": "assets/images/employees/lyn.jpeg",
+    "blessing": "Wishing you/me health and a happy family in the new year!"
+  },
+  {
+    "id": "mark-yao",
+    "name": "Mark Yao",
+    "avatar": "assets/images/employees/mark_yao.jpeg",
+    "blessing": "May the Horse bring you energy and success."
+  },
+  {
+    "id": "miya-luo",
+    "name": "Miya Luo",
+    "avatar": "assets/images/employees/miya_luo.jpeg",
+    "blessing": "Wishing you a joyous Spring Festival and a prosperous new year!"
+  },
+  {
+    "id": "murphy-wang",
+    "name": "Murphy Wang",
+    "avatar": "assets/images/employees/murphy_wang.jpeg",
+    "blessing": "Welcome to GZ! We wish you a very happy Chinese New Year filled with joy and new discoveries here."
+  },
+  {
+    "id": "nickolas-g-j-yu",
+    "name": "Nickolas G J Yu",
+    "avatar": "assets/images/employees/nickolas_g_j_yu.jpeg",
+    "blessing": "happy new year"
+  },
+  {
+    "id": "nicole-cao",
+    "name": "Nicole Cao",
+    "avatar": "assets/images/employees/nicole_cao.jpeg",
+    "blessing": "Happy New Year!"
+  },
+  {
+    "id": "norrish-liang",
+    "name": "Norrish Liang",
+    "avatar": "assets/images/employees/norrish_liang.jpeg",
+    "blessing": "In 2026， may you run toward your dreams with the speed of a horse and never look back. Happy New Year!"
+  },
+  {
+    "id": "phyllis-lin",
+    "name": "Phyllis Lin",
+    "avatar": "assets/images/employees/phyllis_lin.jpeg",
+    "blessing": "May the Year of the Horse bring you boundless joy， great fortune and all the blessings you wish for. Happy Chinese New Year!"
+  },
+  {
+    "id": "raymond-yuan",
+    "name": "Raymond Yuan",
+    "avatar": "assets/images/employees/raymond_yuan.jpeg",
+    "blessing": "Happy 2026 new year. Wish you happy everyday."
+  },
+  {
+    "id": "richard-tan",
+    "name": "Richard Tan",
+    "avatar": "assets/images/employees/richard_tan.jpeg",
+    "blessing": "万事如意，心想事成！"
+  },
+  {
+    "id": "rock-tan",
+    "name": "Rock Tan",
+    "avatar": "assets/images/employees/rock_tan.jpeg",
+    "blessing": "Happy new year！"
+  },
+  {
+    "id": "sandra-h-y-chen",
+    "name": "Sandra H Y Chen",
+    "avatar": "assets/images/employees/sandra_h_y_chen.jpeg",
+    "blessing": "Happy New Year and Good Luck"
+  },
+  {
+    "id": "sherra",
+    "name": "Sherra",
+    "avatar": "assets/images/employees/sherra.jpeg",
+    "blessing": "Happy New Year!"
+  },
+  {
+    "id": "stanven-yang",
+    "name": "stanven yang",
+    "avatar": "assets/images/employees/stanven_yang.jpeg",
+    "blessing": "happy new year"
+  },
+  {
+    "id": "teresa-li",
+    "name": "Teresa Li",
+    "avatar": "assets/images/employees/teresa_li.jpeg",
+    "blessing": "Happy New Year!! 2026 all the best!"
+  },
+  {
+    "id": "vincent-wu",
+    "name": "Vincent Wu",
+    "avatar": "assets/images/employees/vincent_wu.jpeg",
+    "blessing": "IWPB YYDS"
+  },
+  {
+    "id": "vincent-zhang",
+    "name": "Vincent Zhang",
+    "avatar": "assets/images/employees/vincent_zhang.jpeg",
+    "blessing": "good luck and be rich"
+  },
+  {
+    "id": "winson-xu",
+    "name": "Winson Xu",
+    "avatar": "assets/images/employees/winson_xu.jpeg",
+    "blessing": "Wishing you a prosperous Year of the Horse， filled with good fortune， health， and success in all your endeavors!"
+  },
+  {
+    "id": "yoyo-yao",
+    "name": "Yoyo Yao",
+    "avatar": "assets/images/employees/yoyo_yao.jpeg",
+    "blessing": "Wishing a year full of new adventures， meaningful moments and good health. Happy new year of horse."
+  },
+  {
+    "id": "zu-shun-tan",
+    "name": "Zu Shun TAN",
+    "avatar": "assets/images/employees/zu_shun_tan.jpeg",
+    "blessing": "Happy Year of the Horse! May success gallop your way and good luck surround you always."
   }
 ]

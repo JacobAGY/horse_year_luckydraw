@@ -715,6 +715,8 @@ function setPacketAvatarMode(avatarUrl, glyph="奖"){
 // 员工祝福配置（从 assets/blesses.json 读取）
 // ---------------------------
 let blesses = [];
+let blessesReadyResolve;
+const blessesReadyPromise = new Promise(function(r){ blessesReadyResolve = r; });
 // 记录已经被抽中的员工ID
 let drawnEmployeeIds = new Set();
 
@@ -765,6 +767,7 @@ function updateWinnerListDisplay(){
   }catch(e){
     blesses = [];
   }
+  if(typeof blessesReadyResolve === "function") blessesReadyResolve();
 })();
 
 // ---------------------------
@@ -1278,89 +1281,49 @@ const avatarTextures = [];
 const avatarMaterials = [];
 let avatarTexturesLoaded = false;
 
-// 加载员工头像纹理
+// 加载员工头像纹理（环绕红包墙仅使用 assets/images/employees/ 下的图片）
 async function loadAvatarTextures(){
   if(avatarTexturesLoaded) return;
-  
   avatarTexturesLoaded = true;
   const loader = new THREE.TextureLoader();
-  
-  // 优先从 blesses 配置加载头像
+  // 仅使用 blesses 里指向 employees 的 avatar，保证围绕部分全部来自 employees
+  const employeeAvatarPaths = new Set();
   if(Array.isArray(blesses) && blesses.length > 0){
     for(let i = 0; i < blesses.length; i++){
       const bless = blesses[i];
-      if(bless.avatar){
-        try{
-          const tex = await new Promise((resolve, reject) => {
-            loader.load(
-              bless.avatar,
-              resolve,
-              undefined,
-              reject
-            );
-          });
-          tex.colorSpace = THREE.SRGBColorSpace;
-          tex.minFilter = THREE.LinearFilter;
-          tex.magFilter = THREE.LinearFilter;
-          tex.generateMipmaps = false;
-          avatarTextures.push(tex);
-          
-          const mat = new THREE.MeshBasicMaterial({
-            map: tex,
-            transparent: true,
-            opacity: 0.98,
-            depthWrite: false,
-            depthTest: false,
-            toneMapped: false
-          });
-          avatarMaterials.push(mat);
-        }catch(e){
-          console.warn(`Failed to load avatar: ${bless.avatar}`, e);
-        }
+      if(bless.avatar && String(bless.avatar).indexOf("assets/images/employees/") !== -1){
+        employeeAvatarPaths.add(bless.avatar);
       }
     }
   }
-  
-  // 如果配置中没有头像或加载失败，直接从 employees 目录加载（1.png 到 4.png）
-  if(avatarMaterials.length === 0){
-    const employeeImages = ["1.png", "2.png", "3.png", "4.png"];
-    for(let i = 0; i < employeeImages.length; i++){
-      const imgPath = `assets/images/employees/${employeeImages[i]}`;
-      try{
-        const tex = await new Promise((resolve, reject) => {
-          loader.load(
-            imgPath,
-            resolve,
-            undefined,
-            reject
-          );
-        });
-        tex.colorSpace = THREE.SRGBColorSpace;
-        tex.minFilter = THREE.LinearFilter;
-        tex.magFilter = THREE.LinearFilter;
-        tex.generateMipmaps = false;
-        avatarTextures.push(tex);
-        
-        const mat = new THREE.MeshBasicMaterial({
-          map: tex,
-          transparent: true,
-          opacity: 0.98,
-          depthWrite: false,
-          depthTest: false,
-          toneMapped: false
-        });
-        avatarMaterials.push(mat);
-      }catch(e){
-        console.warn(`Failed to load employee image: ${imgPath}`, e);
-      }
+  const avatarPathArray = Array.from(employeeAvatarPaths);
+  for(let i = 0; i < avatarPathArray.length; i++){
+    const avatarPath = avatarPathArray[i];
+    try{
+      const tex = await new Promise((resolve, reject) => {
+        loader.load(avatarPath, resolve, undefined, reject);
+      });
+      tex.colorSpace = THREE.SRGBColorSpace;
+      tex.minFilter = THREE.LinearFilter;
+      tex.magFilter = THREE.LinearFilter;
+      tex.generateMipmaps = false;
+      avatarTextures.push(tex);
+      avatarMaterials.push(new THREE.MeshBasicMaterial({
+        map: tex,
+        transparent: true,
+        opacity: 0.98,
+        depthWrite: false,
+        depthTest: false,
+        toneMapped: false
+      }));
+    }catch(e){
+      console.warn("Failed to load employee avatar: " + avatarPath, e);
     }
   }
-  
-  // 如果仍然没有加载到头像，使用默认红包纹理作为最后的后备
+  // 仅在 employees 下没有任何可用头像时，才用默认红包纹理
   if(avatarMaterials.length === 0){
-    const ENV_TEX = makeRedEnvelopeTexture();
     const defaultMat = new THREE.MeshBasicMaterial({
-      map: ENV_TEX,
+      map: makeRedEnvelopeTexture(),
       transparent: true,
       opacity: 0.98,
       depthWrite: false,
@@ -1437,22 +1400,12 @@ function initEnvelopeMeshes(){
   }
 }
 
-// 延迟初始化，等待头像加载
+// 先等 blesses 加载完成（avatar 指向 employees），再加载环绕头像并初始化
 (async function(){
+  await blessesReadyPromise;
   await loadAvatarTextures();
   initEnvelopeMeshes();
 })();
-
-// 监听 blesses 加载完成，重新初始化
-let checkBlessesInterval = setInterval(() => {
-  if(blesses.length > 0 && !avatarTexturesLoaded){
-    loadAvatarTextures().then(() => {
-      initEnvelopeMeshes();
-      clearInterval(checkBlessesInterval);
-    });
-  }
-}, 500);
-setTimeout(() => clearInterval(checkBlessesInterval), 10000);
 
 const _obj = new THREE.Object3D();
 const _tmp = new THREE.Vector3();
