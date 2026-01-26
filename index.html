@@ -4,6 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
+  <link rel="icon" href="favicon.ico" type="image/x-icon" />
   <title>马年祝福 · 手势粒子文字 · 红包开封 · 烟花背景</title>
 
   <script async src="https://unpkg.com/es-module-shims@1.10.0/dist/es-module-shims.js"></script>
@@ -262,16 +263,6 @@
     .focusTitle{ margin:0; font-size:18px; letter-spacing:.5px; font-weight:900; }
     .focusLine{ margin:10px 0 0; font-size:16px; line-height:1.6; color: rgba(255,255,255,.88); white-space:pre-wrap; }
 
-    .videoWrap{
-      margin-top:12px;
-      border-radius:16px;
-      overflow:hidden;
-      border:1px solid rgba(255,255,255,.12);
-      position:relative;
-      box-shadow: 0 16px 46px rgba(0,0,0,.55);
-    }
-    .videoWrap video{ width:100%; height:auto; display:block; background:#000; }
-
     video#cam{
       position:absolute;
       right:12px; bottom:12px;
@@ -461,9 +452,6 @@
         </div>
       </div>
 
-      <div class="videoWrap" id="rewardVideoWrap">
-        <video id="horseVideo" playsinline muted loop></video>
-      </div>
     </div>
   </div>
 
@@ -489,16 +477,6 @@ import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
 import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
 import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
 import { ShaderPass } from "three/addons/postprocessing/ShaderPass.js";
-
-const HORSE_VIDEOS = [
-  "assets/videos/horse1.mp4",
-  "assets/videos/horse2.mp4",
-  "assets/videos/horse3.mp4",
-  "assets/videos/horse4.mp4"
-];
-
-// 散开态马视频（webm）
-const HORSE_RUN_WEBM = "assets/video/horse.webm";
 
 const IS_MOBILE = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 const DPR_CAP = IS_MOBILE ? 1.15 : 1.9;
@@ -526,9 +504,7 @@ const focusTextEl = document.getElementById("focusText");
 const packetEl = document.getElementById("packet");
 const packetLidEl = packetEl?.querySelector(".lid");
 const packetSealEl = packetEl?.querySelector(".seal");
-const horseVideo = document.getElementById("horseVideo");
 const focusAvatarEl = document.getElementById("focusAvatar");
-const rewardVideoWrap = document.getElementById("rewardVideoWrap");
 const winnerListEl = document.getElementById("winnerList");
 const winnerListContentEl = document.getElementById("winnerListContent");
 const cooldownTimerEl = document.getElementById("cooldownTimer");
@@ -632,18 +608,15 @@ function setMode(next){
     targetMix = 0;
     targetFocus = 0;
     hideFocusOverlay();
-    setHorseScatterVisible(false);
   }else if(mode === Mode.SCATTER){
     targetMix = 1;
     targetFocus = 0;
     hideFocusOverlay();
-    setHorseScatterVisible(true);
     kickScatterImpulse();
   }else{
     targetMix = 1;
     targetFocus = 1;
     showFocusOverlay();
-    setHorseScatterVisible(false);
   }
 }
 function showFocusOverlay(){ focusOverlay.classList.add("show"); }
@@ -719,6 +692,8 @@ let blessesReadyResolve;
 const blessesReadyPromise = new Promise(function(r){ blessesReadyResolve = r; });
 // 记录已经被抽中的员工ID
 let drawnEmployeeIds = new Set();
+// 兜底为红包图（无头像或加载失败时使用）
+const FALLBACK_AVATAR = "assets/images/packet.png";
 
 // ---------------------------
 // 中奖名单记录
@@ -742,10 +717,10 @@ function updateWinnerListDisplay(){
   const reversedList = [...winnerList].reverse();
   winnerListContentEl.innerHTML = reversedList.map((winner, index) => {
     const number = winnerList.length - index; // 编号从总人数开始递减
-    const avatarUrl = winner.avatar || `assets/images/employees/${Math.floor(Math.random() * 4) + 1}.png`;
+    const avatarUrl = winner.avatar || FALLBACK_AVATAR;
     return `
       <div class="winnerItem">
-        <img src="${avatarUrl}" alt="${winner.name}" class="winnerAvatar" onerror="this.src='assets/images/employees/1.png'">
+        <img src="${avatarUrl}" alt="${winner.name}" class="winnerAvatar" onerror="this.src='assets/images/packet.png'">
         <span class="winnerNumber">${number}</span>
         <span class="winnerName">${winner.name}</span>
       </div>
@@ -792,65 +767,6 @@ function makeDotTexture(){
   return tex;
 }
 const DOT_TEX = makeDotTexture();
-
-// ---------------------------
-// 散开态：奔跑马视频（固定不抖动）
-// ---------------------------
-const horseRunVideo = document.createElement("video");
-horseRunVideo.src = HORSE_RUN_WEBM;
-horseRunVideo.muted = true;
-horseRunVideo.loop = true;
-horseRunVideo.playsInline = true;
-horseRunVideo.preload = "auto";
-horseRunVideo.crossOrigin = "anonymous";
-
-let horseReady = false;
-horseRunVideo.addEventListener("loadeddata", ()=>{ horseReady = true; }, { once:false });
-horseRunVideo.addEventListener("canplay", ()=>{ horseReady = true; }, { once:false });
-
-const horseRunTex = new THREE.VideoTexture(horseRunVideo);
-horseRunTex.colorSpace = THREE.SRGBColorSpace;
-horseRunTex.minFilter = THREE.LinearFilter;
-horseRunTex.magFilter = THREE.LinearFilter;
-horseRunTex.generateMipmaps = false;
-
-const horseGroup = new THREE.Group();
-horseGroup.visible = false;
-scene.add(horseGroup);
-
-const horsePlane = new THREE.Mesh(
-  new THREE.PlaneGeometry(6.6, 3.8),
-  new THREE.MeshBasicMaterial({
-    map: horseRunTex,
-    transparent: true,
-    opacity: 0.96,
-    depthWrite: false,
-    depthTest: false,
-    toneMapped: false
-  })
-);
-// ✅ 视频应在“湍流之上”：renderOrder 在散开态设更高（见 animate 中动态设置）
-horsePlane.renderOrder = 30000;
-horsePlane.layers.enable(0);
-horseGroup.add(horsePlane);
-
-// ✅ 固定位置（不抖动）
-horseGroup.position.set(0, 2.25, 0.65);
-
-function updateHorseBillboard(){ horsePlane.quaternion.copy(camera.quaternion); }
-
-function setHorseScatterVisible(v){
-  if(v){
-    horseGroup.visible = (horseReady || horseRunVideo.readyState >= 2);
-    horseRunVideo.play().catch(()=>{});
-  }else{
-    horseGroup.visible = false;
-    horseRunVideo.pause();
-  }
-}
-async function warmupVideo(v){
-  try{ await v.play(); v.pause(); }catch(e){}
-}
 
 // ---------------------------
 // 银河星环（散开态显示，依然在整体上方）
@@ -1608,8 +1524,6 @@ const fireworks = new Fireworks();
 // ---------------------------
 // 红包开封流程（只由三指捏合触发）
 // ---------------------------
-function pickVideo(){ return HORSE_VIDEOS[Math.floor(Math.random()*HORSE_VIDEOS.length)]; }
-
 async function triggerRedPacketFlow(){
   // 检查冷却时间
   if(cooldownTime > 0){
@@ -1677,11 +1591,9 @@ async function triggerRedPacketFlow(){
     // 优先使用配置中的头像路径
     let avatarToUse = avatar;
     
-    // 如果配置中没有头像，从 employees 目录随机选择一张
+    // 如果配置中没有头像，从已有员工头像中随机选一张
     if(!avatarToUse || avatarToUse === ""){
-      const employeeImages = ["1.png", "2.png", "3.png", "4.png"];
-      const randomImg = employeeImages[Math.floor(Math.random() * employeeImages.length)];
-      avatarToUse = `assets/images/employees/${randomImg}`;
+      avatarToUse = FALLBACK_AVATAR;
     }
     
     // 确保头像路径正确（如果路径不完整，补充完整路径）
@@ -1699,12 +1611,8 @@ async function triggerRedPacketFlow(){
       // 最后的后备方案
       setPacketDefault("奖");
     }
-    if(rewardVideoWrap) rewardVideoWrap.style.display = "none";
   } else {
-    // 如果没有员工配置，使用默认头像
-    const employeeImages = ["1.png", "2.png", "3.png", "4.png"];
-    const randomImg = employeeImages[Math.floor(Math.random() * employeeImages.length)];
-    winnerAvatar = `assets/images/employees/${randomImg}`;
+    winnerAvatar = FALLBACK_AVATAR;
   }
   
   // 记录中奖人员名字和头像到名单
@@ -1727,14 +1635,6 @@ async function triggerRedPacketFlow(){
   void packetEl.offsetWidth;
   packetEl.classList.add("open");
 
-  const url = pickVideo();
-  try{
-    horseVideo.pause();
-    horseVideo.src = url;
-    horseVideo.load();
-    await horseVideo.play().catch(()=>{});
-  }catch(e){}
-  
   // 启动10秒冷却时间
   cooldownTime = 10;
   if(cooldownTimerEl){
@@ -1838,7 +1738,6 @@ btnStart.addEventListener("click", async ()=>{
   try{
     btnStart.disabled=true;
     btnStart.textContent="启用中…";
-    await warmupVideo(horseRunVideo);
     await startHands();
     tryStartBgm();
     btnStart.textContent="手势识别已开启";
@@ -2073,24 +1972,13 @@ function animate(){
   const scatter01 = clamp((mix - 0.10)/0.90, 0, 1);
   galaxy.update(time, scatter01);
 
-  // 视频显示
-  if(mode===Mode.SCATTER){
-    if(horseReady || horseRunVideo.readyState>=2) horseGroup.visible = true;
-  }else{
-    horseGroup.visible = false;
-  }
-  updateHorseBillboard();
-
-  // ✅ 渲染层级：散开态“湍流在视频下方”
-  // 规则：散开态 -> 粒子 renderOrder < 视频 renderOrder；凝聚态 -> 粒子最高
+  // 渲染层级：散开态湍流在下，凝聚态粒子与头像在上
   if(scatter01 > 0.55){
-    idiomPoints.renderOrder = 18000;      // 湍流在下
-    envMeshes.forEach(m => m.renderOrder = 19000);          // 头像也在下（散开时不抢镜）
-    horsePlane.renderOrder = 30000;       // 马视频在上
+    idiomPoints.renderOrder = 18000;
+    envMeshes.forEach(m => m.renderOrder = 19000);
   }else{
-    idiomPoints.renderOrder = 60000;      // 凝聚时文字在最上
-    envMeshes.forEach(m => m.renderOrder = 65000);          // 头像包裹
-    horsePlane.renderOrder = 30000;
+    idiomPoints.renderOrder = 60000;
+    envMeshes.forEach(m => m.renderOrder = 65000);
   }
 
   const fwOpacity = lerp(1.0, 0.35, scatter01);
@@ -2140,10 +2028,6 @@ onResize();
 statusText.textContent = "已加载：凝聚态（HAPPY NEW YEAR + 红包环绕）";
   // 重新初始化头像网格
   initEnvelopeMeshes();
-
-horseVideo.muted = true;
-horseVideo.loop = true;
-horseVideo.playsInline = true;
 
 </script>
 </body>

@@ -2,7 +2,7 @@
   {
     "id": "alvin",
     "name": "Alvin",
-    "avatar": "assets/images/employees/alvin.jpeg",
+    "avatar": "assets/images/employees/alvin.jpg",
     "blessing": "Hello，New Year"
   },
   {
@@ -42,6 +42,12 @@
     "blessing": "马上有钱，你我都是黑马，Wishing you a prosperous Year of the Horse filled with breakthroughs!"
   },
   {
+    "id": "effy-wang",
+    "name": "Effy Wang",
+    "avatar": "assets/images/employees/effy_wang.jpeg",
+    "blessing": ""
+  },
+  {
     "id": "faye-liao",
     "name": "Faye Liao",
     "avatar": "assets/images/employees/faye_liao.jpeg",
@@ -56,7 +62,7 @@
   {
     "id": "gary-jiang",
     "name": "Gary Jiang",
-    "avatar": "assets/images/employees/gary_jiang.jpeg",
+    "avatar": "assets/images/employees/gary_jiang.jpg",
     "blessing": "May the spirit of Spring Festival—unity and renewal—inspire great achievements for us all. Best wishes for a thriving year!"
   },
   {
@@ -80,7 +86,7 @@
   {
     "id": "hilson-huang",
     "name": "Hilson Huang",
-    "avatar": "assets/images/employees/hilson_huang.jpeg",
+    "avatar": "assets/images/employees/hilson_huang.jpg",
     "blessing": "Happy Year of the Horse — may success gallop  your way!"
   },
   {
@@ -152,7 +158,7 @@
   {
     "id": "leon-lan",
     "name": "Leon Lan",
-    "avatar": "assets/images/employees/leon_lan.jpeg",
+    "avatar": "assets/images/employees/leon_lan.jpg",
     "blessing": "Happy CNY! All the best!"
   },
   {
@@ -166,6 +172,12 @@
     "name": "Lucia Zhang",
     "avatar": "assets/images/employees/lucia_zhang.jpeg",
     "blessing": "Happy Year of the Horse! May you ride forward to great achievements and good fortune."
+  },
+  {
+    "id": "luen-xin-yao",
+    "name": "Luen Xin Yao",
+    "avatar": "assets/images/employees/luen_xin_yao.jpeg",
+    "blessing": ""
   },
   {
     "id": "lyn",
@@ -216,10 +228,22 @@
     "blessing": "May the Year of the Horse bring you boundless joy， great fortune and all the blessings you wish for. Happy Chinese New Year!"
   },
   {
+    "id": "queenie-liang",
+    "name": "Queenie Liang",
+    "avatar": "assets/images/employees/queenie_liang.jpeg",
+    "blessing": ""
+  },
+  {
     "id": "raymond-yuan",
     "name": "Raymond Yuan",
     "avatar": "assets/images/employees/raymond_yuan.jpeg",
     "blessing": "Happy 2026 new year. Wish you happy everyday."
+  },
+  {
+    "id": "richard-chen",
+    "name": "Richard Chen",
+    "avatar": "assets/images/employees/richard_chen.jpeg",
+    "blessing": ""
   },
   {
     "id": "richard-tan",
@@ -246,6 +270,12 @@
     "blessing": "Happy New Year!"
   },
   {
+    "id": "sky-ye",
+    "name": "Sky Ye",
+    "avatar": "assets/images/employees/sky_ye.jpeg",
+    "blessing": ""
+  },
+  {
     "id": "stanven-yang",
     "name": "stanven yang",
     "avatar": "assets/images/employees/stanven_yang.jpeg",
@@ -266,7 +296,7 @@
   {
     "id": "vincent-zhang",
     "name": "Vincent Zhang",
-    "avatar": "assets/images/employees/vincent_zhang.jpeg",
+    "avatar": "assets/images/employees/vincent_zhang.jpg",
     "blessing": "good luck and be rich"
   },
   {
