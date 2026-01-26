@@ -692,8 +692,38 @@ let blessesReadyResolve;
 const blessesReadyPromise = new Promise(function(r){ blessesReadyResolve = r; });
 // 记录已经被抽中的员工ID
 let drawnEmployeeIds = new Set();
-// 兜底为红包图（无头像或加载失败时使用）
-const FALLBACK_AVATAR = "assets/images/packet.png";
+// 兜底头像：与环绕 HAPPY NEW YEAR 的默认红包同款（B 形式，红渐变+金框+奖）
+function getDefaultRedEnvelopeDataURL(){
+  const c = document.createElement("canvas");
+  c.width=256; c.height=320;
+  const ctx = c.getContext("2d");
+  const g = ctx.createLinearGradient(0,0,0,320);
+  g.addColorStop(0, "#d01a35");
+  g.addColorStop(1, "#7b081a");
+  ctx.fillStyle = g;
+  ctx.fillRect(0,0,256,320);
+  ctx.strokeStyle = "rgba(212,175,55,.85)";
+  ctx.lineWidth = 10;
+  ctx.strokeRect(14,14,228,292);
+  ctx.save();
+  ctx.translate(128,190);
+  ctx.beginPath();
+  ctx.fillStyle = "rgba(212,175,55,.92)";
+  ctx.arc(0,0,42,0,Math.PI*2);
+  ctx.fill();
+  ctx.fillStyle = "rgba(90,60,10,.80)";
+  ctx.font = "900 54px ui-sans-serif, system-ui, -apple-system";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText("奖", 0, 2);
+  ctx.restore();
+  return c.toDataURL("image/png");
+}
+const FALLBACK_AVATAR = getDefaultRedEnvelopeDataURL();
+window.__fallbackAvatar = FALLBACK_AVATAR;
+function resolveAvatarUrl(url){
+  return (!url || url === "assets/images/packet.png") ? FALLBACK_AVATAR : url;
+}
 
 // ---------------------------
 // 中奖名单记录
@@ -717,10 +747,10 @@ function updateWinnerListDisplay(){
   const reversedList = [...winnerList].reverse();
   winnerListContentEl.innerHTML = reversedList.map((winner, index) => {
     const number = winnerList.length - index; // 编号从总人数开始递减
-    const avatarUrl = winner.avatar || FALLBACK_AVATAR;
+    const avatarUrl = resolveAvatarUrl(winner.avatar);
     return `
       <div class="winnerItem">
-        <img src="${avatarUrl}" alt="${winner.name}" class="winnerAvatar" onerror="this.src='assets/images/packet.png'">
+        <img src="${avatarUrl}" alt="${winner.name}" class="winnerAvatar" onerror="this.onerror=null;this.src=window.__fallbackAvatar">
         <span class="winnerNumber">${number}</span>
         <span class="winnerName">${winner.name}</span>
       </div>
@@ -1587,24 +1617,16 @@ async function triggerRedPacketFlow(){
     if(focusAvatarEl){
       focusAvatarEl.style.display = "none";
     }
-    // 确保使用员工头像作为"奖"的背景
-    // 优先使用配置中的头像路径
+    // 确保使用员工头像作为"奖"的背景；packet.png 已弃用，统一用 B 形式（红渐变+金框+奖）
     let avatarToUse = avatar;
-    
-    // 如果配置中没有头像，从已有员工头像中随机选一张
     if(!avatarToUse || avatarToUse === ""){
       avatarToUse = FALLBACK_AVATAR;
     }
-    
-    // 确保头像路径正确（如果路径不完整，补充完整路径）
-    if(avatarToUse && !avatarToUse.startsWith("assets/") && !avatarToUse.startsWith("http")){
+    if(avatarToUse && !avatarToUse.startsWith("assets/") && !avatarToUse.startsWith("http") && !avatarToUse.startsWith("data:")){
       avatarToUse = `assets/images/employees/${avatarToUse}`;
     }
-    
-    // 保存头像路径用于中奖名单显示
+    avatarToUse = resolveAvatarUrl(avatarToUse);
     winnerAvatar = avatarToUse;
-    
-    // 设置红包背景为员工头像
     if(avatarToUse){
       setPacketAvatarMode(avatarToUse, "奖");
     }else{

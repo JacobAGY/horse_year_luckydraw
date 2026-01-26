@@ -1,153 +1,99 @@
 [
   {
     "id": "alvin",
-    "name": "Alvin",
+    "name": "Alvin J Wang",
     "avatar": "assets/images/employees/alvin.jpg",
     "blessing": "Hello，New Year"
   },
   {
     "id": "amy-zhang",
-    "name": "Amy Zhang",
+    "name": "Amy Y M Zhang",
     "avatar": "assets/images/employees/amy_zhang.jpeg",
     "blessing": "Gong Xi Fa Cai (恭喜发财）"
   },
   {
-    "id": "andy-wu",
-    "name": "Andy Wu",
-    "avatar": "assets/images/employees/andy_wu.jpeg",
-    "blessing": "Wish all have a lucky new year"
-  },
-  {
     "id": "ares-zhang",
-    "name": "Ares Zhang",
+    "name": "Ares H J Zhang",
     "avatar": "assets/images/employees/ares_zhang.jpeg",
     "blessing": "Wishing you a galloping great Year of the Horse! May it be filled with success， energy， and triumph. 🐎✨"
   },
   {
     "id": "bruce-luo",
-    "name": "Bruce Luo",
+    "name": "Bruce J L Luo",
     "avatar": "assets/images/employees/bruce_luo.jpeg",
     "blessing": "In the Year of the Horse， let’s ride together toward shared goals"
   },
   {
     "id": "cara-huang",
-    "name": "Cara Huang",
+    "name": "Cara K Q HUANG",
     "avatar": "assets/images/employees/cara_huang.jpeg",
     "blessing": "Wish everyone a happy and prosperous Year of the Horse!"
   },
   {
     "id": "echo-li",
-    "name": "Echo Li",
+    "name": "Echo J L Li",
     "avatar": "assets/images/employees/echo_li.jpeg",
     "blessing": "马上有钱，你我都是黑马，Wishing you a prosperous Year of the Horse filled with breakthroughs!"
   },
   {
     "id": "effy-wang",
-    "name": "Effy Wang",
+    "name": "Effy Y F Wang",
     "avatar": "assets/images/employees/effy_wang.jpeg",
     "blessing": ""
   },
   {
     "id": "faye-liao",
-    "name": "Faye Liao",
+    "name": "Faye F Liao",
     "avatar": "assets/images/employees/faye_liao.jpeg",
     "blessing": "Wishing you all the best blessings for a wonderful Chinese New Year."
   },
   {
-    "id": "frank-liu",
-    "name": "Frank Liu",
-    "avatar": "assets/images/employees/frank_liu.png",
-    "blessing": "Happy New Year，Cheers for good things in coming days"
-  },
-  {
-    "id": "gary-jiang",
-    "name": "Gary Jiang",
-    "avatar": "assets/images/employees/gary_jiang.jpg",
-    "blessing": "May the spirit of Spring Festival—unity and renewal—inspire great achievements for us all. Best wishes for a thriving year!"
-  },
-  {
     "id": "gary-xiong",
-    "name": "Gary Xiong",
+    "name": "Gary S G Xiong",
     "avatar": "assets/images/employees/gary_xiong.jpeg",
     "blessing": "All Money Back My Home"
   },
   {
     "id": "gary-zhang",
-    "name": "Gary Zhang",
+    "name": "Gary Y Zhang",
     "avatar": "assets/images/employees/gary_zhang.jpeg",
     "blessing": "越来越好"
   },
   {
-    "id": "gracy-ai",
-    "name": "Gracy Ai",
-    "avatar": "assets/images/employees/gracy_ai.jpeg",
-    "blessing": "New house in horse year"
-  },
-  {
     "id": "hilson-huang",
-    "name": "Hilson Huang",
+    "name": "Hilson H Y Huang",
     "avatar": "assets/images/employees/hilson_huang.jpg",
     "blessing": "Happy Year of the Horse — may success gallop  your way!"
   },
   {
     "id": "holy-ao",
-    "name": "Holy Ao",
+    "name": "Holy G Y Ao",
     "avatar": "assets/images/employees/holy_ao.jpeg",
     "blessing": "Wishing you a galloping good Year of the Horse filled with joy and success！"
   },
   {
     "id": "jackson-hao",
-    "name": "Jackson Hao",
+    "name": "Jackson Z C Hao",
     "avatar": "assets/images/employees/jackson_hao.jpeg",
     "blessing": "Wishes you a very very happy Chinese new Year"
   },
   {
-    "id": "jane-xiao",
-    "name": "Jane Xiao",
-    "avatar": "assets/images/employees/jane_xiao.jpeg",
-    "blessing": "Happy New Year"
-  },
-  {
-    "id": "jason-hui",
-    "name": "Jason Hui",
-    "avatar": "assets/images/employees/jason_hui.jpeg",
-    "blessing": "May the Lunar New Year bring you endless joy， good fortune and warm moments with your loved ones."
-  },
-  {
     "id": "jeanette-jian",
-    "name": "Jeanette Jian",
+    "name": "Jeanette Z Jian",
     "avatar": "assets/images/employees/jeanette_jian.jpeg",
     "blessing": "May all your hopes and wishes come true in the year ahead"
   },
   {
-    "id": "jeremy-lin",
-    "name": "Jeremy Lin",
-    "avatar": "assets/images/employees/jeremy_lin.jpeg",
-    "blessing": "May our data fuel endless innovation and our insights light the way to an exceptional new year."
-  },
-  {
-    "id": "jerry-liu",
-    "name": "Jerry Liu",
-    "avatar": "assets/images/employees/jerry_liu.jpeg",
-    "blessing": "Happy Chinese horse new year！Sincerely best wishes to everyone."
-  },
-  {
     "id": "jessie-zhang",
-    "name": "Jessie Zhang",
+    "name": "Jessie T T Zhang",
     "avatar": "assets/images/employees/jessie_zhang.jpeg",
     "blessing": "May all your dreams come ture in the year ahead"
   },
   {
     "id": "joyce-wu",
-    "name": "Joyce Wu",
+    "name": "Joyce Y F Wu",
     "avatar": "assets/images/employees/joyce_wu.jpeg",
     "blessing": "Wish you a year filled with health，happiness，and prosperity"
-  },
-  {
-    "id": "kavin-zhu",
-    "name": "Kavin Zhu",
-    "avatar": "assets/images/employees/kavin_zhu.png",
-    "blessing": "Wish everything is being good"
   },
   {
     "id": "kenji-zhang",
@@ -157,103 +103,55 @@
   },
   {
     "id": "leon-lan",
-    "name": "Leon Lan",
+    "name": "Leon T E Lan",
     "avatar": "assets/images/employees/leon_lan.jpg",
     "blessing": "Happy CNY! All the best!"
   },
   {
     "id": "lucia-lu",
-    "name": "Lucia Lu",
+    "name": "Lucia X Y Lu",
     "avatar": "assets/images/employees/lucia_lu.jpeg",
     "blessing": "happy new year"
   },
   {
-    "id": "lucia-zhang",
-    "name": "Lucia Zhang",
-    "avatar": "assets/images/employees/lucia_zhang.jpeg",
-    "blessing": "Happy Year of the Horse! May you ride forward to great achievements and good fortune."
-  },
-  {
-    "id": "luen-xin-yao",
-    "name": "Luen Xin Yao",
-    "avatar": "assets/images/employees/luen_xin_yao.jpeg",
-    "blessing": ""
-  },
-  {
-    "id": "lyn",
-    "name": "Lyn",
-    "avatar": "assets/images/employees/lyn.jpeg",
-    "blessing": "Wishing you/me health and a happy family in the new year!"
-  },
-  {
     "id": "mark-yao",
-    "name": "Mark Yao",
+    "name": "Mark M Yao",
     "avatar": "assets/images/employees/mark_yao.jpeg",
     "blessing": "May the Horse bring you energy and success."
   },
   {
     "id": "miya-luo",
-    "name": "Miya Luo",
+    "name": "Miya S R Luo",
     "avatar": "assets/images/employees/miya_luo.jpeg",
     "blessing": "Wishing you a joyous Spring Festival and a prosperous new year!"
   },
   {
     "id": "murphy-wang",
-    "name": "Murphy Wang",
+    "name": "Murphy C Wang",
     "avatar": "assets/images/employees/murphy_wang.jpeg",
     "blessing": "Welcome to GZ! We wish you a very happy Chinese New Year filled with joy and new discoveries here."
   },
   {
-    "id": "nickolas-g-j-yu",
-    "name": "Nickolas G J Yu",
-    "avatar": "assets/images/employees/nickolas_g_j_yu.jpeg",
-    "blessing": "happy new year"
-  },
-  {
-    "id": "nicole-cao",
-    "name": "Nicole Cao",
-    "avatar": "assets/images/employees/nicole_cao.jpeg",
-    "blessing": "Happy New Year!"
-  },
-  {
-    "id": "norrish-liang",
-    "name": "Norrish Liang",
-    "avatar": "assets/images/employees/norrish_liang.jpeg",
-    "blessing": "In 2026， may you run toward your dreams with the speed of a horse and never look back. Happy New Year!"
-  },
-  {
     "id": "phyllis-lin",
-    "name": "Phyllis Lin",
+    "name": "Phyllis Y X Lin",
     "avatar": "assets/images/employees/phyllis_lin.jpeg",
     "blessing": "May the Year of the Horse bring you boundless joy， great fortune and all the blessings you wish for. Happy Chinese New Year!"
   },
   {
     "id": "queenie-liang",
-    "name": "Queenie Liang",
+    "name": "Queenie X J Liang",
     "avatar": "assets/images/employees/queenie_liang.jpeg",
     "blessing": ""
   },
   {
-    "id": "raymond-yuan",
-    "name": "Raymond Yuan",
-    "avatar": "assets/images/employees/raymond_yuan.jpeg",
-    "blessing": "Happy 2026 new year. Wish you happy everyday."
-  },
-  {
     "id": "richard-chen",
-    "name": "Richard Chen",
+    "name": "Richard G J Chen",
     "avatar": "assets/images/employees/richard_chen.jpeg",
     "blessing": ""
   },
   {
-    "id": "richard-tan",
-    "name": "Richard Tan",
-    "avatar": "assets/images/employees/richard_tan.jpeg",
-    "blessing": "万事如意，心想事成！"
-  },
-  {
     "id": "rock-tan",
-    "name": "Rock Tan",
+    "name": "Rock J L Tan",
     "avatar": "assets/images/employees/rock_tan.jpeg",
     "blessing": "Happy new year！"
   },
@@ -265,19 +163,19 @@
   },
   {
     "id": "sherra",
-    "name": "Sherra",
+    "name": "Sherra Zhong",
     "avatar": "assets/images/employees/sherra.jpeg",
     "blessing": "Happy New Year!"
   },
   {
     "id": "sky-ye",
-    "name": "Sky Ye",
+    "name": "Sky X Ye",
     "avatar": "assets/images/employees/sky_ye.jpeg",
     "blessing": ""
   },
   {
     "id": "stanven-yang",
-    "name": "stanven yang",
+    "name": "Stanven H L Yang",
     "avatar": "assets/images/employees/stanven_yang.jpeg",
     "blessing": "happy new year"
   },
@@ -288,14 +186,8 @@
     "blessing": "Happy New Year!! 2026 all the best!"
   },
   {
-    "id": "vincent-wu",
-    "name": "Vincent Wu",
-    "avatar": "assets/images/employees/vincent_wu.jpeg",
-    "blessing": "IWPB YYDS"
-  },
-  {
     "id": "vincent-zhang",
-    "name": "Vincent Zhang",
+    "name": "Vincent Zw Zhang",
     "avatar": "assets/images/employees/vincent_zhang.jpg",
     "blessing": "good luck and be rich"
   },
@@ -307,14 +199,134 @@
   },
   {
     "id": "yoyo-yao",
-    "name": "Yoyo Yao",
+    "name": "Yoyo M L Yao",
     "avatar": "assets/images/employees/yoyo_yao.jpeg",
     "blessing": "Wishing a year full of new adventures， meaningful moments and good health. Happy new year of horse."
   },
   {
-    "id": "zu-shun-tan",
-    "name": "Zu Shun TAN",
-    "avatar": "assets/images/employees/zu_shun_tan.jpeg",
-    "blessing": "Happy Year of the Horse! May success gallop your way and good luck surround you always."
+    "id": "amir-estawro",
+    "name": "Amir Estawro",
+    "avatar": "assets/images/packet.png",
+    "blessing": "happy new year"
+  },
+  {
+    "id": "boris-c-l-lam",
+    "name": "Boris C L Lam",
+    "avatar": "assets/images/packet.png",
+    "blessing": "happy new year"
+  },
+  {
+    "id": "chong-yang",
+    "name": "Chong Yang",
+    "avatar": "assets/images/packet.png",
+    "blessing": "happy new year"
+  },
+  {
+    "id": "daniel-w-t-lin",
+    "name": "Daniel W T Lin",
+    "avatar": "assets/images/packet.png",
+    "blessing": "happy new year"
+  },
+  {
+    "id": "eric-c-f-li",
+    "name": "Eric C F Li",
+    "avatar": "assets/images/packet.png",
+    "blessing": "happy new year"
+  },
+  {
+    "id": "helen-h-l-xiao",
+    "name": "Helen H L Xiao",
+    "avatar": "assets/images/packet.png",
+    "blessing": "happy new year"
+  },
+  {
+    "id": "isabel-q-meng",
+    "name": "Isabel Q Meng",
+    "avatar": "assets/images/packet.png",
+    "blessing": "happy new year"
+  },
+  {
+    "id": "josie-mcavoy",
+    "name": "Josie MCAVOY",
+    "avatar": "assets/images/packet.png",
+    "blessing": "happy new year"
+  },
+  {
+    "id": "kayla-w-m-qiu",
+    "name": "Kayla W M Qiu",
+    "avatar": "assets/images/packet.png",
+    "blessing": "happy new year"
+  },
+  {
+    "id": "lunette-wang",
+    "name": "Lunette Wang",
+    "avatar": "assets/images/packet.png",
+    "blessing": "happy new year"
+  },
+  {
+    "id": "myra-mo-yu-zhao",
+    "name": "Myra Mo Yu Zhao",
+    "avatar": "assets/images/packet.png",
+    "blessing": "happy new year"
+  },
+  {
+    "id": "nanarion-q-zou",
+    "name": "Nanarion Q Zou",
+    "avatar": "assets/images/packet.png",
+    "blessing": "happy new year"
+  },
+  {
+    "id": "raymond-p-ren",
+    "name": "Raymond P Ren",
+    "avatar": "assets/images/packet.png",
+    "blessing": "happy new year"
+  },
+  {
+    "id": "richard-r-h-zhao",
+    "name": "Richard R H Zhao",
+    "avatar": "assets/images/packet.png",
+    "blessing": "happy new year"
+  },
+  {
+    "id": "rocky-r-q-ou",
+    "name": "Rocky R Q Ou",
+    "avatar": "assets/images/packet.png",
+    "blessing": "happy new year"
+  },
+  {
+    "id": "ryan-y-w-long",
+    "name": "Ryan Y W Long",
+    "avatar": "assets/images/packet.png",
+    "blessing": "happy new year"
+  },
+  {
+    "id": "teresa-m-j-liu",
+    "name": "Teresa M J Liu",
+    "avatar": "assets/images/packet.png",
+    "blessing": "happy new year"
+  },
+  {
+    "id": "vincent-w-k-li",
+    "name": "Vincent W K Li",
+    "avatar": "assets/images/packet.png",
+    "blessing": "happy new year"
+  },
+  {
+    "id": "wason-y-h-wang",
+    "name": "Wason Y H Wang",
+    "avatar": "assets/images/packet.png",
+    "blessing": "happy new year"
+  },
+  {
+    "id": "will-x-peng",
+    "name": "Will X Peng",
+    "avatar": "assets/images/packet.png",
+    "blessing": "happy new year"
+  },
+  {
+    "id": "yannis-z-lao",
+    "name": "Yannis Z Lao",
+    "avatar": "assets/images/packet.png",
+    "blessing": "happy new year"
   }
 ]
