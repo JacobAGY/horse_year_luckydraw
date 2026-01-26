@@ -226,6 +226,39 @@
     }
 
     .focusTextWrap{ flex:1 1 340px; min-width:260px; }
+    .focusTitleRow{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+    .focusAwardGlyph{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      width:44px;
+      height:44px;
+      flex-shrink:0;
+      border-radius:999px;
+      background: radial-gradient(circle at 30% 30%, rgba(255,245,220,.95), rgba(212,175,55,.92) 60%, rgba(90,60,10,.85) 100%);
+      box-shadow: 0 0 0 2px rgba(212,175,55,.20), 0 0 18px rgba(212,175,55,.45);
+      font-size:22px;
+      font-weight:900;
+      color:rgba(140,10,30,.98);
+      text-shadow:0 2px 3px rgba(0,0,0,.35);
+      line-height:1;
+    }
+    .focusOverlay.show .packet .seal{ display:none !important; }
+    .focusOverlay.show .packet:not(.packet-avatar)::after{
+      content:"";
+      position:absolute;
+      left:50%;
+      top:54%;
+      width:60px;
+      height:60px;
+      transform:translate(-50%,-50%);
+      border-radius:999px;
+      background:inherit;
+      pointer-events:none;
+      z-index:0;
+    }
+    .focusOverlay.show .packet.packet-avatar::after{ display:none !important; }
+    .focusOverlay.show .packet .lid{ z-index:1; }
     .focusTitle{ margin:0; font-size:18px; letter-spacing:.5px; font-weight:900; }
     .focusLine{ margin:10px 0 0; font-size:16px; line-height:1.6; color: rgba(255,255,255,.88); white-space:pre-wrap; }
 
@@ -270,7 +303,7 @@
       opacity:1;
     }
     .winnerListTitle{
-      font-size:15px;
+      font-size:17px;
       font-weight:900;
       letter-spacing:.4px;
       color:var(--gold);
@@ -300,12 +333,12 @@
       display:flex;
       align-items:center;
       gap:8px;
-      padding:7px 8px;
+      padding:8px 10px;
       margin:4px 0;
       border-radius:8px;
       background:rgba(212,175,55,.08);
       border:1px solid rgba(212,175,55,.15);
-      font-size:13px;
+      font-size:15px;
       color:rgba(255,255,255,.92);
       animation: winnerSlideIn .3s ease;
     }
@@ -320,8 +353,8 @@
       }
     }
     .winnerAvatar{
-      width:32px;
-      height:32px;
+      width:36px;
+      height:36px;
       border-radius:999px;
       object-fit:cover;
       border:2px solid rgba(212,175,55,.55);
@@ -331,14 +364,14 @@
     .winnerNumber{
       color:var(--gold);
       font-weight:800;
-      min-width:20px;
-      font-size:12px;
+      min-width:22px;
+      font-size:14px;
       text-align:right;
     }
     .winnerName{
       flex:1;
       font-weight:600;
-      font-size:16px;
+      font-size:17px;
     }
 
     .cooldownTimer{
@@ -420,7 +453,10 @@
         </div>
         <img id="focusAvatar" class="focusAvatar" alt="">
         <div class="focusTextWrap">
-          <h3 id="focusTitle" class="focusTitle">红包到 · 好运到</h3>
+          <div class="focusTitleRow">
+            <span class="focusAwardGlyph" id="focusAwardGlyph">奖</span>
+            <h3 id="focusTitle" class="focusTitle">红包到 · 好运到</h3>
+          </div>
           <div id="focusText" class="focusLine"></div>
         </div>
       </div>
@@ -641,6 +677,8 @@ function setPacketDefault(glyph="奖"){
   if(packetEl){
     packetEl.style.background = PACKET_GRADIENT;
     packetEl.style.backgroundSize = "";
+    packetEl.style.backgroundImage = "";
+    packetEl.classList.remove("packet-avatar");
   }
   if(packetLidEl){
     packetLidEl.style.background = LID_GRADIENT;
@@ -648,6 +686,8 @@ function setPacketDefault(glyph="奖"){
   if(packetSealEl){
     packetSealEl.setAttribute("data-glyph", glyph);
   }
+  const awardEl = document.getElementById("focusAwardGlyph");
+  if(awardEl) awardEl.textContent = glyph;
 }
 
 function setPacketAvatarMode(avatarUrl, glyph="奖"){
@@ -658,6 +698,7 @@ function setPacketAvatarMode(avatarUrl, glyph="奖"){
     packetEl.style.backgroundSize = "cover";
     packetEl.style.backgroundPosition = "center";
     packetEl.style.backgroundRepeat = "no-repeat";
+    packetEl.classList.add("packet-avatar");
   }
   if(packetLidEl){
     // 盖子使用半透明背景，让头像可见
@@ -666,6 +707,8 @@ function setPacketAvatarMode(avatarUrl, glyph="奖"){
   if(packetSealEl){
     packetSealEl.setAttribute("data-glyph", glyph);
   }
+  const awardEl = document.getElementById("focusAwardGlyph");
+  if(awardEl) awardEl.textContent = glyph;
 }
 
 // ---------------------------
