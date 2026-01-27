@@ -204,6 +204,18 @@
     "blessing": "Wishing a year full of new adventures， meaningful moments and good health. Happy new year of horse."
   },
   {
+    "id": "nickolas-g-j-yu",
+    "name": "Nickolas G J Yu",
+    "avatar": "assets/images/employees/nickolas_g_j_yu.jpeg",
+    "blessing": "happy new year"
+  },
+  {
+    "id": "richard-y-c-tan",
+    "name": "Richard Y C Tan",
+    "avatar": "assets/images/employees/richard_tan.jpeg",
+    "blessing": "万事如意，心想事成！"
+  },
+  {
     "id": "amir-estawro",
     "name": "Amir Estawro",
     "avatar": "assets/images/packet.png",
@@ -326,6 +338,12 @@
   {
     "id": "yannis-z-lao",
     "name": "Yannis Z Lao",
+    "avatar": "assets/images/packet.png",
+    "blessing": "happy new year"
+  },
+  {
+    "id": "bi-zhou-xing",
+    "name": "Bi Zhou Xing",
     "avatar": "assets/images/packet.png",
     "blessing": "happy new year"
   }
